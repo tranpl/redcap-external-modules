@@ -12,4 +12,4 @@ namespace ExternalModules;
 ?><!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><?php
 
 require_once '../../redcap_connect.php';
-require_once __DIR__ . '/../classes/Modules.php';
+require_once __DIR__ . '/../classes/ExternalModules.php';

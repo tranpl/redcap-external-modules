@@ -1,7 +1,7 @@
 <?php
 namespace ExternalModules;
 
-require_once '../../classes/Modules.php';
+require_once '../../classes/ExternalModules.php';
 
 $excludedModules = @$_POST['excludedModules'];
 if ($excludedModules == null) {

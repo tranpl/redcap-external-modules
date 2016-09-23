@@ -9,7 +9,7 @@
 // file will be called when REDCap calls the hook for that project.
 // **********************************************************************************************
 
-require_once dirname(__FILE__) . '/classes/Modules.php';
+require_once dirname(__FILE__) . '/classes/ExternalModules.php';
 use ExternalModules\ExternalModules;
 
 // REDCAP_EVERY_PAGE_BEFORE_RENDER
