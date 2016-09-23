@@ -153,6 +153,10 @@ ExternalModules::addResource('css/style.css');
 		});
 
 		$('.external-modules-remove-button').click(function (event) {
+			// TODO
+			alert('Removing modules has been disabled until we have the ability to configure a writable installed modules directory.');
+			return;
+
 			var button = $(event.target);
 			button.attr('disabled', true);
 			button.html('Removing...');

@@ -10,11 +10,6 @@ if (empty($module)) {
 	return;
 }
 
-// TODO - Remove this this mocked module is no longer listed.
-if ($module == 'doggy-daycare') {
-	die('success');
-}
-
 # TODO - need better security here (perhaps check for '..' or '/')
 ExternalModules::remove($module);
 
