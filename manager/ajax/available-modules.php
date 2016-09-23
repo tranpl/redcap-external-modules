@@ -13,7 +13,7 @@ if ($excludedModules == null) {
 <table id='modules-available' class="table table-no-top-row-border">
 	<?php
 
-	$availableModules = Modules::getAvailableModules($excludedModules);
+	$availableModules = ExternalModules::getAvailableModules($excludedModules);
 
 	if (empty($availableModules)) {
 		echo 'None';

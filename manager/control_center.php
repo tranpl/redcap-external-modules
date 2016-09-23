@@ -4,12 +4,12 @@ namespace ExternalModules;
 require_once 'header.php';
 require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/header.php';
 
-Modules::addResource('css/style.css');
+ExternalModules::addResource('css/style.css');
 
 ?>
 
 <h4 style="margin-top: 0;">
-	<img src="<?= Modules::getIconPath() ?>">
+	<img src="<?= ExternalModules::getIconPath() ?>">
 	Module Management
 </h4>
 
@@ -79,7 +79,7 @@ Modules::addResource('css/style.css');
 						<td>
 							<input type="checkbox" name="enabled">
 						</td>
-						<?= Modules::getSettingOverrideDropdown('enabled') ?>
+						<?= ExternalModules::getSettingOverrideDropdown('enabled') ?>
 					</tr>
 					<tr>
 						<td>
@@ -88,7 +88,7 @@ Modules::addResource('css/style.css');
 						<td>
 							<input name="module-setting-1">
 						</td>
-						<?= Modules::getSettingOverrideDropdown('module-setting-1') ?>
+						<?= ExternalModules::getSettingOverrideDropdown('module-setting-1') ?>
 					</tr>
 					<tr>
 						<td>
@@ -97,7 +97,7 @@ Modules::addResource('css/style.css');
 						<td>
 							<input type="checkbox" name="module-setting-2">
 						</td>
-						<?= Modules::getSettingOverrideDropdown('module-setting-2') ?>
+						<?= ExternalModules::getSettingOverrideDropdown('module-setting-2') ?>
 					</tr>
 				</table>
 			</div>

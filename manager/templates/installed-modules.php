@@ -8,7 +8,7 @@ require_once dirname(__FILE__) . '/../../classes/Modules.php';
 <table id='modules-installed' class="table">
 	<?php
 
-	$installedModules = Modules::getInstalledModules();
+	$installedModules = ExternalModules::getInstalledModules();
 
 	if (empty($installedModules)) {
 		echo 'None';

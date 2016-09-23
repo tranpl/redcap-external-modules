@@ -5,7 +5,7 @@ if (!defined(__DIR__)) define(__DIR__, dirname(__FILE__));
 
 require_once __DIR__ . "/../../redcap_connect.php";
 
-class Modules
+class ExternalModules
 {
 	public static $BASE_URL;
 
@@ -124,7 +124,7 @@ class Modules
 		$extension = pathinfo($fullLocalPath, PATHINFO_EXTENSION);
 
 		// Add the filemtime to the url for cache busting.
-		$url = Modules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+		$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
 
 		if ($extension == 'css') {
 			echo "<link rel='stylesheet' type='text/css' href='" . $url . "'>";
@@ -169,4 +169,4 @@ class Modules
 	}
 }
 
-Modules::init();
+ExternalModules::init();

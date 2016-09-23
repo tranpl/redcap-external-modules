@@ -10,7 +10,7 @@
 // **********************************************************************************************
 
 require_once dirname(__FILE__) . '/classes/Modules.php';
-use ExternalModules\Modules;
+use ExternalModules\ExternalModules;
 
 // REDCAP_EVERY_PAGE_BEFORE_RENDER
 function redcap_every_page_before_render($project_id=null)
@@ -24,7 +24,7 @@ function redcap_every_page_before_render($project_id=null)
 		if (file_exists($project_handler_script)) include $project_handler_script;
 	}
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -40,7 +40,7 @@ function redcap_every_page_top($project_id=null)
 		if (file_exists($project_handler_script)) include $project_handler_script;
 	}
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -54,7 +54,7 @@ function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $g
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -68,7 +68,7 @@ function redcap_data_entry_form_top($project_id, $record, $instrument, $event_id
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -82,7 +82,7 @@ function redcap_save_record($project_id, $record, $instrument, $event_id, $group
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -96,7 +96,7 @@ function redcap_survey_complete($project_id, $record, $instrument, $event_id, $g
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -110,7 +110,7 @@ function redcap_survey_page($project_id, $record, $instrument, $event_id, $group
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -124,7 +124,7 @@ function redcap_survey_page_top($project_id, $record, $instrument, $event_id, $g
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -138,7 +138,7 @@ function redcap_add_edit_records_page($project_id, $instrument, $event_id)
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -152,7 +152,7 @@ function redcap_user_rights($project_id)
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
@@ -166,19 +166,19 @@ function redcap_project_home_page($project_id)
 	// then "include" the script to execute it. If not, do nothing.
 	if (file_exists($project_handler_script)) include $project_handler_script;
 
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
 // REDCAP_CUSTOM_VERIFY_USERNAME
 function redcap_custom_verify_username($user)
 {
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }
 
 
 // REDCAP_CONTROL_CENTER
 function redcap_control_center()
 {
-	Modules::callHook(__FUNCTION__, func_get_args());
+	ExternalModules::callHook(__FUNCTION__, func_get_args());
 }

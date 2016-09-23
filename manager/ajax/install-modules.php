@@ -6,7 +6,7 @@ die('Module installation has been disabled until we create configuration steps f
 require_once '../../classes/Modules.php';
 
 foreach ($_POST['modules'] as $module) {
-	Modules::install($module);
+	ExternalModules::install($module);
 }
 
 echo 'success';

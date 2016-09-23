@@ -22,6 +22,6 @@ if ($module == 'doggy-daycare') {
 }
 
 # TODO - need better security here (perhaps check for '..' or '/')
-Modules::remove($module);
+ExternalModules::remove($module);
 
 echo 'success';

@@ -11,7 +11,7 @@ namespace ExternalModules;
 require_once 'header.php';
 require_once __DIR__ . '/../../' . APP_PATH_WEBROOT . 'ProjectGeneral/header.php';
 
-Modules::addResource('css/style.css');
+ExternalModules::addResource('css/style.css');
 
 require_once 'templates/installed-modules.php';
 
@@ -44,7 +44,7 @@ require_once 'templates/installed-modules.php';
 						<td>
 							<input type="checkbox" name="enabled">
 						</td>
-						<?= Modules::getProjectSettingOverrideCheckbox() ?>
+						<?= ExternalModules::getProjectSettingOverrideCheckbox() ?>
 					</tr>
 					<tr>
 						<td>
@@ -53,7 +53,7 @@ require_once 'templates/installed-modules.php';
 						<td>
 							<input name="module-setting-1">
 						</td>
-						<?= Modules::getProjectSettingOverrideCheckbox() ?>
+						<?= ExternalModules::getProjectSettingOverrideCheckbox() ?>
 					</tr>
 					<tr>
 						<td>
@@ -62,7 +62,7 @@ require_once 'templates/installed-modules.php';
 						<td>
 							<input type="checkbox" name="module-setting-2">
 						</td>
-						<?= Modules::getProjectSettingOverrideCheckbox() ?>
+						<?= ExternalModules::getProjectSettingOverrideCheckbox() ?>
 					</tr>
 					<tr>
 						<td>
