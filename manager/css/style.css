@@ -1,0 +1,44 @@
+#modules-available-modal .loading-indicator {
+	padding: 50px;
+}
+
+#modules-available-modal input[type=checkbox] {
+	vertical-align: -3px;
+}
+
+#modules-available-modal label {
+	font-weight: normal;
+}
+
+#modules-available td:first-child,
+#modules-installed td:first-child {
+	padding-top: 17px;
+}
+
+.modules-action-buttons {
+	text-align: right;
+}
+
+/* Only display one backdrop, no matter how many modals are open. */
+.modal-backdrop + .modal-backdrop {
+	opacity: 0;
+}
+
+.table-no-top-row-border tr:first-child td,
+.table-no-top-row-border tr:first-child th {
+	border-top: none;
+}
+
+.table td {
+	vertical-align: middle !important;
+}
+
+.table td label {
+	margin-bottom: 0px;
+	font-weight: normal;
+}
+
+.table th {
+	font-size: 110%;
+	font-weight: bold;
+}
