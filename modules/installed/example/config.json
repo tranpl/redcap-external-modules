@@ -10,8 +10,8 @@
 	],
 
 	"application-links": {
-		"My Module's Custom Application Link": "project-homepage.php",
-		"Another Custom Application Link": "module-subdirectory/some-other-page.php"
+		"My Module's Custom Application Link": "project_homepage.php",
+		"Another Custom Application Link": "module_subdirectory/some_other_page.php"
 	},
 
 	"global-settings": {
