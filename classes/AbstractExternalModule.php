@@ -30,12 +30,67 @@ class AbstractExternalModule
 		throw new Exception('Not yet implemented!');
 	}
 
+	function hook_redcap_add_edit_records_page($project_id, $instrument, $event_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_control_center()
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_custom_verify_username($username)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_data_entry_form_top($project_id, $record, $instrument, $event_id, $group_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_every_page_before_render($project_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_every_page_top($project_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
 	function hook_redcap_project_home_page($project_id)
 	{
 		// Do nothing.  This method is intended to be overridden by children.
 	}
 
-	function hook_redcap_add_edit_records_page($project_id, $instrument, $event_id)
+	function hook_redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_survey_complete($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_survey_page_top($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
+	{
+		// Do nothing.  This method is intended to be overridden by children.
+	}
+
+	function hook_redcap_user_rights($project_id)
 	{
 		// Do nothing.  This method is intended to be overridden by children.
 	}
