@@ -10,7 +10,7 @@ if ($excludedModules == null) {
 
 ?>
 
-<table id='modules-available' class="table table-no-top-row-border">
+<table id='external-modules-available' class="table table-no-top-row-border">
 	<?php
 
 	$availableModules = ExternalModules::getAvailableModules($excludedModules);
@@ -22,7 +22,7 @@ if ($excludedModules == null) {
 			?>
 			<tr data-module='<?= $module ?>'>
 				<td><?= $config->name ?></td>
-				<td class="modules-action-buttons">
+				<td class="external-modules-action-buttons">
 					<button class='btn install-button'>Install</button>
 				</td>
 			</tr>
@@ -35,8 +35,8 @@ if ($excludedModules == null) {
 
 <script>
 	$(function(){
-		var availableModal = $('#modules-available-modal');
-		var installModal = $('#modules-install-modal');
+		var availableModal = $('#external-modules-available-modal');
+		var installModal = $('#external-modules-install-modal');
 		var moduleInstalled = false;
 
 		var reloadPage = function(){
@@ -83,7 +83,7 @@ if ($excludedModules == null) {
 		});
 
 		installModal.on('hide.bs.modal', function(){
-			var availableModuleCount = $('#modules-available tr').length
+			var availableModuleCount = $('#external-modules-available tr').length
 			if(availableModuleCount == 0){
 				// Reload since there aren't any more available modules to install.
 				reloadPage();

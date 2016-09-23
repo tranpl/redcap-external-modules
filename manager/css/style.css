@@ -1,21 +1,21 @@
-#modules-available-modal .loading-indicator {
+#external-modules-available-modal .loading-indicator {
 	padding: 50px;
 }
 
-#modules-available-modal input[type=checkbox] {
+#external-modules-available-modal input[type=checkbox] {
 	vertical-align: -3px;
 }
 
-#modules-available-modal label {
+#external-modules-available-modal label {
 	font-weight: normal;
 }
 
-#modules-available td:first-child,
-#modules-installed td:first-child {
+#external-modules-available td:first-child,
+#external-modules-installed td:first-child {
 	padding-top: 17px;
 }
 
-.modules-action-buttons {
+.external-modules-action-buttons {
 	text-align: right;
 }
 

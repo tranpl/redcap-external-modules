@@ -18,13 +18,13 @@ require_once 'templates/installed-modules.php';
 ?>
 
 <style>
-	#modules-configure-modal th:nth-child(2),
-	#modules-configure-modal td:nth-child(3) {
+	#external-modules-configure-modal th:nth-child(2),
+	#external-modules-configure-modal td:nth-child(3) {
 		text-align: center;
 	}
 </style>
 
-<div id="modules-configure-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-configure-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">

@@ -16,7 +16,7 @@ ExternalModules::addResource('css/style.css');
 <br>
 <br>
 <br>
-<button id="modules-install-button" class="btn" data-toggle="modal" data-target="#modules-available-modal">Install
+<button id="external-modules-install-button" class="btn" data-toggle="modal" data-target="#external-modules-available-modal">Install
 	Module(s)
 </button>
 <br>
@@ -24,7 +24,7 @@ ExternalModules::addResource('css/style.css');
 
 <?php require_once 'templates/installed-modules.php'; ?>
 
-<div id="modules-available-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-available-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -40,7 +40,7 @@ ExternalModules::addResource('css/style.css');
 	</div>
 </div>
 
-<div id="modules-install-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-install-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -59,7 +59,7 @@ ExternalModules::addResource('css/style.css');
 	</div>
 </div>
 
-<div id="modules-configure-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-configure-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -118,12 +118,12 @@ ExternalModules::addResource('css/style.css');
 		$('#sub-nav li.active').removeClass('active');
 		$('#sub-nav a[href*="ControlCenter"]').closest('li').addClass('active');
 
-		var availableModal = $('#modules-available-modal');
+		var availableModal = $('#external-modules-available-modal');
 		var form = availableModal.find('.modal-body form');
 
 		var getInstalledModules = function () {
 			var modules = [];
-			$('#modules-installed tr').each(function (index, element) {
+			$('#external-modules-installed tr').each(function (index, element) {
 				modules.push($(element).data('module'));
 			});
 
@@ -141,18 +141,18 @@ ExternalModules::addResource('css/style.css');
 			}
 		});
 
-		var configureModal = $('#modules-configure-modal');
+		var configureModal = $('#external-modules-configure-modal');
 		configureModal.on('show.bs.modal', function () {
 			var button = $(event.target);
 			var moduleName = $(button.closest('tr').find('td')[0]).html();
 			configureModal.find('.module-name').html(moduleName);
 		});
 
-		$('.modules-update-button').click(function (event) {
+		$('.external-modules-update-button').click(function (event) {
 			alert('There are currently no updates available for this module.')
 		});
 
-		$('.modules-remove-button').click(function (event) {
+		$('.external-modules-remove-button').click(function (event) {
 			var button = $(event.target);
 			button.attr('disabled', true);
 			button.html('Removing...');
