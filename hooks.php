@@ -10,7 +10,7 @@
 // **********************************************************************************************
 
 require_once dirname(__FILE__) . '/classes/Modules.php';
-use Modules\Modules;
+use ExternalModules\Modules;
 
 // REDCAP_EVERY_PAGE_BEFORE_RENDER
 function redcap_every_page_before_render($project_id=null)

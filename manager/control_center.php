@@ -1,5 +1,5 @@
 <?php
-namespace Modules;
+namespace ExternalModules;
 
 require_once 'header.php';
 require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/header.php';

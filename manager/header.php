@@ -6,7 +6,7 @@
  * Time: 10:39 AM
  */
 
-namespace Modules;
+namespace ExternalModules;
 
 # Use the same doctype as REDCap for layout consistency (without this the footer displays strangely).
 ?><!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><?php

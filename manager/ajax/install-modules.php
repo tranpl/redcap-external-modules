@@ -1,5 +1,5 @@
 <?php
-namespace Modules;
+namespace ExternalModules;
 
 die('Module installation has been disabled until we create configuration steps for a writable installed modules folder.');
 

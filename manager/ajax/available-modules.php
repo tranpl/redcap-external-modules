@@ -1,5 +1,5 @@
 <?php
-namespace Modules;
+namespace ExternalModules;
 
 require_once '../../classes/Modules.php';
 

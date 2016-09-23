@@ -5,7 +5,7 @@
  * Date: 9/20/2016
  * Time: 9:02 AM
  */
-namespace Modules;
+namespace ExternalModules;
 
 require_once '../../classes/Modules.php';
 

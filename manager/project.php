@@ -6,7 +6,7 @@
  * Time: 10:30 AM
  */
 
-namespace Modules;
+namespace ExternalModules;
 
 require_once 'header.php';
 require_once __DIR__ . '/../../' . APP_PATH_WEBROOT . 'ProjectGeneral/header.php';
