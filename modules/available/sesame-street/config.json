@@ -1,0 +1,8 @@
+{
+	"name": "Sesame Street",
+	"permissions": [
+		"select_data",
+		"update_data",
+		"delete_data"
+	]
+}

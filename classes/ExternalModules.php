@@ -16,8 +16,8 @@ class ExternalModules
 	{
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
 
-		self::$AVAILABLE_MODULES_PATH = __DIR__ . "/../modules/";
-		self::$INSTALLED_MODULES_PATH = __DIR__ . "/../installed_modules/";
+		self::$AVAILABLE_MODULES_PATH = __DIR__ . "/../modules/available/";
+		self::$INSTALLED_MODULES_PATH = __DIR__ . "/../modules/installed/";
 
 		if (!file_exists(self::$INSTALLED_MODULES_PATH)) {
 			// TODO - Uncomment this one we add the ability to configure a writable folder for modules.
@@ -40,15 +40,7 @@ class ExternalModules
 
 	static function getInstalledModules()
 	{
-		// We're just mocking an installed module for now, until we create configuration steps for a writable installed modules folder.
-		$doggyDaycare = new \StdClass();
-		$doggyDaycare->name = 'Doggy Daycare';
-
-		return array(
-			'doggy-daycare' => $doggyDaycare
-		);
-
-//		return self::getModulesFromPath(self::$INSTALLED_MODULES_PATH);
+		return self::getModulesFromPath(self::$INSTALLED_MODULES_PATH);
 	}
 
 	static function remove($module)
