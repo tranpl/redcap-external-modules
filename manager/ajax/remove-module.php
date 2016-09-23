@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mceverm
- * Date: 9/20/2016
- * Time: 9:02 AM
- */
 namespace ExternalModules;
 
 require_once '../../classes/ExternalModules.php';

@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mceverm
- * Date: 9/22/2016
- * Time: 10:39 AM
- */
-
 namespace ExternalModules;
 
 # Use the same doctype as REDCap for layout consistency (without this the footer displays strangely).

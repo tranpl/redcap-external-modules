@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mceverm
- * Date: 9/22/2016
- * Time: 10:30 AM
- */
-
 namespace ExternalModules;
 
 require_once 'header.php';
