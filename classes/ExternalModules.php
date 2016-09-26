@@ -11,8 +11,8 @@ class ExternalModules
 {
 	public static $BASE_URL;
 
-	private static $AVAILABLE_MODULES_PATH;
-	private static $INSTALLED_MODULES_PATH;
+	public static $AVAILABLE_MODULES_PATH;
+	public static $INSTALLED_MODULES_PATH;
 
 	private static $initialized = false;
 
