@@ -12,6 +12,8 @@ if($_SERVER[HTTP_HOST] == 'localhost'){
 	error_reporting(E_ALL);
 }
 
+require_once __DIR__ . "/AbstractExternalModule.php";
+
 class ExternalModules
 {
 	public static $BASE_URL;
@@ -30,6 +32,16 @@ class ExternalModules
 			// TODO - Uncomment this one we add the ability to configure a writable folder for modules.
 			// mkdir(self::$INSTALLED_MODULES_PATH);
 		}
+	}
+
+	static function getProjectHeaderPath()
+	{
+		return __DIR__ . '/../../' . APP_PATH_WEBROOT . 'ProjectGeneral/header.php';
+	}
+
+	static function getProjectFooterPath()
+	{
+		return __DIR__ . '/../../' . APP_PATH_WEBROOT . 'ProjectGeneral/footer.php';
 	}
 
 	static function getAvailableModules($excludedModules = array())

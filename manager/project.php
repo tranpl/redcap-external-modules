@@ -1,8 +1,7 @@
 <?php
 namespace ExternalModules;
-
-require_once 'header.php';
-require_once __DIR__ . '/../../' . APP_PATH_WEBROOT . 'ProjectGeneral/header.php';
+require_once __DIR__ . '/../classes/ExternalModules.php';
+require_once ExternalModules::getProjectHeaderPath();
 
 ExternalModules::addResource('css/style.css');
 
@@ -84,3 +83,7 @@ require_once 'templates/installed-modules.php';
 		</div>
 	</div>
 </div>
+
+<?php
+
+require_once ExternalModules::getProjectFooterPath();

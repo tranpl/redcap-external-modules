@@ -12,7 +12,7 @@ class AbstractExternalModule
 
 	function selectData($some, $params)
 	{
-		throw new Exception('Not yet implemented!');
+		return 'this could be some data from the database';
 	}
 
 	function updateData($some, $params)
