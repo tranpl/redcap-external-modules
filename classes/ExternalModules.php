@@ -5,6 +5,13 @@ if (!defined(__DIR__)) define(__DIR__, dirname(__FILE__));
 
 require_once __DIR__ . "/../../redcap_connect.php";
 
+if($_SERVER[HTTP_HOST] == 'localhost'){
+	// Assume this is a developer's machine and enable errors.
+	ini_set('display_errors', 1);
+	ini_set('display_startup_errors', 1);
+	error_reporting(E_ALL);
+}
+
 class ExternalModules
 {
 	public static $BASE_URL;
