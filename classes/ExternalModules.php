@@ -1,16 +1,9 @@
 <?php
 namespace ExternalModules;
 
-if (!defined(__DIR__)) define(__DIR__, dirname(__FILE__));
-
 require_once __DIR__ . "/../../redcap_connect.php";
 
-if($_SERVER[HTTP_HOST] == 'localhost'){
-	// Assume this is a developer's machine and enable errors.
-	ini_set('display_errors', 1);
-	ini_set('display_startup_errors', 1);
-	error_reporting(E_ALL);
-}
+use \Exception;
 
 require_once __DIR__ . "/AbstractExternalModule.php";
 
@@ -21,8 +14,19 @@ class ExternalModules
 	private static $AVAILABLE_MODULES_PATH;
 	private static $INSTALLED_MODULES_PATH;
 
-	static function init()
+	private static $initialized = false;
+
+	static function initialize()
 	{
+		if (!defined(__DIR__)) define(__DIR__, dirname(__FILE__));
+
+		if($_SERVER[HTTP_HOST] == 'localhost'){
+			// Assume this is a developer's machine and enable errors.
+			ini_set('display_errors', 1);
+			ini_set('display_startup_errors', 1);
+			error_reporting(E_ALL);
+		}
+
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
 
 		self::$AVAILABLE_MODULES_PATH = __DIR__ . "/../modules/available/";
@@ -92,17 +96,44 @@ class ExternalModules
 		}
 	}
 
-	static function callHook($name, $args)
+	static function callHook($name, $arguments)
 	{
-		# TODO: We need to add a way to forward hooks calls to modules here.
-		# This could be a callHook() function like this one on the module class, a function
-		# definition for each hook on the module class, or an actual file for each hook.
+		# We must initialize this static class here, since this method actually gets called before anything else.
+		# This method is actually called many times (once per hook), so we should only initialize once.
+		if(!self::$initialized){
+			self::initialize();
+			self::$initialized = true;
+		}
 
 		$name = str_replace('redcap_', '', $name);
-		$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
 
+		$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
 		if(file_exists($templatePath)){
 			require $templatePath;
+		}
+
+		# TODO - We could optimize for efficiency here by only looping through the modules that actually request permissions for each hook.
+		$modulesPaths = glob(self::$INSTALLED_MODULES_PATH . '*' , GLOB_ONLYDIR);
+		foreach($modulesPaths as $modulePath){
+			$className = basename($modulePath) . 'ExternalModule';
+
+			$classFilePath = "$modulePath/$className.php";
+			if(!file_exists($classFilePath)){
+				throw new Exception("Could not find the following External Module main class file: $classFilePath");
+			}
+
+			require_once $classFilePath;
+			$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
+			$instance = new $classNameWithNamespace;
+			$methodName = "hook_$name";
+
+			if(method_exists($instance, $methodName)){
+				if(!$instance->hasPermission($methodName)){
+					throw new Exception("The $classNameWithNamespace module must request permission in order to define the following hook: $methodName()");
+				}
+
+				call_user_func_array(array($instance,$methodName), $arguments);
+			}
 		}
 	}
 
@@ -180,4 +211,3 @@ class ExternalModules
 	}
 }
 
-ExternalModules::init();

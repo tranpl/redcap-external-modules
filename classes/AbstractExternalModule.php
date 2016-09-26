@@ -1,113 +1,64 @@
 <?php
 namespace ExternalModules;
 
+use Exception;
+
 class AbstractExternalModule
 {
-	private static $NON_HOOK_PERMISSIONS = array(
-		'select_data',
-		'update_data',
-		'delete_data',
-		'update_user_permissions'
-	);
-
 	function selectData($some, $params)
 	{
+		self::checkPermissions(__FUNCTION__);
+
 		return 'this could be some data from the database';
 	}
 
 	function updateData($some, $params)
 	{
+		self::checkPermissions(__FUNCTION__);
+
 		throw new Exception('Not yet implemented!');
 	}
 
 	function deleteData($some, $params)
 	{
+		self::checkPermissions(__FUNCTION__);
+
 		throw new Exception('Not yet implemented!');
 	}
 
 	function updateUserPermissions($some, $params)
 	{
-		throw new Exception('Not yet implemented!');
+		self::checkPermissions(__FUNCTION__);
+
+		# TODO - Implement this!
+
+		return true;
 	}
 
-	function hook_redcap_add_edit_records_page($project_id, $instrument, $event_id)
+	function checkPermissions($methodName)
 	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
+		# Convert from camel to snake case.
+		# Taken from the second solution here: http://stackoverflow.com/questions/1993721/how-to-convert-camelcase-to-camel-case
+		$permissionName = ltrim(strtolower(preg_replace('/[A-Z]/', '_$0', $methodName)), '_');
 
-	function hook_redcap_control_center()
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_custom_verify_username($username)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_data_entry_form_top($project_id, $record, $instrument, $event_id, $group_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_every_page_before_render($project_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_every_page_top($project_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_project_home_page($project_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_survey_complete($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_survey_page_top($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	function hook_redcap_user_rights($project_id)
-	{
-		// Do nothing.  This method is intended to be overridden by children.
-	}
-
-	# TODO - Add the rest of the hook methods.
-
-	function __call($methodName, $arguments)
-	{
-		$permissionName = $this->methodNameToPermissionName($methodName);
-		if ($this->isPermissionRequired($permissionName) && !$this->hasPermission($permissionName)) {
+		if (!$this->hasPermission($permissionName)) {
 			throw new Exception("This module must request the \"$permissionName\" permission in order to call the $methodName() method.");
 		}
 	}
 
-	private function isPermissionRequired($permissionName)
+	function hasPermission($permissionName)
 	{
-		return strpos($permissionName, 'hook_') === 0 ||
-			   in_array('$permissionName', self::$NON_HOOK_PERMISSIONS);
+		return in_array($permissionName, $this->getConfig()->permissions);
+	}
+
+	private function getConfig()
+	{
+		if(!$this->config){
+			$object = new \ReflectionClass($this);
+			$modulePath = dirname($object->getFileName());
+			$this->config = json_decode(file_get_contents("$modulePath/config.json"));
+		}
+
+		return $this->config;
 	}
 }

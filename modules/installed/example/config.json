@@ -2,7 +2,7 @@
 	"name": "Example Module",
 	
 	"permissions": [
-		"hook_redcap_add_edit_records_page",
+		"hook_project_home_page",
 		"select_data",
 		"update_data",
 		"delete_data",
