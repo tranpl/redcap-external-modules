@@ -79,11 +79,11 @@ class ExternalModules
 		# This could be a callHook() function like this one on the module class, a function
 		# definition for each hook on the module class, or an actual file for each hook.
 
-		if ($name == 'redcap_control_center') {
-			require_once __DIR__ . "/../manager/templates/control-center.php";
-		} else if ($name == 'redcap_every_page_top') {
-			$project_id = $args[0];
-			require_once __DIR__ . "/../manager/templates/every-page-top.php";
+		$name = str_replace('redcap_', '', $name);
+		$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
+
+		if(file_exists($templatePath)){
+			require $templatePath;
 		}
 	}
 

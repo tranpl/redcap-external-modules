@@ -1,6 +1,9 @@
 <?php
 namespace ExternalModules;
-require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
+require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
+
+$project_id = $args[0];
+
 ?>
 
 <script>
