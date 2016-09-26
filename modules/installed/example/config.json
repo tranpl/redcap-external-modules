@@ -9,9 +9,19 @@
 		"update_user_permissions"
 	],
 
-	"application-links": {
-		"My Module's Custom Application Link": "project_homepage.php",
-		"Another Custom Application Link": "module_subdirectory/some_other_page.php"
+	"links": {
+		"control-center": {
+			"My Control Center Menu Link": {
+				"icon": "user.png",
+				"url": "control_center_homepage.php"
+			}
+		},
+		"project": {
+			"My Project Menu Link": {
+				"icon": "report.png",
+				"url": "project_homepage.php"
+			}
+		}
 	},
 
 	"global-settings": {
