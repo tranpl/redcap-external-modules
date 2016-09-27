@@ -1,7 +1,7 @@
 {
 	"name": "Tuna Salad",
 	"permissions": [
-		"hook_redcap_add_edit_records_page",
+		"hook_add_edit_records_page",
 		"update_user_permissions"
 	]
 }
