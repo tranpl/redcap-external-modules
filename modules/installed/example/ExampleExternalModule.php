@@ -11,7 +11,7 @@ class ExampleExternalModule extends AbstractExternalModule
 
 		?>
 		<script>
-			alert("This message came from an External Module hook!  Your project id is <?= $project_id ?>!");
+			console.log("This message came from a hook defined in the ExampleExternalModule!  Your project id is <?= $project_id ?>!");
 		</script>
 		<?php
 	}
