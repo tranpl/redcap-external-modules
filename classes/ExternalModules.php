@@ -181,21 +181,42 @@ class ExternalModules
 	}
 
 	static function getControlCenterLinks(){
+		$links = self::getLinks('control-center');
+
+		$links['Manage External Modules'] = array(
+			'icon' => 'brick',
+			'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
+		);
+
+		ksort($links);
+
+		return $links;
+	}
+
+	static function getProjectLinks(){
+		$links = self::getLinks('project');
+
+		$links['Manage External Modules'] = array(
+			'icon' => 'brick',
+			'url' => ExternalModules::$BASE_URL  . 'manager/project.php'
+		);
+
+		ksort($links);
+
+		return $links;
+	}
+
+	private function getLinks($type){
 		# TODO - This data will likely end up coming from enabled modules in the database instead in the future.
 
-		$links = array(
-			'Manage External Modules' => array(
-				'icon' => 'brick',
-				'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
-			)
-		);
+		$links = array();
 
 		$modulePaths = glob(self::$INSTALLED_MODULES_PATH . '*');
 		foreach($modulePaths as $path){
 			$moduleName = basename($path);
 			$config = json_decode(file_get_contents("$path/config.json"), true);
 
-			foreach($config['links']['control-center'] as $name=>$link){
+			foreach($config['links'][$type] as $name=>$link){
 				$link['url'] = self::$INSTALLED_MODULES_URL . $moduleName . '/' . $link['url'];
 				$links[$name] = $link;
 			}

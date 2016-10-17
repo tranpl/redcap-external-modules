@@ -2,23 +2,35 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 
-$project_id = $args[0];
+$project_id = $arguments[0];
 
 ?>
 
 <script>
 	$(function () {
 		if ($('#project-menu-logo').length > 0) {
-			// The project menu is visible.  Add a link to it!
-			var linkWrapper = $('a[href*="/DataQuality/index.php"]').parent();
-			var newLinkWrapper = linkWrapper.clone();
+			var newPanel = $('#app_panel').clone()
+			newPanel.attr('id', 'external_modules_panel')
+			newPanel.find('.x-panel-header div:first-child').html("External Modules")
 
-			newLinkWrapper.find('img').attr('src', '<?=ExternalModules::getIconPath()?>');
-			newLinkWrapper.find('a')
-				.attr('href', '<?=ExternalModules::$BASE_URL?>manager/project.php?pid=<?=$project_id?>')
-				.html('External Modules');
+			var menubox = newPanel.find('.x-panel-body .menubox .menubox')
+			var exampleLink = menubox.find('.hang:first-child').clone()
+			menubox.html('')
 
-			linkWrapper.after(newLinkWrapper);
+			var newLink
+			<?php
+			foreach(ExternalModules::getProjectLinks() as $name=>$link){
+				?>
+				newLink = exampleLink.clone()
+				newLink.find('img').attr('src', '<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png')
+				newLink.find('a').attr('href', '<?= $link['url'] ?>?pid=<?= $project_id ?>')
+				newLink.find('a').html('<?= $name ?>')
+				menubox.append(newLink)
+				<?php
+			}
+			?>
+
+			newPanel.insertBefore('#help_panel')
 		}
 	})
 </script>
