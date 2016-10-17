@@ -8,7 +8,7 @@ ExternalModules::addResource('css/style.css');
 ?>
 
 <h4 style="margin-top: 0;">
-	<img src="<?= ExternalModules::getIconPath() ?>">
+	<img src="<?= APP_PATH_WEBROOT . 'Resources/images/brick.png' ?>">
 	Module Management
 </h4>
 

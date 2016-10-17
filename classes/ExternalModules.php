@@ -75,11 +75,6 @@ class ExternalModules
 		self::rrmdir(self::$INSTALLED_MODULES_PATH . $module);
 	}
 
-	static function getIconPath()
-	{
-		return APP_PATH_WEBROOT . 'Resources/images/brick.png';
-	}
-
 	static function install($module)
 	{
 		$source = self::$AVAILABLE_MODULES_PATH . $module;
