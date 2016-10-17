@@ -8,8 +8,7 @@ require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 		var span = $('<span style="position: relative; float: left; left: 4px;"></span>')
 
 		<?php
-		$links = ExternalModules::getControlCenterLinks();
-		foreach($links as $name=>$link){
+		foreach(ExternalModules::getControlCenterLinks() as $name=>$link){
 			?>
 			span.append('<img src="<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png">')
 			span.append('&nbsp; ')
