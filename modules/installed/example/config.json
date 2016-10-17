@@ -12,13 +12,13 @@
 	"links": {
 		"control-center": {
 			"My Control Center Menu Link": {
-				"icon": "user.png",
+				"icon": "user",
 				"url": "control_center_homepage.php"
 			}
 		},
 		"project": {
 			"My Project Menu Link": {
-				"icon": "report.png",
+				"icon": "report",
 				"url": "project_homepage.php"
 			}
 		}

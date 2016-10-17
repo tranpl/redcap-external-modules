@@ -6,10 +6,18 @@ require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 <script>
 	$(function () {
 		var span = $('<span style="position: relative; float: left; left: 4px;"></span>')
-		span.append('<img src="<?=ExternalModules::getIconPath()?>">')
-		span.append('&nbsp;')
-		span.append('<a href="<?=ExternalModules::$BASE_URL?>manager/control_center.php">Manage External Modules</a>')
-		span.append('<br>')
+
+		<?php
+		$links = ExternalModules::getControlCenterLinks();
+		foreach($links as $name=>$link){
+			?>
+			span.append('<img src="<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png">')
+			span.append('&nbsp; ')
+			span.append('<a href="<?= $link['url'] ?>"><?= $name ?></a>')
+			span.append('<br>')
+			<?php
+		}
+		?>
 
 		var menu = $('#control_center_menu')
 		menu.find(':last').remove()

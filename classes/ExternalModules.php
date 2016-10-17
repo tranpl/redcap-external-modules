@@ -10,6 +10,7 @@ use \Exception;
 class ExternalModules
 {
 	public static $BASE_URL;
+	public static $INSTALLED_MODULES_URL;
 
 	public static $AVAILABLE_MODULES_PATH;
 	public static $INSTALLED_MODULES_PATH;
@@ -27,10 +28,13 @@ class ExternalModules
 			error_reporting(E_ALL);
 		}
 
+		$installedPath = 'modules/installed/';
+
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
+		self::$INSTALLED_MODULES_URL = self::$BASE_URL . $installedPath;
 
 		self::$AVAILABLE_MODULES_PATH = __DIR__ . "/../modules/available/";
-		self::$INSTALLED_MODULES_PATH = __DIR__ . "/../modules/installed/";
+		self::$INSTALLED_MODULES_PATH = __DIR__ . "/../$installedPath";
 
 		if (!file_exists(self::$INSTALLED_MODULES_PATH)) {
 			// TODO - Uncomment this one we add the ability to configure a writable folder for modules.
@@ -174,6 +178,32 @@ class ExternalModules
 		else {
 			throw new Exception('Unsupported resource added: ' . $path);
 		}
+	}
+
+	static function getControlCenterLinks(){
+		# TODO - This data will likely end up coming from enabled modules in the database instead in the future.
+
+		$links = array(
+			'Manage External Modules' => array(
+				'icon' => 'brick',
+				'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
+			)
+		);
+
+		$modulePaths = glob(self::$INSTALLED_MODULES_PATH . '*');
+		foreach($modulePaths as $path){
+			$moduleName = basename($path);
+			$config = json_decode(file_get_contents("$path/config.json"), true);
+
+			foreach($config['links']['control-center'] as $name=>$link){
+				$link['url'] = self::$INSTALLED_MODULES_URL . $moduleName . '/' . $link['url'];
+				$links[$name] = $link;
+			}
+		}
+
+		ksort($links);
+
+		return $links;
 	}
 
 	private static function getModulesFromPath($path)
