@@ -15,11 +15,9 @@ $project_id = $arguments[0];
 
 			// Adapted from base.js lines 7147 to 7170 in v6.16.8
 			newPanel.find('.projMenuToggle').mouseenter(function() {
-				console.log(1)
 				$(this).removeClass('opacity50');
 				if (isIE) $(this).find("img").removeClass('opacity50');
 			}).mouseleave(function() {
-				console.log(2)
 				$(this).addClass('opacity50');
 				if (isIE) $(this).find("img").addClass('opacity50');
 			}).click(function(){ // Copied from base.js line 7155 in v6.16.8
