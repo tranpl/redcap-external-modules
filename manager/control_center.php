@@ -140,25 +140,21 @@ ExternalModules::addResource('css/style.css');
 			alert('There are currently no updates available for this module.')
 		});
 
-		$('.external-modules-remove-button').click(function (event) {
-			// TODO
-			alert('Removing modules has been disabled until we have the ability to configure a writable installed modules directory.');
-			return;
-
+		$('.external-modules-disable-button').click(function (event) {
 			var button = $(event.target);
 			button.attr('disabled', true);
-			button.html('Removing...');
+			button.html('Disabling...');
 
 			var row = button.closest('tr');
 			var module = row.data('module');
-			$.post('ajax/remove-module.php', {module: module}, function (data) {
+			$.post('ajax/disable-module.php', {module: module}, function (data) {
 				if (data == 'success') {
-					// TODO - This will leave a blank list when the last module is removed.
+					// TODO - This will leave a blank list when the last module is disabled.
 					// We might want to display "none" or something
 					row.remove()
 				}
 				else {
-					alert('An error occurred while removing the ' + module + ' module: ' + data);
+					alert('An error occurred while disabling the ' + module + ' module: ' + data);
 				}
 			});
 		});

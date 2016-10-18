@@ -21,7 +21,7 @@ require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 					<button class='btn external-modules-configure-button' data-toggle="modal" data-target="#external-modules-configure-modal">Configure</button>
 					<?php if (!isset($project_id)) { ?>
 						<button class='btn external-modules-update-button'>Update</button>
-						<button class='btn external-modules-remove-button'>Remove</button>
+						<button class='btn external-modules-disable-button'>Disable</button>
 					<?php } ?>
 				</td>
 			</tr>

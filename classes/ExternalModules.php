@@ -54,9 +54,9 @@ class ExternalModules
 		return array('example');
 	}
 
-	static function remove($module)
+	static function disable($module)
 	{
-		throw new Exception('This method should be removed when we switch "removing" language to "disabling" language.');
+		throw new Exception('Disabling modules is not yet supported.');
 	}
 
 	static function enable($module)
