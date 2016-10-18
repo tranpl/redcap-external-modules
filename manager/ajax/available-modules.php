@@ -23,7 +23,7 @@ if ($excludedModules == null) {
 			<tr data-module='<?= $module ?>'>
 				<td><?= $config->name ?></td>
 				<td class="external-modules-action-buttons">
-					<button class='btn install-button'>Install</button>
+					<button class='btn install-button'>Enable</button>
 				</td>
 			</tr>
 			<?php
@@ -36,8 +36,8 @@ if ($excludedModules == null) {
 <script>
 	$(function(){
 		var availableModal = $('#external-modules-available-modal');
-		var installModal = $('#external-modules-install-modal');
-		var moduleInstalled = false;
+		var enableModal = $('#external-modules-install-modal');
+		var moduleEnabled = false;
 
 		var reloadPage = function(){
 			$('<div class="modal-backdrop fade in"></div>').appendTo(document.body);
@@ -50,11 +50,11 @@ if ($excludedModules == null) {
 			var row = $(event.target).closest('tr');
 			var module = row.data('module');
 
-			var installButton = installModal.find('.install-button');
-			installButton.html('Install');
-			installModal.find('button').attr('disabled', false);
+			var enableButton = enableModal.find('.install-button');
+			enableButton.html('Enable');
+			enableModal.find('button').attr('disabled', false);
 
-			var list = installModal.find('.modal-body ul');
+			var list = enableModal.find('.modal-body ul');
 			list.html('');
 
 			var availableModules = <?=json_encode($availableModules)?>;
@@ -62,30 +62,30 @@ if ($excludedModules == null) {
 				list.append("<li>" + permission + "</li>");
 			})
 
-			installButton.click(function(){
-				installButton.html('Installing...');
-				installModal.find('button').attr('disabled', true);
+			enableButton.click(function(){
+				enableButton.html('Enabling...');
+				enableModal.find('button').attr('disabled', true);
 
 				$.post('ajax/enable-modules.php', {modules: [module]}, function (data) {
 					if (data != 'success') {
-						alert('An error occurred while installing the module: ' + data);
+						alert('An error occurred while enabling the module: ' + data);
 					}
 
-					moduleInstalled = true;
+					moduleEnabled = true;
 					row.remove();
-					installModal.modal('hide');
+					enableModal.modal('hide');
 				});
 			});
 
-			installModal.modal('show');
+			enableModal.modal('show');
 
 			return false;
 		});
 
-		installModal.on('hide.bs.modal', function(){
+		enableModal.on('hide.bs.modal', function(){
 			var availableModuleCount = $('#external-modules-available tr').length
 			if(availableModuleCount == 0){
-				// Reload since there aren't any more available modules to install.
+				// Reload since there aren't any more available modules to enable.
 				reloadPage();
 			}
 			else{
@@ -94,8 +94,8 @@ if ($excludedModules == null) {
 		});
 
 		availableModal.on('hide.bs.modal', function(){
-			if(moduleInstalled){
-				// Reload to refresh the list of installed modules.
+			if(moduleEnabled){
+				// Reload to refresh the list of enabled modules.
 				reloadPage();
 			}
 		});
