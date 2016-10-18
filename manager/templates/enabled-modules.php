@@ -3,7 +3,7 @@ namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 ?>
 
-<h3>Installed Modules</h3>
+<h3>Enabled Modules</h3>
 
 <table id='external-modules-enabled' class="table">
 	<?php

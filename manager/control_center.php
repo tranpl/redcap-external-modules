@@ -42,7 +42,7 @@ ExternalModules::addResource('css/style.css');
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
-				<h4 class="modal-title">Install Module: <span class="module-name"></span></h4>
+				<h4 class="modal-title">Enable Module: <span class="module-name"></span></h4>
 			</div>
 			<div class="modal-body">
 				<p>This module requests the following permissions:</p>
