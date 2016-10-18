@@ -5,7 +5,7 @@ require_once ExternalModules::getProjectHeaderPath();
 
 ExternalModules::addResource('css/style.css');
 
-require_once 'templates/installed-modules.php';
+require_once 'templates/enabled-modules.php';
 
 ?>
 
