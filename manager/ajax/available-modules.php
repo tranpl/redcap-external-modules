@@ -3,17 +3,12 @@ namespace ExternalModules;
 
 require_once '../../classes/ExternalModules.php';
 
-$excludedModules = @$_POST['excludedModules'];
-if ($excludedModules == null) {
-	$excludedModules = array();
-}
-
 ?>
 
 <table id='external-modules-available' class="table table-no-top-row-border">
 	<?php
 
-	$availableModules = ExternalModules::getAvailableModules($excludedModules);
+	$availableModules = ExternalModules::getAvailableModules();
 
 	if (empty($availableModules)) {
 		echo 'None';

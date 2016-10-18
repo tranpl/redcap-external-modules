@@ -41,7 +41,7 @@ class ExternalModules
 		return APP_PATH_DOCROOT . 'ProjectGeneral/footer.php';
 	}
 
-	static function getAvailableModules($excludedModules = array())
+	static function getAvailableModules()
 	{
 		# TODO - We should remove this function, likely replacing references to it with the following:
 		return self::getConfigs(self::getDisabledModuleNames());

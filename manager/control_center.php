@@ -118,21 +118,12 @@ ExternalModules::addResource('css/style.css');
 		var availableModal = $('#external-modules-available-modal');
 		var form = availableModal.find('.modal-body form');
 
-		var getInstalledModules = function () {
-			var modules = [];
-			$('#external-modules-enabled tr').each(function (index, element) {
-				modules.push($(element).data('module'));
-			});
-
-			return modules;
-		}
-
 		availableModal.on('show.bs.modal', function () {
 			var loadingIndicator = availableModal.find('.loading-indicator');
 			if (loadingIndicator.length == 1) {
 				new Spinner().spin(loadingIndicator[0]);
 
-				$.post('ajax/available-modules.php', {excludedModules: getInstalledModules()}, function (html) {
+				$.post('ajax/available-modules.php', function (html) {
 					form.html(html);
 				})
 			}
