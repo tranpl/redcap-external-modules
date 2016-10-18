@@ -5,7 +5,7 @@ require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 
 <h3>Installed Modules</h3>
 
-<table id='external-modules-installed' class="table">
+<table id='external-modules-enabled' class="table">
 	<?php
 
 	$configsByName = ExternalModules::getConfigs(ExternalModules::getEnabledModuleNames());

@@ -11,7 +11,7 @@
 }
 
 #external-modules-available td:first-child,
-#external-modules-installed td:first-child {
+#external-modules-enabled td:first-child {
 	padding-top: 17px;
 }
 

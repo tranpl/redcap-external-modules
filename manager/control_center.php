@@ -122,7 +122,7 @@ ExternalModules::addResource('css/style.css');
 
 		var getInstalledModules = function () {
 			var modules = [];
-			$('#external-modules-installed tr').each(function (index, element) {
+			$('#external-modules-enabled tr').each(function (index, element) {
 				modules.push($(element).data('module'));
 			});
 
