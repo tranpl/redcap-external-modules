@@ -66,7 +66,7 @@ if ($excludedModules == null) {
 				installButton.html('Installing...');
 				installModal.find('button').attr('disabled', true);
 
-				$.post('ajax/install-modules.php', {modules: [module]}, function (data) {
+				$.post('ajax/enable-modules.php', {modules: [module]}, function (data) {
 					if (data != 'success') {
 						alert('An error occurred while installing the module: ' + data);
 					}

@@ -59,9 +59,9 @@ class ExternalModules
 		throw new Exception('This method should be removed when we switch "removing" language to "disabling" language.');
 	}
 
-	static function install($module)
+	static function enable($module)
 	{
-		throw new Exception('This method should be removed when we switch "installing" language to "enabling" language.');
+		throw new Exception('Enabling modules is not yet supported.  For testing (for now), they can be hardcoded in the getEnabledModuleNames() method.');
 	}
 
 	static function callHook($name, $arguments)
