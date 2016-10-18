@@ -37,7 +37,7 @@ ExternalModules::addResource('css/style.css');
 	</div>
 </div>
 
-<div id="external-modules-install-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-enable-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">

@@ -36,7 +36,7 @@ if ($excludedModules == null) {
 <script>
 	$(function(){
 		var availableModal = $('#external-modules-available-modal');
-		var enableModal = $('#external-modules-install-modal');
+		var enableModal = $('#external-modules-enable-modal');
 		var moduleEnabled = false;
 
 		var reloadPage = function(){
