@@ -10,10 +10,8 @@ use \Exception;
 class ExternalModules
 {
 	public static $BASE_URL;
-	public static $INSTALLED_MODULES_URL;
-
-	public static $AVAILABLE_MODULES_PATH;
-	public static $INSTALLED_MODULES_PATH;
+	public static $MODULES_URL;
+	public static $MODULES_PATH;
 
 	private static $initialized = false;
 
@@ -28,18 +26,9 @@ class ExternalModules
 			error_reporting(E_ALL);
 		}
 
-		$installedPath = 'modules/installed/';
-
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
-		self::$INSTALLED_MODULES_URL = self::$BASE_URL . $installedPath;
-
-		self::$AVAILABLE_MODULES_PATH = __DIR__ . "/../modules/available/";
-		self::$INSTALLED_MODULES_PATH = __DIR__ . "/../$installedPath";
-
-		if (!file_exists(self::$INSTALLED_MODULES_PATH)) {
-			// TODO - Uncomment this one we add the ability to configure a writable folder for modules.
-			// mkdir(self::$INSTALLED_MODULES_PATH);
-		}
+		self::$MODULES_URL = self::$BASE_URL . 'modules/';
+		self::$MODULES_PATH = __DIR__ . "/../modules/";
 	}
 
 	static function getProjectHeaderPath()
@@ -54,45 +43,25 @@ class ExternalModules
 
 	static function getAvailableModules($excludedModules = array())
 	{
-		$available = self::getModulesFromPath(self::$AVAILABLE_MODULES_PATH);
-
-		foreach ($available as $module => $config) {
-			if (in_array($module, $excludedModules)) {
-				unset($available[$module]);
-			}
-		}
-
-		return $available;
+		# TODO - We should remove this function, likely replacing references to it with the following:
+		return self::getConfigs(self::getDisabledModuleNames());
 	}
 
-	static function getInstalledModules()
+	static function getEnabledModuleNames()
 	{
-		return self::getModulesFromPath(self::$INSTALLED_MODULES_PATH);
+		# TODO - Eventually we'll track which modules are enabled in the database.
+		# For testing (for now) simply use a hard coded list.
+		return array('example');
 	}
 
 	static function remove($module)
 	{
-		self::rrmdir(self::$INSTALLED_MODULES_PATH . $module);
+		throw new Exception('This method should be removed when we switch "removing" language to "disabling" language.');
 	}
 
 	static function install($module)
 	{
-		$source = self::$AVAILABLE_MODULES_PATH . $module;
-		$destination = self::$INSTALLED_MODULES_PATH . $module;
-
-		# Taken from here: http://stackoverflow.com/questions/5707806/recursive-copy-of-directory
-		mkdir($destination, 0755);
-		foreach (
-		$iterator = new \RecursiveIteratorIterator(
-		new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
-		\RecursiveIteratorIterator::SELF_FIRST) as $item
-		) {
-			if ($item->isDir()) {
-				mkdir($destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
-			} else {
-				copy($item, $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
-			}
-		}
+		throw new Exception('This method should be removed when we switch "installing" language to "enabling" language.');
 	}
 
 	static function callHook($name, $arguments)
@@ -111,9 +80,9 @@ class ExternalModules
 			require $templatePath;
 		}
 
-		# TODO - We could optimize for efficiency here by only looping through the modules that actually request permissions for each hook.
-		$modulesPaths = glob(self::$INSTALLED_MODULES_PATH . '*' , GLOB_ONLYDIR);
-		foreach($modulesPaths as $modulePath){
+		$modulesNames = self::getModuleNamesWithHook($name);
+		foreach($modulesNames as $moduleName){
+			$modulePath = ExternalModules::$MODULES_PATH . $moduleName;
 			$className = basename($modulePath) . 'ExternalModule';
 
 			$classFilePath = "$modulePath/$className.php";
@@ -134,6 +103,13 @@ class ExternalModules
 				call_user_func_array(array($instance,$methodName), $arguments);
 			}
 		}
+	}
+
+	static function getModuleNamesWithHook($hookName)
+	{
+		# TODO - Once enabled modules are stored in the database we will query for enabled modules that request permission for the specified hook.
+		# For now, simply return all enabled modules.
+		return self::getEnabledModuleNames();
 	}
 
 	static function getSettingOverrideDropdown($fieldName)
@@ -206,13 +182,12 @@ class ExternalModules
 
 		$links = array();
 
-		$modulePaths = glob(self::$INSTALLED_MODULES_PATH . '*');
-		foreach($modulePaths as $path){
-			$moduleName = basename($path);
-			$config = json_decode(file_get_contents("$path/config.json"), true);
+		$moduleNames = self::getEnabledModuleNames();
+		foreach($moduleNames as $moduleName){
+			$config = json_decode(file_get_contents(self::$MODULES_PATH . "$moduleName/config.json"), true);
 
 			foreach($config['links'][$type] as $name=>$link){
-				$link['url'] = self::$INSTALLED_MODULES_URL . $moduleName . '/' . $link['url'];
+				$link['url'] = self::$MODULES_URL . $moduleName . '/' . $link['url'];
 				$links[$name] = $link;
 			}
 		}
@@ -222,18 +197,32 @@ class ExternalModules
 		return $links;
 	}
 
-	private static function getModulesFromPath($path)
+	static function getDisabledModuleNames()
 	{
-		$modules = array();
-		$dirs = scandir($path);
+		$enabledModules = self::getEnabledModuleNames();
+		$dirs = scandir(self::$MODULES_PATH);
 
+		$disabledModuleNames = array();
 		foreach ($dirs as $dir) {
 			if ($dir[0] == '.') {
 				continue;
 			}
 
-			$config = json_decode(file_get_contents("$path/$dir/config.json"));
-			$modules[$dir] = $config;
+			if(!in_array($dir, $enabledModules)){
+				$disabledModuleNames[] = $dir;
+			}
+		}
+
+		return $disabledModuleNames;
+	}
+
+	static function getConfigs($moduleNames)
+	{
+		$modules = array();
+
+		foreach ($moduleNames as $name) {
+			$config = json_decode(file_get_contents(self::$MODULES_PATH . "$name/config.json"));
+			$modules[$name] = $config;
 		}
 
 		return $modules;

@@ -56,7 +56,7 @@ class AbstractExternalModule
 		if(!$this->config){
 			$moduleName = str_replace('ExternalModules\\', '', get_class($this));
 			$moduleName = str_replace('ExternalModule', '', $moduleName);
-			$modulePath = ExternalModules::$INSTALLED_MODULES_PATH . $moduleName;
+			$modulePath = ExternalModules::$MODULES_PATH . $moduleName;
 			$this->config = json_decode(file_get_contents("$modulePath/config.json"));
 		}
 

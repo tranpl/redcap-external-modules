@@ -8,12 +8,12 @@ require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 <table id='external-modules-installed' class="table">
 	<?php
 
-	$installedModules = ExternalModules::getInstalledModules();
+	$configsByName = ExternalModules::getConfigs(ExternalModules::getEnabledModuleNames());
 
-	if (empty($installedModules)) {
+	if (empty($configsByName)) {
 		echo 'None';
 	} else {
-		foreach ($installedModules as $module => $config) {
+		foreach ($configsByName as $module => $config) {
 			?>
 			<tr data-module='<?= $module ?>'>
 				<td><?= $config->name ?></td>
