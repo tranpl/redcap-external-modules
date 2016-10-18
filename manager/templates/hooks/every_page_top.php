@@ -13,7 +13,7 @@ $project_id = $arguments[0];
 			newPanel.attr('id', 'external_modules_panel')
 			newPanel.find('.x-panel-header div:first-child').html("External Modules")
 
-			// Adapted from base.js lines 7147 to 7170 in v6.16.8
+			// The following chained blocks were adapted from base.js lines 7147 to 7170 in v6.16.8
 			newPanel.find('.projMenuToggle').mouseenter(function() {
 				$(this).removeClass('opacity50');
 				if (isIE) $(this).find("img").removeClass('opacity50');
