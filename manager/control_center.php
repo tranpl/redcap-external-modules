@@ -52,7 +52,7 @@ ExternalModules::addResource('css/style.css');
 			</div>
 			<div class="modal-footer">
 				<button class="btn" data-dismiss="modal">Cancel</button>
-				<button class="btn install-button"></button>
+				<button class="btn enable-button"></button>
 			</div>
 		</div>
 	</div>

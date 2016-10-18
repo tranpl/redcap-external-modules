@@ -23,7 +23,7 @@ if ($excludedModules == null) {
 			<tr data-module='<?= $module ?>'>
 				<td><?= $config->name ?></td>
 				<td class="external-modules-action-buttons">
-					<button class='btn install-button'>Enable</button>
+					<button class='btn enable-button'>Enable</button>
 				</td>
 			</tr>
 			<?php
@@ -44,13 +44,13 @@ if ($excludedModules == null) {
 			location.reload();
 		}
 
-		availableModal.find('.install-button').click(function(event){
+		availableModal.find('.enable-button').click(function(event){
 			availableModal.hide();
 
 			var row = $(event.target).closest('tr');
 			var module = row.data('module');
 
-			var enableButton = enableModal.find('.install-button');
+			var enableButton = enableModal.find('.enable-button');
 			enableButton.html('Enable');
 			enableModal.find('button').attr('disabled', false);
 
