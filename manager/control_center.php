@@ -15,9 +15,7 @@ ExternalModules::addResource('css/style.css');
 <br>
 <br>
 <br>
-<button id="external-modules-install-button" class="btn" data-toggle="modal" data-target="#external-modules-available-modal">Install
-	Module(s)
-</button>
+<button class="btn" data-toggle="modal" data-target="#external-modules-available-modal">Enable Module(s)</button>
 <br>
 <br>
 
