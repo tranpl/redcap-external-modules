@@ -17,4 +17,4 @@ Development work for REDCap External Modules/Packages to support a standardized 
 			```
 			ExternalModules::callHook(__FUNCTION__, func_get_args());
 			```
-3. An **External Modules** link will now be available under both the Control Center and Project menus.
+3. An **External Modules** section will now be available under both the Control Center and Project menus.
