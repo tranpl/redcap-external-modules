@@ -44,12 +44,12 @@ class ExternalModules
 
 	static function getProjectHeaderPath()
 	{
-		return __DIR__ . '/../../' . APP_PATH_WEBROOT . 'ProjectGeneral/header.php';
+		return APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
 	}
 
 	static function getProjectFooterPath()
 	{
-		return __DIR__ . '/../../' . APP_PATH_WEBROOT . 'ProjectGeneral/footer.php';
+		return APP_PATH_DOCROOT . 'ProjectGeneral/footer.php';
 	}
 
 	static function getAvailableModules($excludedModules = array())
