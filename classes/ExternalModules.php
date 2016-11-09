@@ -1,8 +1,11 @@
 <?php
 namespace ExternalModules;
 
-require_once __DIR__ . "/AbstractExternalModule.php";
+if (!defined(__DIR__)){
+	define(__DIR__, dirname(__FILE__));
+}
 
+require_once __DIR__ . "/AbstractExternalModule.php";
 require_once __DIR__ . "/../../redcap_connect.php";
 
 use \Exception;
@@ -17,8 +20,6 @@ class ExternalModules
 
 	static function initialize()
 	{
-		if (!defined(__DIR__)) define(__DIR__, dirname(__FILE__));
-
 		if($_SERVER[HTTP_HOST] == 'localhost'){
 			// Assume this is a developer's machine and enable errors.
 			ini_set('display_errors', 1);
