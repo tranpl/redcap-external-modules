@@ -28,8 +28,8 @@ class ExternalModules
 		}
 
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
-		self::$MODULES_URL = self::$BASE_URL . 'modules/';
-		self::$MODULES_PATH = __DIR__ . "/../modules/";
+		self::$MODULES_URL = APP_PATH_WEBROOT . '../modules/';
+		self::$MODULES_PATH = __DIR__ . "/../../modules/";
 	}
 
 	static function getProjectHeaderPath()
