@@ -5,15 +5,15 @@ require_once '../../classes/ExternalModules.php';
 
 ?>
 
-<table id='external-modules-available' class="table table-no-top-row-border">
+<table id='external-modules-disabled-table' class="table table-no-top-row-border">
 	<?php
 
-	$availableModules = ExternalModules::getAvailableModules();
+	$disabledModules = ExternalModules::getDisabledModules();
 
-	if (empty($availableModules)) {
+	if (empty($disabledModules)) {
 		echo 'None';
 	} else {
-		foreach ($availableModules as $module => $config) {
+		foreach ($disabledModules as $module => $config) {
 			?>
 			<tr data-module='<?= $module ?>'>
 				<td><?= $config->name ?></td>
@@ -30,7 +30,7 @@ require_once '../../classes/ExternalModules.php';
 
 <script>
 	$(function(){
-		var availableModal = $('#external-modules-available-modal');
+		var disabledModal = $('#external-modules-disabled-modal');
 		var enableModal = $('#external-modules-enable-modal');
 		var moduleEnabled = false;
 
@@ -39,8 +39,8 @@ require_once '../../classes/ExternalModules.php';
 			location.reload();
 		}
 
-		availableModal.find('.enable-button').click(function(event){
-			availableModal.hide();
+		disabledModal.find('.enable-button').click(function(event){
+			disabledModal.hide();
 
 			var row = $(event.target).closest('tr');
 			var module = row.data('module');
@@ -52,8 +52,8 @@ require_once '../../classes/ExternalModules.php';
 			var list = enableModal.find('.modal-body ul');
 			list.html('');
 
-			var availableModules = <?=json_encode($availableModules)?>;
-			availableModules[module].permissions.forEach(function(permission){
+			var disabledModules = <?=json_encode($disabledModules)?>;
+			disabledModules[module].permissions.forEach(function(permission){
 				list.append("<li>" + permission + "</li>");
 			})
 
@@ -78,17 +78,16 @@ require_once '../../classes/ExternalModules.php';
 		});
 
 		enableModal.on('hide.bs.modal', function(){
-			var availableModuleCount = $('#external-modules-available tr').length
-			if(availableModuleCount == 0){
-				// Reload since there aren't any more available modules to enable.
+			if($('#external-modules-disabled-table tr').length == 0){
+				// Reload since there aren't any more disabled modules to enable.
 				reloadPage();
 			}
 			else{
-				availableModal.show();
+				disabledModal.show();
 			}
 		});
 
-		availableModal.on('hide.bs.modal', function(){
+		disabledModal.on('hide.bs.modal', function(){
 			if(moduleEnabled){
 				// Reload to refresh the list of enabled modules.
 				reloadPage();

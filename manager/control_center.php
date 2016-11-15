@@ -15,18 +15,18 @@ ExternalModules::addResource('css/style.css');
 <br>
 <br>
 <br>
-<button class="btn" data-toggle="modal" data-target="#external-modules-available-modal">Enable Module(s)</button>
+<button class="btn" data-toggle="modal" data-target="#external-modules-disabled-modal">Enable Module(s)</button>
 <br>
 <br>
 
 <?php require_once 'templates/enabled-modules.php'; ?>
 
-<div id="external-modules-available-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
-				<h4 class="modal-title">Available Modules</h4>
+				<h4 class="modal-title">Disabled Modules</h4>
 			</div>
 			<div class="modal-body">
 				<form>
@@ -115,15 +115,15 @@ ExternalModules::addResource('css/style.css');
 		$('#sub-nav li.active').removeClass('active');
 		$('#sub-nav a[href*="ControlCenter"]').closest('li').addClass('active');
 
-		var availableModal = $('#external-modules-available-modal');
-		var form = availableModal.find('.modal-body form');
+		var disabledModal = $('#external-modules-disabled-modal');
+		var form = disabledModal.find('.modal-body form');
 
-		availableModal.on('show.bs.modal', function () {
-			var loadingIndicator = availableModal.find('.loading-indicator');
+		disabledModal.on('show.bs.modal', function () {
+			var loadingIndicator = disabledModal.find('.loading-indicator');
 			if (loadingIndicator.length == 1) {
 				new Spinner().spin(loadingIndicator[0]);
 
-				$.post('ajax/available-modules.php', null, function (html) {
+				$.post('ajax/get-disabled-modules.php', null, function (html) {
 					form.html(html);
 				})
 			}

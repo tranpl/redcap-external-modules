@@ -1,16 +1,16 @@
-#external-modules-available-modal .loading-indicator {
+#external-modules-disabled-modal .loading-indicator {
 	padding: 50px;
 }
 
-#external-modules-available-modal input[type=checkbox] {
+#external-modules-disabled-modal input[type=checkbox] {
 	vertical-align: -3px;
 }
 
-#external-modules-available-modal label {
+#external-modules-disabled-modal label {
 	font-weight: normal;
 }
 
-#external-modules-available td:first-child,
+#external-modules-disabled-table td:first-child,
 #external-modules-enabled td:first-child {
 	padding-top: 17px;
 }
