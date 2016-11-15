@@ -30,9 +30,7 @@ class AbstractExternalModule
 	{
 		self::checkPermissions(__FUNCTION__);
 
-		# TODO - Implement this!
-
-		return true;
+		throw new Exception('Not yet implemented!');
 	}
 
 	function checkPermissions($methodName)
