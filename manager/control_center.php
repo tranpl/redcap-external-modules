@@ -136,10 +136,6 @@ ExternalModules::addResource('css/style.css');
 			configureModal.find('.module-name').html(moduleName);
 		});
 
-		$('.external-modules-update-button').click(function (event) {
-			alert('There are currently no updates available for this module.')
-		});
-
 		$('.external-modules-disable-button').click(function (event) {
 			var button = $(event.target);
 			button.attr('disabled', true);
