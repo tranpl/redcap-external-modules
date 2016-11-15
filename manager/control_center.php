@@ -123,7 +123,7 @@ ExternalModules::addResource('css/style.css');
 			if (loadingIndicator.length == 1) {
 				new Spinner().spin(loadingIndicator[0]);
 
-				$.post('ajax/available-modules.php', function (html) {
+				$.post('ajax/available-modules.php', null, function (html) {
 					form.html(html);
 				})
 			}
