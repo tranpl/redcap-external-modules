@@ -64,7 +64,9 @@ require_once '../../classes/ExternalModules.php';
 
 				$.post('ajax/enable-modules.php', {modules: [module]}, function (data) {
 					if (data != 'success') {
-						alert('An error occurred while enabling the module: ' + data);
+						var message = 'An error occurred while enabling the module: ' + data
+						console.log('AJAX Request Error:', message)
+						alert(message);
 					}
 
 					moduleEnabled = true;
