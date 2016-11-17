@@ -8,7 +8,7 @@ require_once '../../classes/ExternalModules.php';
 <table id='external-modules-disabled-table' class="table table-no-top-row-border">
 	<?php
 
-	$disabledModules = ExternalModules::getDisabledModules();
+	$disabledModules = ExternalModules::getConfigs(ExternalModules::getDisabledModuleNames());
 
 	if (empty($disabledModules)) {
 		echo 'None';
