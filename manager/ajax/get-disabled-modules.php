@@ -57,6 +57,7 @@ require_once '../../classes/ExternalModules.php';
 				list.append("<li>" + permission + "</li>");
 			})
 
+			enableButton.off('click') // disable any events attached from other modules
 			enableButton.click(function(){
 				enableButton.html('Enabling...');
 				enableModal.find('button').attr('disabled', true);
