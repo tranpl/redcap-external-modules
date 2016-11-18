@@ -63,14 +63,16 @@ require_once '../../classes/ExternalModules.php';
 				enableModal.find('button').attr('disabled', true);
 
 				$.post('ajax/enable-modules.php', {modules: [module]}, function (data) {
-					if (data != 'success') {
+					if (data == 'success') {
+						moduleEnabled = true;
+						row.remove();
+					}
+					else {
 						var message = 'An error occurred while enabling the module: ' + data
 						console.log('AJAX Request Error:', message)
 						alert(message);
 					}
 
-					moduleEnabled = true;
-					row.remove();
 					enableModal.modal('hide');
 				});
 			});
