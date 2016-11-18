@@ -311,6 +311,7 @@ class ExternalModules
 		}
 
 		# We must initialize this static class here, since this method actually gets called before anything else.
+		# We can't initialize sooner than this because we have to wait for REDCap to initialize it's functions and variables we depend on.
 		# This method is actually called many times (once per hook), so we should only initialize once.
 		if(!self::$initialized){
 			self::initialize();
