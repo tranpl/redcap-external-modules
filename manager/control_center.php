@@ -15,7 +15,7 @@ ExternalModules::addResource('css/style.css');
 <br>
 <br>
 <br>
-<button class="btn" data-toggle="modal" data-target="#external-modules-disabled-modal">Enable Module(s)</button>
+<button data-toggle="modal" data-target="#external-modules-disabled-modal">Enable Module(s)</button>
 <br>
 <br>
 
@@ -49,8 +49,8 @@ ExternalModules::addResource('css/style.css');
 				<ul></ul>
 			</div>
 			<div class="modal-footer">
-				<button class="btn" data-dismiss="modal">Cancel</button>
-				<button class="btn enable-button"></button>
+				<button data-dismiss="modal">Cancel</button>
+				<button class="enable-button"></button>
 			</div>
 		</div>
 	</div>
@@ -99,8 +99,8 @@ ExternalModules::addResource('css/style.css');
 				</table>
 			</div>
 			<div class="modal-footer">
-				<button class="btn" data-dismiss="modal">Cancel</button>
-				<button class="btn">Save</button>
+				<button data-dismiss="modal">Cancel</button>
+				<button>Save</button>
 			</div>
 		</div>
 	</div>

@@ -77,8 +77,8 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 				</table>
 			</div>
 			<div class="modal-footer">
-				<button class="btn" data-dismiss="modal">Cancel</button>
-				<button class="btn">Save</button>
+				<button data-dismiss="modal">Cancel</button>
+				<button>Save</button>
 			</div>
 		</div>
 	</div>

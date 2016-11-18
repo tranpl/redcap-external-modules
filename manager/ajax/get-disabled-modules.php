@@ -18,7 +18,7 @@ require_once '../../classes/ExternalModules.php';
 			<tr data-module='<?= $module ?>'>
 				<td><?= $config->name ?></td>
 				<td class="external-modules-action-buttons">
-					<button class='btn enable-button'>Enable</button>
+					<button class='enable-button'>Enable</button>
 				</td>
 			</tr>
 			<?php
