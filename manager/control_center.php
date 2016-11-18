@@ -19,7 +19,7 @@ ExternalModules::addResource('css/style.css');
 <br>
 <br>
 
-<?php require_once 'templates/enabled-modules.php'; ?>
+<?php ExternalModules::safeRequireOnce('templates/enabled-modules.php'); ?>
 
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">

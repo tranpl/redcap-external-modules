@@ -322,7 +322,7 @@ class ExternalModules
 
 		$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
 		if(file_exists($templatePath)){
-			require $templatePath;
+			self::safeRequire($templatePath, $arguments);
 		}
 
 		$modulesNames = self::getModuleNamesWithHook($name);
@@ -343,6 +343,18 @@ class ExternalModules
 		}
 	}
 
+	# This function exists solely to provide a scope where we don't care if local variables get overwritten by code in the required file.
+	# Use the $arguments variable to pass data to the required file.
+	static function safeRequire($path, $arguments = array()){
+		require $path;
+	}
+
+	# This function exists solely to provide a scope where we don't care if local variables get overwritten by code in the required file.
+	# Use the $arguments variable to pass data to the required file.
+	static function safeRequireOnce($path, $arguments = array()){
+		require_once $path;
+	}
+
 	private static function getModuleInstance($moduleDirectoryName)
 	{
 		$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
@@ -356,7 +368,7 @@ class ExternalModules
 				throw new Exception("Could not find the following External Module main class file: $classFilePath");
 			}
 
-			require_once $classFilePath;
+			self::safeRequireOnce($classFilePath);
 		}
 
 		return new $classNameWithNamespace;
