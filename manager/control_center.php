@@ -145,9 +145,12 @@ ExternalModules::addResource('css/style.css');
 			var module = row.data('module');
 			$.post('ajax/disable-module.php', {module: module}, function (data) {
 				if (data == 'success') {
-					// TODO - This will leave a blank list when the last module is disabled.
-					// We might want to display "none" or something
-					row.remove()
+					var table = row.closest('table');
+					row.remove();
+
+					if(table.find('tr').length == 0){
+						table.html('None');
+					}
 				}
 				else {
 					alert('An error occurred while disabling the ' + module + ' module: ' + data);
