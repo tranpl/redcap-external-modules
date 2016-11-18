@@ -32,7 +32,6 @@ require_once '../../classes/ExternalModules.php';
 	$(function(){
 		var disabledModal = $('#external-modules-disabled-modal');
 		var enableModal = $('#external-modules-enable-modal');
-		var moduleEnabled = false;
 
 		var reloadPage = function(){
 			$('<div class="modal-backdrop fade in"></div>').appendTo(document.body);
@@ -64,12 +63,12 @@ require_once '../../classes/ExternalModules.php';
 
 				$.post('ajax/enable-modules.php', {modules: [module]}, function (data) {
 					if (data == 'success') {
-						moduleEnabled = true;
-						row.remove();
+						reloadPage();
+						disabledModal.modal('hide');
 					}
 					else {
-						var message = 'An error occurred while enabling the module: ' + data
-						console.log('AJAX Request Error:', message)
+						var message = 'An error occurred while enabling the module: ' + data;
+						console.log('AJAX Request Error:', message);
 						alert(message);
 					}
 
@@ -89,13 +88,6 @@ require_once '../../classes/ExternalModules.php';
 			}
 			else{
 				disabledModal.show();
-			}
-		});
-
-		disabledModal.on('hide.bs.modal', function(){
-			if(moduleEnabled){
-				// Reload to refresh the list of enabled modules.
-				reloadPage();
 			}
 		});
 	})
