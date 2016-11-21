@@ -1,3 +1,7 @@
+#external-modules-enabled{
+	max-width: 700px;
+}
+
 #external-modules-disabled-modal .loading-indicator {
 	padding: 50px;
 }
