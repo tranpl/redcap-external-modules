@@ -16,7 +16,7 @@ require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 		foreach ($configsByName as $module => $config) {
 			?>
 			<tr data-module='<?= $module ?>'>
-				<td><?= $config->name ?></td>
+				<td><?= $config['name'] ?></td>
 				<td class="external-modules-action-buttons">
 					<button class='external-modules-configure-button' data-toggle="modal" data-target="#external-modules-configure-modal">Configure</button>
 					<?php if (!isset($_GET['pid'])) { ?>

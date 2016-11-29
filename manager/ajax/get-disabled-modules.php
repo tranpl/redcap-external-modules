@@ -16,7 +16,7 @@ require_once '../../classes/ExternalModules.php';
 		foreach ($disabledModules as $module => $config) {
 			?>
 			<tr data-module='<?= $module ?>'>
-				<td><?= $config->name ?></td>
+				<td><?= $config['name'] ?></td>
 				<td class="external-modules-action-buttons">
 					<button class='enable-button'>Enable</button>
 				</td>

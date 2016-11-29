@@ -452,11 +452,11 @@ class ExternalModules
 		$links = array();
 
 		$moduleNames = self::getEnabledModuleNames();
-		foreach($moduleNames as $moduleName){
-			$config = json_decode(file_get_contents(self::$MODULES_PATH . "$moduleName/config.json"), true);
+		foreach($moduleNames as $moduleDirectoryName){
+			$config = self::getConfig($moduleDirectoryName);
 
 			foreach($config['links'][$type] as $name=>$link){
-				$link['url'] = self::$MODULES_URL . $moduleName . '/' . $link['url'];
+				$link['url'] = self::$MODULES_URL . $moduleDirectoryName . '/' . $link['url'];
 				$links[$name] = $link;
 			}
 		}
@@ -489,12 +489,17 @@ class ExternalModules
 	{
 		$modules = array();
 
-		foreach ($moduleNames as $name) {
-			$config = json_decode(file_get_contents(self::$MODULES_PATH . "$name/config.json"));
-			$modules[$name] = $config;
+		foreach ($moduleNames as $moduleDirectoryName) {
+			$config = self::getConfig($moduleDirectoryName);
+			$modules[$moduleDirectoryName] = $config;
 		}
 
 		return $modules;
+	}
+
+	static function getConfig($moduleDirectoryName)
+	{
+		return json_decode(file_get_contents(self::$MODULES_PATH . "$moduleDirectoryName/config.json"), true);
 	}
 
 	# Taken from: http://stackoverflow.com/questions/3338123/how-do-i-recursively-delete-a-directory-and-its-entire-contents-files-sub-dir
