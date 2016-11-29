@@ -499,7 +499,13 @@ class ExternalModules
 
 	static function getConfig($moduleDirectoryName)
 	{
-		return json_decode(file_get_contents(self::$MODULES_PATH . "$moduleDirectoryName/config.json"), true);
+		$config = json_decode(file_get_contents(self::$MODULES_PATH . "$moduleDirectoryName/config.json"), true);
+
+		if($config == NULL){
+			throw new Exception("An error occurred while parsing configuration file for the \"$moduleDirectoryName\" module!  It is likely not valid JSON.");
+		}
+
+		return $config;
 	}
 
 	# Taken from: http://stackoverflow.com/questions/3338123/how-do-i-recursively-delete-a-directory-and-its-entire-contents-files-sub-dir
