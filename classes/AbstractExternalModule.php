@@ -5,6 +5,35 @@ use Exception;
 
 class AbstractExternalModule
 {
+	private $CONFIG;
+
+	function __construct()
+	{
+		self::checkSettings();
+	}
+
+	private function checkSettings()
+	{
+		$config = self::getConfig();
+
+		foreach($config['global-settings'] as $name=>$details){
+			self::checkSettingName($name);
+		}
+
+		foreach($config['project-settings'] as $name=>$details){
+			self::checkSettingName($name);
+		}
+	}
+
+	private function checkSettingName($name)
+	{
+		if(strpos($name, '"') !== FALSE || strpos($name, "'") !== FALSE){
+			// Disallow quote characters in setting names at module enable/instantiation time so that
+			// setting names need can be included in html attributes without worrying about escaping.
+			throw new Exception("The " . self::getModuleDirectoryName() . " module contains a setting named \"$name\" that contains quote characters which are not allowed in setting names.");
+		}
+	}
+
 	function selectData($some, $params)
 	{
 		self::checkPermissions(__FUNCTION__);
@@ -46,18 +75,21 @@ class AbstractExternalModule
 
 	function hasPermission($permissionName)
 	{
-		return in_array($permissionName, $this->getConfig()->permissions);
+		return in_array($permissionName, $this->getConfig()['permissions']);
 	}
 
-	private function getConfig()
+	function getConfig()
 	{
-		if(!$this->config){
-			$moduleName = str_replace('ExternalModules\\', '', get_class($this));
-			$moduleName = str_replace('ExternalModule', '', $moduleName);
-			$modulePath = ExternalModules::$MODULES_PATH . $moduleName;
-			$this->config = json_decode(file_get_contents("$modulePath/config.json"));
+		if(!isset($this->CONFIG)){
+			$this->CONFIG = ExternalModules::getConfig(self::getModuleDirectoryName());
 		}
 
-		return $this->config;
+		return $this->CONFIG;
+	}
+
+	function getModuleDirectoryName()
+	{
+		$reflector = new \ReflectionClass(get_class($this));
+		return basename(dirname($reflector->getFileName()));
 	}
 }
