@@ -107,4 +107,72 @@ class AbstractExternalModule
 		$reflector = new \ReflectionClass(get_class($this));
 		return basename(dirname($reflector->getFileName()));
 	}
+
+	function setGlobalSetting($key, $value)
+	{
+		ExternalModules::setGlobalSetting(self::getModuleDirectoryName(), $key, $value);
+	}
+
+	function getGlobalSetting($key)
+	{
+		return ExternalModules::getGlobalSetting(self::getModuleDirectoryName(), $key);
+	}
+
+	function removeGlobalSetting($key)
+	{
+		ExternalModules::removeGlobalSetting(self::getModuleDirectoryName(), $key);
+	}
+
+	function setProjectSetting($key, $value, $pid = null)
+	{
+		$pid = self::requireProjectId($pid);
+		ExternalModules::setProjectSetting(self::getModuleDirectoryName(), $pid, $key, $value);
+	}
+
+	function getProjectSetting($key, $pid = null)
+	{
+		$pid = self::requireProjectId($pid);
+		return ExternalModules::getProjectSetting(self::getModuleDirectoryName(), $pid, $key);
+	}
+
+	function removeProjectSetting($key, $pid = null)
+	{
+		$pid = self::requireProjectId($pid);
+		ExternalModules::removeProjectSetting(self::getModuleDirectoryName(), $pid, $key);
+	}
+
+	// Returns the project level setting if it exists, and returns the global setting if not.
+	function getSetting($key, $pid = null)
+	{
+		$pid = self::detectProjectId($pid);
+		if(isset($pid)){
+			$value = self::getProjectSetting( $key);
+		}
+
+		if(!isset($value)){
+			$value = self::getGlobalSetting($key);
+		}
+
+		return $value;
+	}
+
+	private function requireProjectId($pid)
+	{
+		$pid = self::detectProjectId($pid);
+
+		if(!isset($pid)){
+			throw new Exception("You must supply a project id (pid) either as a GET parameter or as the last argument to this method!");
+		}
+
+		return $pid;
+	}
+
+	private function detectProjectId($pid)
+	{
+		if($pid == null){
+			$pid = @$_GET['pid'];
+		}
+
+		return $pid;
+	}
 }
