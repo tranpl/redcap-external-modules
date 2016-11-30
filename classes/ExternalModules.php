@@ -6,6 +6,11 @@ if (!defined(__DIR__)){
 }
 
 require_once __DIR__ . "/AbstractExternalModule.php";
+
+if(PHP_SAPI == 'cli'){
+	// This is required for redcap when running on the command line (including unit testing).
+	define('NOAUTH', true);
+}
 require_once __DIR__ . "/../../redcap_connect.php";
 
 use \Exception;
@@ -107,27 +112,27 @@ class ExternalModules
 		self::setGlobalSetting($moduleDirectoryName, self::KEY_ENABLED, true);
 	}
 
-	private static function getGlobalSetting($moduleDirectoryName, $key)
+	static function getGlobalSetting($moduleDirectoryName, $key)
 	{
 		return self::getProjectSetting($moduleDirectoryName, self::GLOBAL_SETTING_PROJECT_ID, $key);
 	}
 
-	private static function getGlobalSettings($moduleDirectoryNames, $keys)
+	static function getGlobalSettings($moduleDirectoryNames, $keys = null)
 	{
 		return self::getProjectSettings($moduleDirectoryNames, array(self::GLOBAL_SETTING_PROJECT_ID), $keys);
 	}
 
-	private static function setGlobalSetting($moduleDirectoryName, $key, $value)
+	static function setGlobalSetting($moduleDirectoryName, $key, $value)
 	{
 		self::setProjectSetting($moduleDirectoryName, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
 	}
 
-	private static function removeGlobalSetting($moduleDirectoryName, $key)
+	static function removeGlobalSetting($moduleDirectoryName, $key)
 	{
 		self::removeProjectSetting($moduleDirectoryName, self::GLOBAL_SETTING_PROJECT_ID, $key);
 	}
 
-	private static function setProjectSetting($moduleDirectoryName, $projectId, $key, $value)
+	static function setProjectSetting($moduleDirectoryName, $projectId, $key, $value)
 	{
 		$externalModuleId = self::getExternalModuleId($moduleDirectoryName);
 
