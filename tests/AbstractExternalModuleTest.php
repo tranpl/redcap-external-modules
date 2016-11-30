@@ -58,9 +58,9 @@ class AbstractExternalModuleTest extends TestCase
 	{
 		$m = self::getInstance();
 
-		$this->assertTrue($m->isSettingKeyValid('test'));
-		$this->assertTrue($m->isSettingKeyValid('test2'));
-		$this->assertTrue($m->isSettingKeyValid('test-dash'));
+		$this->assertTrue($m->isSettingKeyValid('a'));
+		$this->assertTrue($m->isSettingKeyValid('2'));
+		$this->assertTrue($m->isSettingKeyValid('-'));
 
 		$this->assertFalse($m->isSettingKeyValid('A'));
 		$this->assertFalse($m->isSettingKeyValid('!'));

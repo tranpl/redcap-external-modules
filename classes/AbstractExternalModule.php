@@ -38,13 +38,15 @@ class AbstractExternalModule
 
 	private function checkSettingKey($key)
 	{
-		if(strpos($key, '"') !== FALSE || strpos($key, "'") !== FALSE){
-			throw new Exception("The " . self::getModuleDirectoryName() . " module has a setting named \"$key\" that contains quote characters.  These are not allowed in setting names so that they are always html field name an attribute friendly (without requiring escaping).");
+		if(!self::isSettingKeyValid($key)){
+			throw new Exception("The " . self::getModuleDirectoryName() . " module has a setting named \"$key\" that contains invalid characters.  Only lowercase characters, numbers, and dashes are allowed.");
 		}
+	}
 
-		if(strpos($key, '_') !== FALSE){
-			throw new Exception("The " . self::getModuleDirectoryName() . " module has a setting named \"$key\" that contains an underscore.  Underscores are not allowed in setting names because they are used for internal settings.");
-		}
+	protected function isSettingKeyValid($key)
+	{
+		// Only allow lowercase characters, numbers, and dashes to ensure consistency between modules (and so we don't have to worry about escaping).
+		return !preg_match("/[^a-z0-9-]/", $key);
 	}
 
 	function selectData($some, $params)
