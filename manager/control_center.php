@@ -65,37 +65,13 @@ ExternalModules::addResource('css/style.css');
 			</div>
 			<div class="modal-body">
 				<table class="table table-no-top-row-border">
-					<tr>
-						<th colspan="2">Global Settings</th>
-						<th>Allow Project Overrides</th>
-					</tr>
-					<tr>
-						<td>
-							<label>Enable on projects by default: </label>
-						</td>
-						<td>
-							<input type="checkbox" name="enabled">
-						</td>
-						<?= ExternalModules::getSettingOverrideDropdown('enabled') ?>
-					</tr>
-					<tr>
-						<td>
-							<label>Module Defined Setting 1:</label>
-						</td>
-						<td>
-							<input name="module-setting-1">
-						</td>
-						<?= ExternalModules::getSettingOverrideDropdown('module-setting-1') ?>
-					</tr>
-					<tr>
-						<td>
-							<label>Module Defined Setting 2:</label>
-						</td>
-						<td>
-							<input type="checkbox" name="module-setting-2">
-						</td>
-						<?= ExternalModules::getSettingOverrideDropdown('module-setting-2') ?>
-					</tr>
+					<thead>
+						<tr>
+							<th colspan="2">Global Settings</th>
+							<th>Project Override<br>Permission Level</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
 				</table>
 			</div>
 			<div class="modal-footer">

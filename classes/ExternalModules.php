@@ -215,7 +215,7 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_name, value
+		return self::query("SELECT directory_name, `key`, value
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
@@ -285,6 +285,10 @@ class ExternalModules
 
 	private static function getSQLInClause($columnName, $array)
 	{
+		if(!is_array($array)){
+			$array = array($array);
+		}
+
 		$columnName = db_real_escape_string($columnName);
 
 		$valueListSql = "";
@@ -398,19 +402,6 @@ class ExternalModules
 		# TODO - Once enabled modules are stored in the database we will query for enabled modules that request permission for the specified hook.
 		# For now, simply return all enabled modules.
 		return self::getEnabledModuleNames();
-	}
-
-	static function getSettingOverrideDropdown($fieldName)
-	{
-		?>
-		<td>
-			<select name="<?= $fieldName ?>_override">
-				<option>Superusers Only</option>
-				<option>Design Rights Users</option>
-				<option>Any User</option>
-			</select>
-		</td>
-		<?php
 	}
 
 	static function getProjectSettingOverrideCheckbox($fieldName)
