@@ -105,11 +105,25 @@ class ExternalModules
 
 	static function enable($moduleDirectoryName)
 	{
-		# Attempt to load the module before enabling it system wide.
+		# Attempt to create an instance of the module before enabling it system wide.
 		# This should catch problems like syntax errors in module code.
-		self::getModuleInstance($moduleDirectoryName);
+		$instance = self::getModuleInstance($moduleDirectoryName);
+
+		initializeSettingDefaults($instance);
 
 		self::setGlobalSetting($moduleDirectoryName, self::KEY_ENABLED, true);
+	}
+
+	static function initializeSettingDefaults($moduleInstance)
+	{
+		$config = $moduleInstance->getConfig();
+		foreach($config['global-settings'] as $key=>$details){
+			$default = @$details['default'];
+			$existingValue = $moduleInstance->getGlobalSetting($key);
+			if(isset($default) && $existingValue == null){
+				$moduleInstance->setGlobalSetting($key, $default);
+			}
+		}
 	}
 
 	static function getGlobalSetting($moduleDirectoryName, $key)

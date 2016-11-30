@@ -1,14 +1,10 @@
 <?php
 namespace ExternalModules;
-require_once dirname(__FILE__) . '/../classes/ExternalModules.php';
+require_once 'BaseTest.php';
 
-use PHPUnit\Framework\TestCase;
 use \Exception;
 
-const TEST_SETTING_KEY = 'unit-test-setting-key';
-const TEST_SETTING_PID = 1;
-
-class AbstractExternalModuleTest extends TestCase
+class AbstractExternalModuleTest extends BaseTest
 {
 	protected $backupGlobals = FALSE;
 
@@ -28,6 +24,17 @@ class AbstractExternalModuleTest extends TestCase
 			],
 		]);
     }
+
+	function testCheckSettings_projectDefaults()
+	{
+		self::assertConfigInvalid([
+			'project-settings' => [
+				'some-setting' => [
+					'default' => true
+				]
+			]
+		]);
+	}
 
 	function testCheckSettingKey_valid()
 	{
@@ -82,16 +89,9 @@ class AbstractExternalModuleTest extends TestCase
 
 	function assertConfigInvalid($config)
 	{
-		$exception = null;
-
-		try{
+		$this->assertThrowsException(function() use ($config){
 			self::assertConfigValid($config);
-		}
-		catch(Exception $e){
-			$exception = $e;
-		}
-
-		$this->assertNotNull($exception);
+		});
 	}
 
 	function testGlobalSettings()
@@ -172,68 +172,5 @@ class AbstractExternalModuleTest extends TestCase
 		$_GET['pid'] = $pid;
 		$this->assertEquals($pid, $m->detectProjectId(null));
 		unset($_GET['pid']);
-	}
-
-	private function setGlobalSetting($value)
-	{
-		self::getInstance()->setGlobalSetting(TEST_SETTING_KEY, $value);
-	}
-
-	private function getGlobalSetting()
-	{
-		return self::getInstance()->getGlobalSetting(TEST_SETTING_KEY);
-	}
-
-	private function removeGlobalSetting()
-	{
-		self::getInstance()->removeGlobalSetting(TEST_SETTING_KEY);
-	}
-
-	private function setProjectSetting($value)
-	{
-		self::getInstance()->setProjectSetting(TEST_SETTING_KEY, $value, TEST_SETTING_PID);
-	}
-
-	private function getProjectSetting()
-	{
-		return self::getInstance()->getProjectSetting(TEST_SETTING_KEY, TEST_SETTING_PID);
-	}
-
-	private function removeProjectSetting()
-	{
-		self::getInstance()->removeProjectSetting(TEST_SETTING_KEY, TEST_SETTING_PID);
-	}
-
-    private function getInstance($config = [])
-	{
-    	return new class($config) extends AbstractExternalModule {
-    		function __construct($config)
-			{
-				$this->CONFIG = $config;
-				parent::__construct();
-			}
-
-			function __call($name, $arguments)
-			{
-				// We end up in here when we try to call a private method.
-				// use reflection to call the method anyway (allowing unit testing of private methods).
-				$method = new \ReflectionMethod(get_class(), $name);
-				$method->setAccessible(true);
-
-				return $method->invokeArgs ($this, $arguments);
-			}
-		};
-	}
-
-	private function assertThrowsException($callable){
-		$exceptionThrown = false;
-		try{
-			$callable();
-		}
-		catch(Exception $e){
-			$exceptionThrown = true;
-		}
-
-		$this->assertTrue($exceptionThrown);
 	}
 }
