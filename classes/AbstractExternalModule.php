@@ -5,32 +5,45 @@ use Exception;
 
 class AbstractExternalModule
 {
-	private $CONFIG;
+	protected $CONFIG;
 
 	function __construct()
 	{
+		// Disallow illegal configuration options at module instantiation (and enable) time.
 		self::checkSettings();
 	}
 
-	private function checkSettings()
+	protected function checkSettings()
 	{
-		$config = self::getConfig();
+		$config = $this->getConfig();
+		$globalSettings = @$config['global-settings'];
+		$projectSettings = @$config['project-settings'];
 
-		foreach($config['global-settings'] as $name=>$details){
-			self::checkSettingName($name);
+		if(isset($globalSettings)){
+			foreach($globalSettings as $key=> $details){
+				self::checkSettingKey($key);
+			}
 		}
 
-		foreach($config['project-settings'] as $name=>$details){
-			self::checkSettingName($name);
+		if(isset($projectSettings)){
+			foreach($projectSettings as $key=> $details){
+				self::checkSettingKey($key);
+			}
+
+			if(array_key_exists($key, $globalSettings)){
+				throw new Exception("The \"" . self::getModuleDirectoryName() . "\" module defines the \"$key\" setting on both the global and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the global setting configuration instead.");
+			}
 		}
 	}
 
-	private function checkSettingName($name)
+	private function checkSettingKey($key)
 	{
-		if(strpos($name, '"') !== FALSE || strpos($name, "'") !== FALSE){
-			// Disallow quote characters in setting names at module enable/instantiation time so that
-			// setting names need can be included in html attributes without worrying about escaping.
-			throw new Exception("The " . self::getModuleDirectoryName() . " module contains a setting named \"$name\" that contains quote characters which are not allowed in setting names.");
+		if(strpos($key, '"') !== FALSE || strpos($key, "'") !== FALSE){
+			throw new Exception("The " . self::getModuleDirectoryName() . " module has a setting named \"$key\" that contains quote characters.  These are not allowed in setting names so that they are always html field name an attribute friendly (without requiring escaping).");
+		}
+
+		if(strpos($key, '_') !== FALSE){
+			throw new Exception("The " . self::getModuleDirectoryName() . " module has a setting named \"$key\" that contains an underscore.  Underscores are not allowed in setting names because they are used for internal settings.");
 		}
 	}
 
