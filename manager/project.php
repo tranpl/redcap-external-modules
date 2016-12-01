@@ -25,55 +25,13 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 			</div>
 			<div class="modal-body">
 				<table class="table table-no-top-row-border">
-					<tr>
-						<th colspan="2">Project Settings</th>
-						<th>Override Default</th>
-					</tr>
-					<tr>
-						<td>
-							<label>Enable on this project: </label>
-						</td>
-						<td>
-							<input type="checkbox" name="enabled">
-						</td>
-						<?= ExternalModules::getProjectSettingOverrideCheckbox() ?>
-					</tr>
-					<tr>
-						<td>
-							<label>Module Defined Setting 1:</label>
-						</td>
-						<td>
-							<input name="module-setting-1">
-						</td>
-						<?= ExternalModules::getProjectSettingOverrideCheckbox() ?>
-					</tr>
-					<tr>
-						<td>
-							<label>Module Defined Setting 2:</label>
-						</td>
-						<td>
-							<input type="checkbox" name="module-setting-2">
-						</td>
-						<?= ExternalModules::getProjectSettingOverrideCheckbox() ?>
-					</tr>
-					<tr>
-						<td>
-							<label>Module Defined Project Setting 1:</label>
-						</td>
-						<td>
-							<input name="module-setting-1">
-						</td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>
-							<label>Module Defined Project Setting 2:</label>
-						</td>
-						<td>
-							<input type="checkbox" name="module-setting-2">
-						</td>
-						<td></td>
-					</tr>
+					<thead>
+						<tr>
+							<th colspan="2">Project Settings</th>
+							<th>Override Global Setting</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
 				</table>
 			</div>
 			<div class="modal-footer">

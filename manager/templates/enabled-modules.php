@@ -38,7 +38,7 @@ $pid = $_GET['pid'];
 		var pid = <?=json_encode($pid)?>;
 		var configsByName = <?=json_encode($configsByName)?>;
 
-		var getSettingRow = function(settingKey, setting, currentValue){
+		var getSettingColumns = function(settingKey, setting, currentValue, inputAttributes){
 			var html = "<td><label>" + setting.name + ":</label></td>";
 
 			var type = setting.type;
@@ -54,17 +54,17 @@ $pid = $_GET['pid'];
 					value = '';
 				}
 
-				return '<input type="' + type + '" name="' + settingKey + '" value="' + value + '" ' + checked + '>';
+				return '<input type="' + type + '" name="' + settingKey + '" value="' + getAttributeValueHtml(value) + '" ' + checked + ' ' + inputAttributes + '>';
 			};
 
-			var inputHtml
+			var inputHtml;
 			if(type == 'dropdown'){
 				var optionsHtml = '';
 				for(var value in setting.choices ){
 					optionsHtml += '<option value="' + value + '">' +  choices[value] + '</option>';
 				}
 
-				inputHtml = '<select name="' + settingKey + '">' + optionsHtml + '</select>';
+				inputHtml = '<select name="' + settingKey + '" ' + inputAttributes + '>' + optionsHtml + '</select>';
 			}
 			else if(type == 'radio'){
 				inputHtml = "";
@@ -78,13 +78,73 @@ $pid = $_GET['pid'];
 
 			html += "<td>" + inputHtml + "</td>";
 
-			html += '<td><select name="' + settingKey + '_allow-project-overrides">';
-			html += '<option>Superusers Only</option>';
-			html += '<option>Design Rights Users</option>';
-			html += '<option>Any User</option>';
-			html += '</select></td>';
+			return html;
+		};
 
-			return "<tr>" + html + "</tr>";
+		var getGlobalSettingColumns = function(key, setting, value){
+			var columns = getSettingColumns(key, setting, value, '');
+			columns += '<td><select name="' + key + '_allow-project-overrides">';
+			columns += '<option>Superusers Only</option>';
+			columns += '<option>Design Rights Users</option>';
+			columns += '<option>Any User</option>';
+			columns += '</select></td>';
+
+			return columns;
+		};
+
+		var getAttributeValueHtml = function(s){
+			if(s == null){
+				return ''
+			}
+
+			s = s.replace(/"/g, '&quot;');
+			s = s.replace(/'/g, '&apos;');
+
+			return s
+		}
+
+		var getProjectSettingColumns = function(key, setting, value, globalValue){
+			var inputAttributes = '';
+			var overrideCheckboxAttributes = 'data-global-value="' + getAttributeValueHtml(globalValue) + '"';
+			if(value == globalValue){
+				inputAttributes += ' disabled';
+			}
+			else{
+				overrideCheckboxAttributes += ' checked';
+			}
+
+			var columns = getSettingColumns(key, setting, value, inputAttributes);
+			columns += '<td><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
+
+			return columns;
+		};
+
+		var getSettingRows = function(global, configSettings, savedSettings){
+			var rowsHtml = ''
+
+			for(var key in configSettings){
+				var config = configSettings[key];
+				var saved = savedSettings[key];
+
+				var value = null;
+				var globalValue = null;
+				if(saved){
+					value = saved.value;
+					globalValue = saved.global_value;
+				}
+
+				var columns;
+				if(!pid){
+					columns = getGlobalSettingColumns(key, config, value);
+				}
+				else if(!global || config['allow-project-overrides']){
+					columns = getProjectSettingColumns(key, config, value, globalValue);
+				}
+
+				rowsHtml +=  '<tr>' + columns + '</tr>';
+			}
+
+			return rowsHtml;
 		};
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
@@ -102,22 +162,41 @@ $pid = $_GET['pid'];
 					return;
 				}
 
-				var existingSettings = data.settings;
+				var savedSettings = data.settings;
 
-				var globalSettings = config['global-settings'];
-				var settingHtml = "";
+				var settingsHtml = "";
+				settingsHtml += getSettingRows(true, config['global-settings'], savedSettings);
 
-				for(var key in globalSettings){
-					var setting = globalSettings[key];
-					var value = existingSettings[key];
-
-					if(!pid || setting['allow-project-overrides']){
-						settingHtml += getSettingRow(key, setting, value);
-					}
+				if(pid) {
+					settingsHtml += getSettingRows(false, config['project-settings'], savedSettings);
 				}
-				
-				tbody.html(settingHtml);
+
+				tbody.html(settingsHtml);
 			});
+		});
+
+		$('#external-modules-configure-modal').on('click', '.override-global-setting', function(){
+			var overrideCheckbox = $(this);
+			var globalValue = overrideCheckbox.data('global-value');
+			var inputs = overrideCheckbox.closest('tr').find('td:nth-child(2)').find('input, select');
+
+			if(overrideCheckbox.prop('checked')){
+				inputs.prop('disabled', false)
+			}
+			else{
+				var type = inputs[0].type;
+				if(type == 'radio'){
+					inputs.filter('[value=' + globalValue + ']').click()
+				}
+				else if(type == 'checkbox'){
+					inputs.prop('checked', globalValue)
+				}
+				else{ // text or select
+					inputs.val(globalValue)
+				}
+
+				inputs.prop('disabled', true);
+			}
 		});
 	});
 </script>

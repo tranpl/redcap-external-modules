@@ -51,3 +51,8 @@
 	vertical-align: -2px;
 	margin-right: 5px;
 }
+
+#external-modules-configure-modal select:disabled {
+	/* match text input disabled backgrounds */
+	background-color: rgb(235, 235, 228);
+}

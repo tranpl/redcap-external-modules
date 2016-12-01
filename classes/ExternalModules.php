@@ -434,15 +434,6 @@ class ExternalModules
 		return self::getEnabledModuleNames();
 	}
 
-	static function getProjectSettingOverrideCheckbox($fieldName)
-	{
-		?>
-		<td>
-			<input type="checkbox" name="<?= $fieldName ?>_override" checked>
-		</td>
-		<?php
-	}
-
 	static function addResource($path)
 	{
 		$path = "manager/$path";
