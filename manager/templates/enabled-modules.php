@@ -37,6 +37,7 @@ $pid = $_GET['pid'];
 	$(function(){
 		var pid = <?=json_encode($pid)?>;
 		var configsByName = <?=json_encode($configsByName)?>;
+		var configureModal = $('#external-modules-configure-modal');
 
 		var getSettingColumns = function(settingKey, setting, currentValue, inputAttributes){
 			var html = "<td><label>" + setting.name + ":</label></td>";
@@ -149,13 +150,12 @@ $pid = $_GET['pid'];
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
 			var moduleDirectoryName = $(this).closest('tr').data('module');
-			var modal = $('#external-modules-configure-modal');
 			var config = configsByName[moduleDirectoryName];
 
-			modal.find('.module-name').html(config.name);
-			var tbody = modal.find('tbody');
+			configureModal.find('.module-name').html(config.name);
+			var tbody = configureModal.find('tbody');
 			tbody.html('');
-			modal.modal('show');
+			configureModal.modal('show');
 
 			$.post('ajax/get-settings.php', {moduleDirectoryName: moduleDirectoryName}, function(data){
 				if(data.status != 'success'){
@@ -175,7 +175,7 @@ $pid = $_GET['pid'];
 			});
 		});
 
-		$('#external-modules-configure-modal').on('click', '.override-global-setting', function(){
+		configureModal.on('click', '.override-global-setting', function(){
 			var overrideCheckbox = $(this);
 			var globalValue = overrideCheckbox.data('global-value');
 			var inputs = overrideCheckbox.closest('tr').find('td:nth-child(2)').find('input, select');
