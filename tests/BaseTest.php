@@ -10,6 +10,8 @@ const TEST_SETTING_PID = 1;
 
 abstract class BaseTest extends TestCase
 {
+	protected $backupGlobals = FALSE;
+
 	protected function setGlobalSetting($value)
 	{
 		self::getInstance()->setGlobalSetting(TEST_SETTING_KEY, $value);

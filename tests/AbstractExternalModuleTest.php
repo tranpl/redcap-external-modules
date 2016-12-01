@@ -6,8 +6,6 @@ use \Exception;
 
 class AbstractExternalModuleTest extends BaseTest
 {
-	protected $backupGlobals = FALSE;
-
 	function testCheckSettings_emptyConfig()
 	{
 		self::assertConfigValid([]);
