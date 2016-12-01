@@ -109,7 +109,7 @@ class ExternalModules
 		# This should catch problems like syntax errors in module code.
 		$instance = self::getModuleInstance($moduleDirectoryName);
 
-		initializeSettingDefaults($instance);
+		self::initializeSettingDefaults($instance);
 
 		self::setGlobalSetting($moduleDirectoryName, self::KEY_ENABLED, true);
 	}
