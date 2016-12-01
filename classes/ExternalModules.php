@@ -199,7 +199,37 @@ class ExternalModules
 		}
 	}
 
-	static function getProjectSettings($moduleDirectoryNames, $projectIds, $keys)
+	static function getGlobalAndProjectSettingsAsArray($moduleDirectoryNames, $projectId)
+	{
+		$result = self::getProjectSettings($moduleDirectoryNames, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
+
+		$settings = array();
+		while($row = db_fetch_assoc($result)){
+			$key = $row['key'];
+			$value = $row['value'];
+
+			$setting =& $settings[$key];
+			if(!isset($setting)){
+				$setting = array();
+				$settings[$key] =& $setting;
+			}
+
+			if($row['project_id'] === null){
+				$setting['global_value'] = $value;
+
+				if(!isset($setting['value'])){
+					$setting['value'] = $value;
+				}
+			}
+			else{
+				$setting['value'] = $value;
+			}
+		}
+
+		return $settings;
+	}
+
+	static function getProjectSettings($moduleDirectoryNames, $projectIds, $keys = array())
 	{
 		$whereClauses = array();
 
@@ -215,7 +245,7 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_name, `key`, value
+		return self::query("SELECT directory_name, s.project_id, s.key, s.value
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
