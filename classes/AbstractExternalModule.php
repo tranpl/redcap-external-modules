@@ -150,7 +150,7 @@ class AbstractExternalModule
 	{
 		$pid = self::detectProjectId($pid);
 		if(isset($pid)){
-			$value = self::getProjectSetting( $key);
+			$value = self::getProjectSetting($key, $pid);
 		}
 
 		if(!isset($value)){

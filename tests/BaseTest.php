@@ -48,6 +48,11 @@ abstract class BaseTest extends TestCase
 		self::getInstance()->removeProjectSetting(TEST_SETTING_KEY, TEST_SETTING_PID);
 	}
 
+	protected function getSetting()
+	{
+		return self::getInstance()->getSetting(TEST_SETTING_KEY, TEST_SETTING_PID);
+	}
+
 	protected function getInstance($config = [])
 	{
 		return new class($config) extends AbstractExternalModule {
