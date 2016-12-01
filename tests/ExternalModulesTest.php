@@ -8,9 +8,6 @@ class ExternalModulesTest extends BaseTest
 {
 	function testInitializeSettingDefaults()
 	{
-		// Cleanup from any previously failed tests.
-		$this->removeGlobalSetting();
-
 		$defaultValue = rand();
 
 		$m = $this->getInstance([

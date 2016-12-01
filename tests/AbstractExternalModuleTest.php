@@ -94,10 +94,6 @@ class AbstractExternalModuleTest extends BaseTest
 
 	function testGlobalSettings()
 	{
-		// Clean up this setting from any previous failed tests.
-		$this->removeGlobalSetting();
-		$this->assertNull($this->getGlobalSetting());
-
 		$value = rand();
 		$this->setGlobalSetting($value);
 		$this->assertEquals($value, $this->getGlobalSetting());
@@ -108,10 +104,6 @@ class AbstractExternalModuleTest extends BaseTest
 
 	function testProjectSettings()
 	{
-		// Clean up this setting from any previous failed tests.
-		$this->removeProjectSetting();
-		$this->assertNull($this->getProjectSetting());
-
 		$value = rand();
 		$this->setProjectSetting($value);
 		$this->assertEquals($value, $this->getProjectSetting());
@@ -122,11 +114,6 @@ class AbstractExternalModuleTest extends BaseTest
 
 	function testGetSetting()
 	{
-		// Clean up this setting from any previous failed tests.
-		$this->removeGlobalSetting();
-		$this->assertNull($this->getGlobalSetting());
-		$this->removeProjectSetting();
-		$this->assertNull($this->getProjectSetting());
 
 		$globalValue = 'global';
 		$this->setGlobalSetting($globalValue);

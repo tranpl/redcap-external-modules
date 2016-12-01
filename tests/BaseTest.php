@@ -12,6 +12,12 @@ abstract class BaseTest extends TestCase
 {
 	protected $backupGlobals = FALSE;
 
+	protected function tearDown()
+	{
+		$this->removeGlobalSetting();
+		$this->removeProjectSetting();
+	}
+
 	protected function setGlobalSetting($value)
 	{
 		self::getInstance()->setGlobalSetting(TEST_SETTING_KEY, $value);
