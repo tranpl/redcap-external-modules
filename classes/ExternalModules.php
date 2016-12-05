@@ -574,6 +574,11 @@ class ExternalModules
 			return true;
 		}
 
+		if(!isset($_GET['pid'])){
+			// REDCap::getUserRights() will crash if no pid is set, so just return false.
+			return false;
+		}
+
 		$rights = \REDCap::getUserRights();
 		return $rights[USERID]['design'] == 1;
 	}
