@@ -470,10 +470,12 @@ class ExternalModules
 	static function getProjectLinks(){
 		$links = self::getLinks('project');
 
-		$links['Manage External Modules'] = array(
-			'icon' => 'brick',
-			'url' => ExternalModules::$BASE_URL  . 'manager/project.php'
-		);
+		if(self::hasDesignRights()){
+			$links['Manage External Modules'] = array(
+				'icon' => 'brick',
+				'url' => ExternalModules::$BASE_URL  . 'manager/project.php'
+			);
+		}
 
 		ksort($links);
 
@@ -568,6 +570,10 @@ class ExternalModules
 
 	static function hasDesignRights()
 	{
+		if(SUPER_USER){
+			return true;
+		}
+
 		$rights = \REDCap::getUserRights();
 		return $rights[USERID]['design'] == 1;
 	}
