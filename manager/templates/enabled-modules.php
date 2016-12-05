@@ -104,11 +104,16 @@ $pid = $_GET['pid'];
 		var getGlobalSettingColumns = function(setting){
 			var columns = getSettingColumns(setting, '');
 
-			var overrideChoices = [
-				{ value: '', name: 'Superusers Only' },
-				{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Design and Setup Users' },
-			];
-			columns += '<td>' + getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue) + '</td>';
+			if(setting['allow-project-overrides']){
+				var overrideChoices = [
+					{ value: '', name: 'Superusers Only' },
+					{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Design and Setup Users' },
+				];
+				columns += '<td>' + getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue) + '</td>';
+			}
+			else{
+				columns += '<td></td>';
+			}
 
 			return columns;
 		};
