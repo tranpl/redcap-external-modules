@@ -171,12 +171,18 @@ $pid = $_GET['pid'];
 					setting.overrideLevelValue = overrideLevel.value
 				}
 
+				// Checking whether a global setting is actuall overridden is necessary for the UI to reflect when
+				// settings are overridden prior to allow-project-overrides being set to false.
+				var globalSettingOverridden = setting.value != setting.globalValue;
+
 				var columns;
 				if(!pid){
 					columns = getGlobalSettingColumns(setting);
 				}
-				else if(!global || setting['allow-project-overrides']){
-					columns = getProjectSettingColumns(setting, global);
+				else if(!global || setting['allow-project-overrides'] || globalSettingOverridden){
+					if(setting['allow-project-overrides'] || globalSettingOverridden){
+						columns = getProjectSettingColumns(setting, global);
+					}
 				}
 
 				rowsHtml +=  '<tr>' + columns + '</tr>';
