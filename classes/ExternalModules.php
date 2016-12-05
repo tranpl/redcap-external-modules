@@ -17,13 +17,6 @@ use \Exception;
 
 class ExternalModules
 {
-	public static $BASE_URL;
-	public static $MODULES_URL;
-	public static $MODULES_PATH;
-
-	private static $initialized = false;
-	private static $moduleBeingLoaded = null;
-
 	const GLOBAL_SETTING_PROJECT_ID = 'NULL';
 	const KEY_ENABLED = 'enabled';
 
@@ -31,6 +24,13 @@ class ExternalModules
 
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
+
+	public static $BASE_URL;
+	public static $MODULES_URL;
+	public static $MODULES_PATH;
+
+	private static $initialized = false;
+	private static $moduleBeingLoaded = null;
 
 	static function initialize()
 	{
