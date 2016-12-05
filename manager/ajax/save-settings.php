@@ -18,8 +18,6 @@ foreach($_POST as $key=>$value){
 		ExternalModules::setGlobalSetting($moduleDirectoryName, $key, $value);
 	}
 	else{
-		// The following call currently requires the module instance to be created and the config to be parsed repeatedly for each setting.
-		// Ideally we should cache module instances to prevent this, but realistically this a minor performance optimization that is not currently justifiable.
 		if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryName, $key)){
 			die("You don't have permission to save the following project setting: $key");
 		}
