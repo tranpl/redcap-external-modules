@@ -180,9 +180,7 @@ $pid = $_GET['pid'];
 					columns = getGlobalSettingColumns(setting);
 				}
 				else if(!global || setting['allow-project-overrides'] || globalSettingOverridden){
-					if(setting['allow-project-overrides'] || globalSettingOverridden){
-						columns = getProjectSettingColumns(setting, global);
-					}
+					columns = getProjectSettingColumns(setting, global);
 				}
 
 				rowsHtml +=  '<tr>' + columns + '</tr>';
