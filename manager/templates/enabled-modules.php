@@ -38,6 +38,7 @@ $pid = $_GET['pid'];
 		var pid = <?=json_encode($pid)?>;
 		var configsByName = <?=json_encode($configsByName)?>;
 		var configureModal = $('#external-modules-configure-modal');
+		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
 		var getSelectElement = function(name, choices, selectedValue, selectAttributes){
 			if(!selectAttributes){
@@ -152,6 +153,24 @@ $pid = $_GET['pid'];
 			return columns;
 		};
 
+		var shouldShowSettingOnProjectManagementPage = function(setting, global) {
+			if(!global){
+				// Always show project level settings.
+				return true;
+			}
+
+			if(setting.overrideLevelValue == null && !isSuperUser){
+				// Hide this setting since the override level will prevent the non-superuser from actually saving it.
+				return false;
+			}
+
+			// Checking whether a global setting is actually overridden is necessary for the UI to reflect when
+			// settings are overridden prior to allow-project-overrides being set to false.
+			var alreadyOverridden = setting.value != setting.globalValue;
+
+			return setting['allow-project-overrides'] || alreadyOverridden;
+		}
+
 		var getSettingRows = function(global, configSettings, savedSettings){
 			var rowsHtml = ''
 
@@ -171,15 +190,11 @@ $pid = $_GET['pid'];
 					setting.overrideLevelValue = overrideLevel.value
 				}
 
-				// Checking whether a global setting is actuall overridden is necessary for the UI to reflect when
-				// settings are overridden prior to allow-project-overrides being set to false.
-				var globalSettingOverridden = setting.value != setting.globalValue;
-
 				var columns;
 				if(!pid){
 					columns = getGlobalSettingColumns(setting);
 				}
-				else if(!global || setting['allow-project-overrides'] || globalSettingOverridden){
+				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
 					columns = getProjectSettingColumns(setting, global);
 				}
 
