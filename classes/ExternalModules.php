@@ -31,6 +31,7 @@ class ExternalModules
 
 	private static $initialized = false;
 	private static $moduleBeingLoaded = null;
+	private static $instanceCache = array();
 
 	static function initialize()
 	{
@@ -413,21 +414,27 @@ class ExternalModules
 
 	private static function getModuleInstance($moduleDirectoryName)
 	{
-		$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
-		$className = basename($modulePath) . 'ExternalModule';
-		$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
+		$instance = @self::$instanceCache[$moduleDirectoryName];
+		if(!isset($instance)){
+			$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
+			$className = basename($modulePath) . 'ExternalModule';
+			$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
 
-		if(!class_exists($classNameWithNamespace)){
-			$classFilePath = "$modulePath/$className.php";
+			if(!class_exists($classNameWithNamespace)){
+				$classFilePath = "$modulePath/$className.php";
 
-			if(!file_exists($classFilePath)){
-				throw new Exception("Could not find the following External Module main class file: $classFilePath");
+				if(!file_exists($classFilePath)){
+					throw new Exception("Could not find the following External Module main class file: $classFilePath");
+				}
+
+				self::safeRequireOnce($classFilePath);
 			}
 
-			self::safeRequireOnce($classFilePath);
+			$instance = new $classNameWithNamespace;
+			self::$instanceCache[$moduleDirectoryName] = $instance;
 		}
-
-		return new $classNameWithNamespace;
+		
+		return $instance;
 	}
 
 	static function getModuleNamesWithHook($hookName)
