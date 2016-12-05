@@ -15,7 +15,7 @@ ExternalModules::addResource('css/style.css');
 <br>
 <br>
 <br>
-<button data-toggle="modal" data-target="#external-modules-disabled-modal">Enable Module(s)</button>
+<button id="external-modules-enable-modules-button">Enable Module(s)</button>
 <br>
 <br>
 
@@ -30,7 +30,6 @@ ExternalModules::addResource('css/style.css');
 			</div>
 			<div class="modal-body">
 				<form>
-					<div class="loading-indicator"></div>
 				</form>
 			</div>
 		</div>
@@ -92,17 +91,20 @@ ExternalModules::addResource('css/style.css');
 		$('#sub-nav a[href*="ControlCenter"]').closest('li').addClass('active');
 
 		var disabledModal = $('#external-modules-disabled-modal');
-		var form = disabledModal.find('.modal-body form');
+		$('#external-modules-enable-modules-button').click(function(){
+			var form = disabledModal.find('.modal-body form');
+			var loadingIndicator = $('<div class="loading-indicator"></div>');
+			new Spinner().spin(loadingIndicator[0]);
+			form.html('');
+			form.append(loadingIndicator);
 
-		disabledModal.on('show.bs.modal', function () {
-			var loadingIndicator = disabledModal.find('.loading-indicator');
-			if (loadingIndicator.length == 1) {
-				new Spinner().spin(loadingIndicator[0]);
+			// This ajax call was originally written thinking the list of available modules would come from a central repo.
+			// It may not be necessary any more.
+			$.post('ajax/get-disabled-modules.php', null, function (html) {
+				form.html(html);
+			})
 
-				$.post('ajax/get-disabled-modules.php', null, function (html) {
-					form.html(html);
-				})
-			}
+			disabledModal.modal('show');
 		});
 
 		var configureModal = $('#external-modules-configure-modal');
