@@ -68,7 +68,7 @@ ExternalModules::addResource('css/style.css');
 					<thead>
 						<tr>
 							<th colspan="2">Global Settings</th>
-							<th>Allow Projects<br>To Override</th>
+							<th>Project Override<br>Permission Level</th>
 						</tr>
 					</thead>
 					<tbody></tbody>
