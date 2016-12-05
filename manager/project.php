@@ -36,7 +36,7 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 			</div>
 			<div class="modal-footer">
 				<button data-dismiss="modal">Cancel</button>
-				<button>Save</button>
+				<button class="save">Save</button>
 			</div>
 		</div>
 	</div>

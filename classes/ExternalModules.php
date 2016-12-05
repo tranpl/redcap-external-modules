@@ -29,6 +29,9 @@ class ExternalModules
 
 	const DISABLE_EXTERNAL_MODULE_HOOKS = 'disable-external-module-hooks';
 
+	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
+	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
+
 	static function initialize()
 	{
 		if($_SERVER[HTTP_HOST] == 'localhost'){
@@ -537,6 +540,41 @@ class ExternalModules
 		}
 
 		return $config;
+	}
+
+	static function hasProjectSettingSavePermission($moduleDirectoryName, $key)
+	{
+		if(self::hasGlobalSettingsSavePermission($moduleDirectoryName)){
+			return true;
+		}
+
+		if(self::hasDesignRights()){
+			if(!self::isGlobalSetting($moduleDirectoryName, $key)){
+				return true;
+			}
+
+			$level = self::getGlobalSetting($moduleDirectoryName, $key . self::OVERRIDE_PERMISSION_LEVEL_SUFFIX);
+			return $level == self::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS;
+		}
+
+		return false;
+	}
+
+	static function isGlobalSetting($moduleDirectoryName, $key)
+	{
+		$instance = self::getModuleInstance($moduleDirectoryName);
+		return isset($instance->getConfig()['global-settings'][$key]);
+	}
+
+	static function hasDesignRights()
+	{
+		$rights = \REDCap::getUserRights();
+		return $rights[USERID]['design'] == 1;
+	}
+
+	static function hasGlobalSettingsSavePermission()
+	{
+		return SUPER_USER;
 	}
 
 	# Taken from: http://stackoverflow.com/questions/3338123/how-do-i-recursively-delete-a-directory-and-its-entire-contents-files-sub-dir

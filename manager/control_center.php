@@ -68,7 +68,7 @@ ExternalModules::addResource('css/style.css');
 					<thead>
 						<tr>
 							<th colspan="2">Global Settings</th>
-							<th>Project Override<br>Permission Level</th>
+							<th>Allow Projects<br>To Override</th>
 						</tr>
 					</thead>
 					<tbody></tbody>
@@ -76,7 +76,7 @@ ExternalModules::addResource('css/style.css');
 			</div>
 			<div class="modal-footer">
 				<button data-dismiss="modal">Cancel</button>
-				<button>Save</button>
+				<button class="save">Save</button>
 			</div>
 		</div>
 	</div>
