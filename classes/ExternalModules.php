@@ -18,7 +18,7 @@ use \Exception;
 class ExternalModules
 {
 	const GLOBAL_SETTING_PROJECT_ID = 'NULL';
-	const KEY_ENABLED = 'enabled';
+	const KEY_VERSION = 'version';
 
 	const DISABLE_EXTERNAL_MODULE_HOOKS = 'disable-external-module-hooks';
 
@@ -90,32 +90,32 @@ class ExternalModules
 		return APP_PATH_DOCROOT . 'ProjectGeneral/footer.php';
 	}
 
-	static function getEnabledModuleNames()
+	static function getEnabledModules()
 	{
-		$result = self::getGlobalSettings(null, array(self::KEY_ENABLED));
+		$result = self::getGlobalSettings(null, array(self::KEY_VERSION));
 
-		$names = array();
+		$modules = array();
 		while($row = db_fetch_assoc($result)){
-			$names[] = $row['directory_name'];
+			$modules[$row['directory_prefix']] = $row['value'];
 		}
 
-		return $names;
+		return $modules;
 	}
 
-	static function disable($moduleDirectoryName)
+	static function disable($moduleDirectoryPrefix)
 	{
-		self::setGlobalSetting($moduleDirectoryName, self::KEY_ENABLED, false);
+		self::setGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION, false);
 	}
 
-	static function enable($moduleDirectoryName)
+	static function enable($moduleDirectoryPrefix, $version)
 	{
 		# Attempt to create an instance of the module before enabling it system wide.
 		# This should catch problems like syntax errors in module code.
-		$instance = self::getModuleInstance($moduleDirectoryName);
+		$instance = self::getModuleInstance($moduleDirectoryPrefix, $version);
 
 		self::initializeSettingDefaults($instance);
 
-		self::setGlobalSetting($moduleDirectoryName, self::KEY_ENABLED, true);
+		self::setGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION, $version);
 	}
 
 	static function initializeSettingDefaults($moduleInstance)
@@ -130,35 +130,35 @@ class ExternalModules
 		}
 	}
 
-	static function getGlobalSetting($moduleDirectoryName, $key)
+	static function getGlobalSetting($moduleDirectoryPrefix, $key)
 	{
-		return self::getProjectSetting($moduleDirectoryName, self::GLOBAL_SETTING_PROJECT_ID, $key);
+		return self::getProjectSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
 	}
 
-	static function getGlobalSettings($moduleDirectoryNames, $keys = null)
+	static function getGlobalSettings($moduleDirectoryPrefixes, $keys = null)
 	{
-		return self::getProjectSettings($moduleDirectoryNames, array(self::GLOBAL_SETTING_PROJECT_ID), $keys);
+		return self::getProjectSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID), $keys);
 	}
 
-	static function setGlobalSetting($moduleDirectoryName, $key, $value)
+	static function setGlobalSetting($moduleDirectoryPrefix, $key, $value)
 	{
-		self::setProjectSetting($moduleDirectoryName, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
+		self::setProjectSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
 	}
 
-	static function removeGlobalSetting($moduleDirectoryName, $key)
+	static function removeGlobalSetting($moduleDirectoryPrefix, $key)
 	{
-		self::removeProjectSetting($moduleDirectoryName, self::GLOBAL_SETTING_PROJECT_ID, $key);
+		self::removeProjectSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
 	}
 
-	static function setProjectSetting($moduleDirectoryName, $projectId, $key, $value)
+	static function setProjectSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
-		$externalModuleId = self::getExternalModuleId($moduleDirectoryName);
+		$externalModuleId = self::getExternalModuleId($moduleDirectoryPrefix);
 
 		$projectId = db_real_escape_string($projectId);
 		$key = db_real_escape_string($key);
 		$value = db_real_escape_string($value);
 
-		$oldValue = self::getProjectSetting($moduleDirectoryName, $projectId, $key);
+		$oldValue = self::getProjectSetting($moduleDirectoryPrefix, $projectId, $key);
 		if($value == $oldValue){
 			// We don't need to do anything.
 			return;
@@ -203,9 +203,9 @@ class ExternalModules
 		}
 	}
 
-	static function getGlobalAndProjectSettingsAsArray($moduleDirectoryNames, $projectId)
+	static function getGlobalAndProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
-		$result = self::getProjectSettings($moduleDirectoryNames, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
+		$result = self::getProjectSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
 		while($row = db_fetch_assoc($result)){
@@ -233,12 +233,12 @@ class ExternalModules
 		return $settings;
 	}
 
-	static function getProjectSettings($moduleDirectoryNames, $projectIds, $keys = array())
+	static function getProjectSettings($moduleDirectoryPrefixes, $projectIds, $keys = array())
 	{
 		$whereClauses = array();
 
-		if (!empty($moduleDirectoryNames)) {
-			$whereClauses[] = self::getSQLInClause('m.directory_name', $moduleDirectoryNames);
+		if (!empty($moduleDirectoryPrefixes)) {
+			$whereClauses[] = self::getSQLInClause('m.directory_prefix', $moduleDirectoryPrefixes);
 		}
 
 		if (!empty($projectIds)) {
@@ -249,16 +249,16 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_name, s.project_id, s.key, s.value
+		return self::query("SELECT directory_prefix, s.project_id, s.key, s.value
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
 							WHERE " . implode(' AND ', $whereClauses));
 	}
 
-	static function getProjectSetting($moduleDirectoryName, $projectId, $key)
+	static function getProjectSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
-		$result = self::getProjectSettings(array($moduleDirectoryName), array($projectId), array($key));
+		$result = self::getProjectSettings(array($moduleDirectoryPrefix), array($projectId), array($key));
 
 		$numRows = db_num_rows($result);
 		if($numRows == 1){
@@ -273,22 +273,22 @@ class ExternalModules
 		}
 	}
 
-	static function removeProjectSetting($moduleDirectoryName, $projectId, $key){
-		self::setProjectSetting($moduleDirectoryName, $projectId, $key, null);
+	static function removeProjectSetting($moduleDirectoryPrefix, $projectId, $key){
+		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
 	}
 
-	private static function getExternalModuleId($moduleDirectoryName)
+	private static function getExternalModuleId($moduleDirectoryPrefix)
 	{
-		$moduleDirectoryName = db_real_escape_string($moduleDirectoryName);
+		$moduleDirectoryPrefix = db_real_escape_string($moduleDirectoryPrefix);
 
-		$result = self::query("SELECT external_module_id FROM redcap_external_modules WHERE directory_name = '$moduleDirectoryName'");
+		$result = self::query("SELECT external_module_id FROM redcap_external_modules WHERE directory_prefix = '$moduleDirectoryPrefix'");
 
 		$row = db_fetch_assoc($result);
 		if($row){
 			return $row['external_module_id'];
 		}
 		else{
-			self::query("INSERT INTO redcap_external_modules (directory_name) VALUES ('$moduleDirectoryName')");
+			self::query("INSERT INTO redcap_external_modules (directory_prefix) VALUES ('$moduleDirectoryPrefix')");
 			return db_insert_id();
 		}
 	}
@@ -382,17 +382,17 @@ class ExternalModules
 			self::safeRequire($templatePath, $arguments);
 		}
 
-		$modulesNames = self::getModuleNamesWithHook($name);
-		foreach($modulesNames as $moduleName){
-			self::$moduleBeingLoaded = $moduleName;
-			$instance = self::getModuleInstance($moduleName);
+		$modules = self::getModulesWithHook($name);
+		foreach($modules as $prefix=>$version){
+			self::$moduleBeingLoaded = $prefix;
+			$instance = self::getModuleInstance($prefix, $version);
 			self::$moduleBeingLoaded = null;
 
 			$methodName = "hook_$name";
 
 			if(method_exists($instance, $methodName)){
 				if(!$instance->hasPermission($methodName)){
-					throw new Exception("The \"$moduleName\" external module must request permission in order to define the following hook: $methodName()");
+					throw new Exception("The \"$prefix\" external module must request permission in order to define the following hook: $methodName()");
 				}
 
 				call_user_func_array(array($instance,$methodName), $arguments);
@@ -412,12 +412,13 @@ class ExternalModules
 		require_once $path;
 	}
 
-	private static function getModuleInstance($moduleDirectoryName)
+	private static function getModuleInstance($prefix, $version)
 	{
+		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$instance = @self::$instanceCache[$moduleDirectoryName];
 		if(!isset($instance)){
 			$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
-			$className = basename($modulePath) . 'ExternalModule';
+			$className = self::getMainClassName($prefix);
 			$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
 
 			if(!class_exists($classNameWithNamespace)){
@@ -430,18 +431,33 @@ class ExternalModules
 				self::safeRequireOnce($classFilePath);
 			}
 
-			$instance = new $classNameWithNamespace;
+			$instance = new $classNameWithNamespace($prefix, $version);
 			self::$instanceCache[$moduleDirectoryName] = $instance;
 		}
 		
 		return $instance;
 	}
 
-	static function getModuleNamesWithHook($hookName)
+	private static function getMainClassName($prefix)
+	{
+		$parts = explode('_', $prefix);
+		$parts = explode('-', $parts[1]);
+
+		$className = '';
+		foreach($parts as $part){
+			$className .= ucfirst($part);
+		}
+
+		$className .= 'ExternalModule';
+
+		return $className;
+	}
+
+	static function getModulesWithHook($hookName)
 	{
 		# TODO - Once enabled modules are stored in the database we will query for enabled modules that request permission for the specified hook.
 		# For now, simply return all enabled modules.
-		return self::getEnabledModuleNames();
+		return self::getEnabledModules();
 	}
 
 	static function addResource($path)
@@ -494,12 +510,12 @@ class ExternalModules
 
 		$links = array();
 
-		$moduleNames = self::getEnabledModuleNames();
-		foreach($moduleNames as $moduleDirectoryName){
-			$config = self::getConfig($moduleDirectoryName);
+		$modules = self::getEnabledModules();
+		foreach($modules as $prefix=>$version){
+			$config = self::getConfig($prefix, $version);
 
 			foreach($config['links'][$type] as $name=>$link){
-				$link['url'] = self::$MODULES_URL . $moduleDirectoryName . '/' . $link['url'];
+				$link['url'] = self::$MODULES_URL . self::getModuleDirectoryName($prefix, $version) . '/' . $link['url'];
 				$links[$name] = $link;
 			}
 		}
@@ -509,69 +525,84 @@ class ExternalModules
 		return $links;
 	}
 
-	static function getDisabledModuleNames()
+	static function getDisabledModuleConfigs()
 	{
-		$enabledModules = self::getEnabledModuleNames();
+		$enabledModules = self::getEnabledModules();
 		$dirs = scandir(self::$MODULES_PATH);
 
-		$disabledModuleNames = array();
+		$disabledModuleVersions = array();
 		foreach ($dirs as $dir) {
 			if ($dir[0] == '.') {
 				continue;
 			}
 
-			if(!in_array($dir, $enabledModules)){
-				$disabledModuleNames[] = $dir;
+			list($prefix, $version) = self::getParseModuleDirectoryPrefixAndVersion($dir);
+
+			if(!isset($enabledModules[$prefix])) {
+				$versions = @$disabledModuleVersions[$prefix];
+				if(!isset($versions)){
+					$versions = array();
+
+				}
+
+				// Use array_merge_recursive() to show newest versions first.
+				$disabledModuleVersions[$prefix] = array_merge_recursive(
+					array($version => self::getConfig($prefix, $version)),
+					$versions
+				);
 			}
 		}
 
-		return $disabledModuleNames;
+		return $disabledModuleVersions;
 	}
 
-	static function getConfigs($moduleNames)
-	{
-		$modules = array();
+	static function getParseModuleDirectoryPrefixAndVersion($directoryName){
+		$parts = explode('_', $directoryName);
 
-		foreach ($moduleNames as $moduleDirectoryName) {
-			$config = self::getConfig($moduleDirectoryName);
-			$modules[$moduleDirectoryName] = $config;
-		}
+		$version = array_pop($parts);
+		$prefix = implode('_', $parts);
 
-		return $modules;
+		return array($prefix, $version);
 	}
 
-	static function getConfig($moduleDirectoryName)
+	static function getConfig($prefix, $version)
 	{
+		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$config = json_decode(file_get_contents(self::$MODULES_PATH . "$moduleDirectoryName/config.json"), true);
 
 		if($config == NULL){
-			throw new Exception("An error occurred while parsing configuration file for the \"$moduleDirectoryName\" module!  It is likely not valid JSON.");
+			throw new Exception("An error occurred while parsing configuration file for the \"$prefix\" module!  It is likely not valid JSON.");
 		}
 
 		return $config;
 	}
 
-	static function hasProjectSettingSavePermission($moduleDirectoryName, $key)
+	private static function getModuleDirectoryName($prefix, $version){
+		return $prefix . '_' . $version;
+	}
+
+	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
 	{
-		if(self::hasGlobalSettingsSavePermission($moduleDirectoryName)){
+		if(self::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
 			return true;
 		}
 
 		if(self::hasDesignRights()){
-			if(!self::isGlobalSetting($moduleDirectoryName, $key)){
+			if(!self::isGlobalSetting($moduleDirectoryPrefix, $key)){
 				return true;
 			}
 
-			$level = self::getGlobalSetting($moduleDirectoryName, $key . self::OVERRIDE_PERMISSION_LEVEL_SUFFIX);
+			$level = self::getGlobalSetting($moduleDirectoryPrefix, $key . self::OVERRIDE_PERMISSION_LEVEL_SUFFIX);
 			return $level == self::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS;
 		}
 
 		return false;
 	}
 
-	static function isGlobalSetting($moduleDirectoryName, $key)
+	static function isGlobalSetting($moduleDirectoryPrefix, $key)
 	{
-		$instance = self::getModuleInstance($moduleDirectoryName);
+		$version = self::getGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION);
+		$instance = self::getModuleInstance($moduleDirectoryPrefix, $version);
 		return isset($instance->getConfig()['global-settings'][$key]);
 	}
 

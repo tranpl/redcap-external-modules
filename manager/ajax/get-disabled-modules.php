@@ -8,15 +8,25 @@ require_once '../../classes/ExternalModules.php';
 <table id='external-modules-disabled-table' class="table table-no-top-row-border">
 	<?php
 
-	$disabledModules = ExternalModules::getConfigs(ExternalModules::getDisabledModuleNames());
+	$disabledModuleConfigs = ExternalModules::getDisabledModuleConfigs();
 
-	if (empty($disabledModules)) {
+	if (empty($disabledModuleConfigs)) {
 		echo 'None';
 	} else {
-		foreach ($disabledModules as $module => $config) {
+		foreach ($disabledModuleConfigs as $moduleDirectoryPrefix => $versions) {
+			$config = reset($versions);
 			?>
-			<tr data-module='<?= $module ?>'>
+			<tr data-module='<?= $moduleDirectoryPrefix ?>'>
 				<td><?= $config['name'] ?></td>
+				<td>
+					<select name="version">
+						<?php
+						foreach($versions as $version=>$config){
+							echo "<option>$version</option>";
+						}
+						?>
+					</select>
+				</td>
 				<td class="external-modules-action-buttons">
 					<button class='enable-button'>Enable</button>
 				</td>
@@ -42,7 +52,8 @@ require_once '../../classes/ExternalModules.php';
 			disabledModal.hide();
 
 			var row = $(event.target).closest('tr');
-			var module = row.data('module');
+			var prefix = row.data('module');
+			var version = row.find('select').val()
 
 			var enableButton = enableModal.find('.enable-button');
 			enableButton.html('Enable');
@@ -51,8 +62,8 @@ require_once '../../classes/ExternalModules.php';
 			var list = enableModal.find('.modal-body ul');
 			list.html('');
 
-			var disabledModules = <?=json_encode($disabledModules)?>;
-			disabledModules[module].permissions.forEach(function(permission){
+			var disabledModules = <?=json_encode($disabledModuleConfigs)?>;
+			disabledModules[prefix][version].permissions.forEach(function(permission){
 				list.append("<li>" + permission + "</li>");
 			})
 
@@ -61,7 +72,7 @@ require_once '../../classes/ExternalModules.php';
 				enableButton.html('Enabling...');
 				enableModal.find('button').attr('disabled', true);
 
-				$.post('ajax/enable-modules.php', {modules: [module]}, function (data) {
+				$.post('ajax/enable-module.php', {prefix: prefix, version: version}, function (data) {
 					if (data == 'success') {
 						reloadPage();
 						disabledModal.modal('hide');

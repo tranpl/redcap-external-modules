@@ -3,8 +3,6 @@ namespace ExternalModules;
 
 require_once '../../classes/ExternalModules.php';
 
-foreach ($_POST['modules'] as $module) {
-	ExternalModules::enable($module);
-}
+ExternalModules::enable($_POST['prefix'], $_POST['version']);
 
 echo 'success';

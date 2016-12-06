@@ -5,10 +5,15 @@ use Exception;
 
 class AbstractExternalModule
 {
+	private $PREFIX;
+	private $VERSION;
 	protected $CONFIG;
 
-	function __construct()
+	function __construct($prefix, $version)
 	{
+		$this->PREFIX = $prefix;
+		$this->VERSION = $version;
+
 		// Disallow illegal configuration options at module instantiation (and enable) time.
 		self::checkSettings();
 	}
@@ -31,11 +36,11 @@ class AbstractExternalModule
 			}
 
 			if(array_key_exists($key, $globalSettings)){
-				throw new Exception("The \"" . self::getModuleDirectoryName() . "\" module defines the \"$key\" setting on both the global and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the global setting configuration instead.");
+				throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting on both the global and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the global setting configuration instead.");
 			}
 
 			if(array_key_exists('default', $details)){
-				throw new Exception("The \"" . self::getModuleDirectoryName() . "\" module defines a default value for the the \"$key\" project setting.  Default values are only allowed on global settings.");
+				throw new Exception("The \"" . $this->PREFIX . "\" module defines a default value for the the \"$key\" project setting.  Default values are only allowed on global settings.");
 			}
 		}
 	}
@@ -43,7 +48,7 @@ class AbstractExternalModule
 	private function checkSettingKey($key)
 	{
 		if(!self::isSettingKeyValid($key)){
-			throw new Exception("The " . self::getModuleDirectoryName() . " module has a setting named \"$key\" that contains invalid characters.  Only lowercase characters, numbers, and dashes are allowed.");
+			throw new Exception("The " . $this->PREFIX . " module has a setting named \"$key\" that contains invalid characters.  Only lowercase characters, numbers, and dashes are allowed.");
 		}
 	}
 
@@ -100,49 +105,43 @@ class AbstractExternalModule
 	function getConfig()
 	{
 		if(!isset($this->CONFIG)){
-			$this->CONFIG = ExternalModules::getConfig(self::getModuleDirectoryName());
+			$this->CONFIG = ExternalModules::getConfig($this->PREFIX, $this->VERSION);
 		}
 
 		return $this->CONFIG;
 	}
 
-	function getModuleDirectoryName()
-	{
-		$reflector = new \ReflectionClass(get_class($this));
-		return basename(dirname($reflector->getFileName()));
-	}
-
 	function setGlobalSetting($key, $value)
 	{
-		ExternalModules::setGlobalSetting(self::getModuleDirectoryName(), $key, $value);
+		ExternalModules::setGlobalSetting($this->PREFIX, $key, $value);
 	}
 
 	function getGlobalSetting($key)
 	{
-		return ExternalModules::getGlobalSetting(self::getModuleDirectoryName(), $key);
+		return ExternalModules::getGlobalSetting($this->PREFIX, $key);
 	}
 
 	function removeGlobalSetting($key)
 	{
-		ExternalModules::removeGlobalSetting(self::getModuleDirectoryName(), $key);
+		ExternalModules::removeGlobalSetting($this->PREFIX, $key);
 	}
 
 	function setProjectSetting($key, $value, $pid = null)
 	{
 		$pid = self::requireProjectId($pid);
-		ExternalModules::setProjectSetting(self::getModuleDirectoryName(), $pid, $key, $value);
+		ExternalModules::setProjectSetting($this->PREFIX, $pid, $key, $value);
 	}
 
 	function getProjectSetting($key, $pid = null)
 	{
 		$pid = self::requireProjectId($pid);
-		return ExternalModules::getProjectSetting(self::getModuleDirectoryName(), $pid, $key);
+		return ExternalModules::getProjectSetting($this->PREFIX, $pid, $key);
 	}
 
 	function removeProjectSetting($key, $pid = null)
 	{
 		$pid = self::requireProjectId($pid);
-		ExternalModules::removeProjectSetting(self::getModuleDirectoryName(), $pid, $key);
+		ExternalModules::removeProjectSetting($this->PREFIX, $pid, $key);
 	}
 
 	// Returns the project level setting if it exists, and returns the global setting if not.

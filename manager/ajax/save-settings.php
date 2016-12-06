@@ -3,9 +3,9 @@ namespace ExternalModules;
 require_once '../../classes/ExternalModules.php';
 
 $pid = @$_GET['pid'];
-$moduleDirectoryName = $_GET['moduleDirectoryName'];
+$moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
 
-if(empty($pid) && !ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryName)){
+if(empty($pid) && !ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
 	die("You don't have permission to save global settings!");
 }
 
@@ -15,14 +15,14 @@ foreach($_POST as $key=>$value){
 	}
 
 	if(empty($pid)){
-		ExternalModules::setGlobalSetting($moduleDirectoryName, $key, $value);
+		ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
 	}
 	else{
-		if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryName, $key)){
+		if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)){
 			die("You don't have permission to save the following project setting: $key");
 		}
 
-		ExternalModules::setProjectSetting($moduleDirectoryName, $pid, $key, $value);
+		ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
 	}
 }
 

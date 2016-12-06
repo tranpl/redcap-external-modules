@@ -10,14 +10,17 @@ $pid = $_GET['pid'];
 <table id='external-modules-enabled' class="table">
 	<?php
 
-	$configsByName = ExternalModules::getConfigs(ExternalModules::getEnabledModuleNames());
+	$versionsByPrefix = ExternalModules::getEnabledModules();
+	$configsByPrefix = array();
 
-	if (empty($configsByName)) {
+	if (empty($versionsByPrefix)) {
 		echo 'None';
 	} else {
-		foreach ($configsByName as $module => $config) {
+		foreach ($versionsByPrefix as $prefix => $version) {
+			$config = ExternalModules::getConfig($prefix, $version);
+			$configsByPrefix[$prefix] = $config;
 			?>
-			<tr data-module='<?= $module ?>'>
+			<tr data-module='<?= $prefix ?>'>
 				<td><?= $config['name'] ?></td>
 				<td class="external-modules-action-buttons">
 					<button class='external-modules-configure-button'>Configure</button>
@@ -36,7 +39,7 @@ $pid = $_GET['pid'];
 <script>
 	$(function(){
 		var pid = <?=json_encode($pid)?>;
-		var configsByName = <?=json_encode($configsByName)?>;
+		var configsByPrefix = <?=json_encode($configsByPrefix)?>;
 		var configureModal = $('#external-modules-configure-modal');
 		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
@@ -205,16 +208,16 @@ $pid = $_GET['pid'];
 		};
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
-			var moduleDirectoryName = $(this).closest('tr').data('module');
-			configureModal.data('module-directory-name', moduleDirectoryName);
+			var moduleDirectoryPrefix = $(this).closest('tr').data('module');
+			configureModal.data('module', moduleDirectoryPrefix);
 
-			var config = configsByName[moduleDirectoryName];
+			var config = configsByPrefix[moduleDirectoryPrefix];
 			configureModal.find('.module-name').html(config.name);
 			var tbody = configureModal.find('tbody');
 			tbody.html('');
 			configureModal.modal('show');
 
-			$.post('ajax/get-settings.php', {pid: pid, moduleDirectoryName: moduleDirectoryName}, function(data){
+			$.post('ajax/get-settings.php', {pid: pid, moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
 				if(data.status != 'success'){
 					return;
 				}
@@ -258,7 +261,7 @@ $pid = $_GET['pid'];
 
 		configureModal.on('click', 'button.save', function(){
 			configureModal.hide();
-			var moduleDirectoryName = configureModal.data('module-directory-name');
+			var moduleDirectoryPrefix = configureModal.data('module');
 
 			var data = {};
 
@@ -297,7 +300,7 @@ $pid = $_GET['pid'];
 				pidString = '';
 			}
 
-			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryName=' + moduleDirectoryName, data, function(data){
+			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data, function(data){
 				if(data.status != 'success'){
 					alert('An error occurred while saving settings: ' + data);
 					configureModal.show();
