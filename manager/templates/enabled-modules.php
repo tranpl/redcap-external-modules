@@ -193,15 +193,12 @@ $pid = $_GET['pid'];
 					setting.overrideLevelValue = overrideLevel.value
 				}
 
-				var columns;
 				if(!pid){
-					columns = getGlobalSettingColumns(setting);
+					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
 				}
 				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
-					columns = getProjectSettingColumns(setting, global);
+					rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
 				}
-
-				rowsHtml +=  '<tr>' + columns + '</tr>';
 			}
 
 			return rowsHtml;
