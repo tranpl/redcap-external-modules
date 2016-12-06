@@ -64,4 +64,43 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($projectValue, $array[TEST_SETTING_KEY]['value']);
 		$this->assertEquals($globalValue, $array[TEST_SETTING_KEY]['global_value']);
 	}
+
+	function testAddReservedSettings(){
+		$class = new \ReflectionClass('ExternalModules\ExternalModules');
+		$method = $class->getMethod('addReservedSettings');
+		$method->setAccessible(true);
+
+		$settingsPlaceholder = "Normally settings would go here, but it doesn't matter for this test.";
+
+		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
+			$method->invokeArgs(null, array(array(
+				'global-settings' => array(
+					'version' => $settingsPlaceholder
+				)
+			)));
+		});
+
+		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
+			$method->invokeArgs(null, array(array(
+				'global-settings' => array(
+					'enabled' => $settingsPlaceholder
+				)
+			)));
+		});
+
+		// Make sure other settings are passed through without exception.
+		$key = 'some-non-reserved-settings';
+		$config = $method->invokeArgs(null, array(array(
+			'global-settings' => array(
+				$key => $settingsPlaceholder
+			)
+		)));
+		$this->assertEquals($settingsPlaceholder, $config['global-settings'][$key]);
+
+		// Make sure reserved settings were merged.
+		$this->assertTrue(is_array($config['global-settings']['enabled']));
+
+		// Make sure version was excluded, since we don't want to display it.
+		$this->assertTrue(!isset($config['global-settings']['version']));
+	}
 }

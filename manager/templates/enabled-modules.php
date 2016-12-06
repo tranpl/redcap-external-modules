@@ -134,6 +134,12 @@ $pid = $_GET['pid'];
 		}
 
 		var getProjectSettingColumns = function(setting, global){
+			var setting = $.extend({}, setting);
+			var projectName = setting['project-name'];
+			if(projectName){
+			        setting.name = projectName;
+			}
+
 			var inputAttributes = '';
 			var overrideCheckboxAttributes = 'data-global-value="' + getAttributeValueHtml(setting.globalValue) + '"';
 

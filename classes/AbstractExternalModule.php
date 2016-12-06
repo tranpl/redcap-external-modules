@@ -36,7 +36,7 @@ class AbstractExternalModule
 			}
 
 			if(array_key_exists($key, $globalSettings)){
-				throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting on both the global and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the global setting configuration instead.");
+				throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting on both the global and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the global setting configuration instead.  If you want this setting to have a different name on the project management page, specify a 'project-name' under the global setting.");
 			}
 
 			if(array_key_exists('default', $details)){

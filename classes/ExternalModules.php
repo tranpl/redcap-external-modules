@@ -33,6 +33,18 @@ class ExternalModules
 	private static $moduleBeingLoaded = null;
 	private static $instanceCache = array();
 
+	private static $RESERVED_SETTINGS = array(
+		'global-settings' => array(
+			'version' => false, // False will cause this setting to be checked (to avoid modules from using it), but it will not actually be displayed.
+			'enabled' => array(
+				'name' => 'Enable on projects by default',
+				'project-name' => 'Enabled',
+				'type' => 'checkbox',
+				'allow-project-overrides' => true,
+			)
+		),
+	);
+
 	static function initialize()
 	{
 		if($_SERVER[HTTP_HOST] == 'localhost'){
@@ -572,6 +584,33 @@ class ExternalModules
 
 		if($config == NULL){
 			throw new Exception("An error occurred while parsing configuration file for the \"$prefix\" module!  It is likely not valid JSON.");
+		}
+
+		return self::addReservedSettings($config);
+	}
+
+	private static function addReservedSettings($config)
+	{
+		foreach(self::$RESERVED_SETTINGS as $type=>$reservedSettings){
+			$visibleReservedSettings = array();
+
+			$configSettings = @$config[$type];
+			if(!isset($configSettings)){
+				$configSettings = array();
+			}
+
+			foreach($reservedSettings as $key=>$details){
+				if(isset($configSettings[$key])){
+					throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
+				}
+
+				if($details){
+					$visibleReservedSettings[$key] = $details;
+				}
+			}
+
+			// Merge arrays so that reserved settings always end up at the top of the list.
+			$config[$type] = array_merge_recursive($visibleReservedSettings, $configSettings);
 		}
 
 		return $config;
