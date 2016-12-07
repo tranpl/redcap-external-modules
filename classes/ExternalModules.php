@@ -122,7 +122,7 @@ class ExternalModules
 
 	static function disable($moduleDirectoryPrefix)
 	{
-		self::setGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION, false);
+		self::removeGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION);
 	}
 
 	static function enable($moduleDirectoryPrefix, $version)
