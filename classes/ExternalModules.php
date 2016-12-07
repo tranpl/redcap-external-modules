@@ -407,19 +407,12 @@ class ExternalModules
 		}
 
 		$pid = null;
-
-		// REDCap may call hooks for a project in cases where the pid get param is not set.
-		// If the pid was passed as an argument, use it.
-		if(!empty($arguments) && gettype($arguments) == 'integer'){
-			// As of REDCap 6.16.8, the above checks allow us to safely assume the first arg is the pid for all hooks.
-			$pid = $arguments[0];
-		}
-
-		if(!isset($pid)){
-			// Fallback to the pid get param.
-			// This is required in cases where we're calling a hook that's not project specific on a project specific page.
-			// ex: calling every_page_top on the project homepage
-			$pid = @$_GET['pid'];
+		if(!empty($arguments)){
+			$firstArg = $arguments[0];
+			if((int)$firstArg == $firstArg){
+				// As of REDCap 6.16.8, the above checks allow us to safely assume the first arg is the pid for all hooks.
+				$pid = $arguments[0];
+			}
 		}
 
 		$modules = self::getEnabledModulesForProject($pid);
