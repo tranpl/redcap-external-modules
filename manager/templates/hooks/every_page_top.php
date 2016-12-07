@@ -43,7 +43,7 @@ $project_id = $arguments[0];
 
 			var newLink
 			<?php
-			foreach(ExternalModules::getProjectLinks() as $name=>$link){
+			foreach(ExternalModules::getProjectLinks($project_id) as $name=>$link){
 				?>
 				newLink = exampleLink.clone()
 				newLink.find('img').attr('src', '<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png')

@@ -579,7 +579,7 @@ class ExternalModules
 	}
 
 	static function getControlCenterLinks(){
-		$links = self::getLinks('control-center');
+		$links = self::getLinks();
 
 		$links['Manage External Modules'] = array(
 			'icon' => 'brick',
@@ -591,8 +591,8 @@ class ExternalModules
 		return $links;
 	}
 
-	static function getProjectLinks(){
-		$links = self::getLinks('project');
+	static function getProjectLinks($pid){
+		$links = self::getLinks($pid);
 
 		if(self::hasDesignRights()){
 			$links['Manage External Modules'] = array(
@@ -606,17 +606,22 @@ class ExternalModules
 		return $links;
 	}
 
-	private function getLinks($type){
-		# TODO - This data will likely end up coming from enabled modules in the database instead in the future.
+	private function getLinks($pid = null){
+		if(isset($pid)){
+			$type = 'project';
+		}
+		else{
+			$type = 'control-center';
+		}
 
 		$links = array();
 
-		$modules = self::getEnabledModules();
-		foreach($modules as $prefix=>$version){
-			$config = self::getConfig($prefix, $version);
+		$modules = self::getEnabledModulesForProject($pid);
+		foreach($modules as $instance){
+			$config = $instance->getConfig();
 
 			foreach($config['links'][$type] as $name=>$link){
-				$link['url'] = self::$MODULES_URL . self::getModuleDirectoryName($prefix, $version) . '/' . $link['url'];
+				$link['url'] = self::$MODULES_URL . self::getModuleDirectoryName($instance->PREFIX, $instance->VERSION) . '/' . $link['url'];
 				$links[$name] = $link;
 			}
 		}
