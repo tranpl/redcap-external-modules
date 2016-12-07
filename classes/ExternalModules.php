@@ -631,9 +631,8 @@ class ExternalModules
 		return $links;
 	}
 
-	static function getDisabledModuleConfigs()
+	static function getDisabledModuleConfigs($enabledModules)
 	{
-		$enabledModules = self::getEnabledModules();
 		$dirs = scandir(self::$MODULES_PATH);
 
 		$disabledModuleVersions = array();
@@ -644,7 +643,7 @@ class ExternalModules
 
 			list($prefix, $version) = self::getParseModuleDirectoryPrefixAndVersion($dir);
 
-			if(!isset($enabledModules[$prefix])) {
+			if(@$enabledModules[$prefix] != $version) {
 				$versions = @$disabledModuleVersions[$prefix];
 				if(!isset($versions)){
 					$versions = array();

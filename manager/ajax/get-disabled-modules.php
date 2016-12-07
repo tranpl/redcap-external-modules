@@ -8,13 +8,22 @@ require_once '../../classes/ExternalModules.php';
 <table id='external-modules-disabled-table' class="table table-no-top-row-border">
 	<?php
 
-	$disabledModuleConfigs = ExternalModules::getDisabledModuleConfigs();
+	$enabledModules = ExternalModules::getEnabledModules();
+	$disabledModuleConfigs = ExternalModules::getDisabledModuleConfigs($enabledModules);
 
 	if (empty($disabledModuleConfigs)) {
 		echo 'None';
 	} else {
 		foreach ($disabledModuleConfigs as $moduleDirectoryPrefix => $versions) {
 			$config = reset($versions);
+
+			if(isset($enabledModules[$moduleDirectoryPrefix])){
+				$enableButtonText = 'Change Version';
+			}
+			else{
+				$enableButtonText = 'Enable';
+			}
+
 			?>
 			<tr data-module='<?= $moduleDirectoryPrefix ?>'>
 				<td><?= $config['name'] ?></td>
@@ -28,7 +37,7 @@ require_once '../../classes/ExternalModules.php';
 					</select>
 				</td>
 				<td class="external-modules-action-buttons">
-					<button class='enable-button'>Enable</button>
+					<button class='enable-button'><?=$enableButtonText?></button>
 				</td>
 			</tr>
 			<?php
