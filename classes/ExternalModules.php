@@ -494,7 +494,12 @@ class ExternalModules
 
 			$instances = array();
 			foreach(array_keys($enabledPrefixes) as $prefix){
-				$instances[] = self::getModuleInstance($prefix, self::$enabledVersions[$prefix]);
+				$version = @self::$enabledVersions[$prefix];
+
+				// Check the version to make sure the module is not globally disabled.
+				if(isset($version)){
+					$instances[] = self::getModuleInstance($prefix, $version);
+				}
 			}
 
 			self::$enabledInstancesByPID[$pid] = $instances;
