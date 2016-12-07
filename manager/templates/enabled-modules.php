@@ -21,7 +21,7 @@ $pid = $_GET['pid'];
 			$configsByPrefix[$prefix] = $config;
 			?>
 			<tr data-module='<?= $prefix ?>'>
-				<td><?= $config['name'] ?></td>
+				<td><?= $config['name'] . ' - ' . $version ?></td>
 				<td class="external-modules-action-buttons">
 					<button class='external-modules-configure-button'>Configure</button>
 					<?php if (!isset($pid)) { ?>
