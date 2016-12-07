@@ -44,7 +44,7 @@ class ExternalModules
 			self::KEY_VERSION => false, // False will cause this setting to be checked (to avoid modules from using it), but it will not actually be displayed.
 			self::KEY_ENABLED => array(
 				'name' => 'Enable on projects by default',
-				'project-name' => 'Enabled',
+				'project-name' => 'Enable on this project',
 				'type' => 'checkbox',
 				'allow-project-overrides' => true,
 			)
