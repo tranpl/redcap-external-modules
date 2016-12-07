@@ -73,15 +73,15 @@ class ExternalModulesTest extends BaseTest
 		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
 			self::callPrivateMethod($method, array(
 				'global-settings' => array(
-					'version' => $settingsPlaceholder
+					ExternalModules::KEY_VERSION => $settingsPlaceholder
 				)
 			));
 		});
 
 		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
 			self::callPrivateMethod($method, array(
-				'global-settings' => array(
-					'enabled' => $settingsPlaceholder
+				'project-settings' => array(
+					ExternalModules::KEY_ENABLED => $settingsPlaceholder
 				)
 			));
 		});

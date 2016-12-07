@@ -108,7 +108,15 @@ class AbstractExternalModule
 	function getConfig()
 	{
 		if(!isset($this->CONFIG)){
-			$this->CONFIG = ExternalModules::getConfig($this->PREFIX, $this->VERSION);
+			$config = ExternalModules::getConfig($this->PREFIX, $this->VERSION);
+
+			foreach(array('global-settings', 'project-settings') as $type){
+				if(!isset($config[type])){
+					$config[type] = array();
+				}
+			}
+
+			$this->CONFIG = $config;
 		}
 
 		return $this->CONFIG;

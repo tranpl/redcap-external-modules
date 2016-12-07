@@ -40,15 +40,13 @@ class ExternalModules
 	private static $enabledInstancesByPID = array();
 
 	private static $RESERVED_SETTINGS = array(
-		'global-settings' => array(
-			self::KEY_VERSION => false, // False will cause this setting to be checked (to avoid modules from using it), but it will not actually be displayed.
-			self::KEY_ENABLED => array(
-				'name' => 'Enable on projects by default',
-				'project-name' => 'Enable on this project',
-				'type' => 'checkbox',
-				'allow-project-overrides' => true,
-			)
-		),
+		self::KEY_VERSION => false, // False will cause this setting to be checked (to avoid modules from using it), but it will not actually be displayed.
+		self::KEY_ENABLED => array(
+			'name' => 'Enable on projects by default',
+			'project-name' => 'Enable on this project',
+			'type' => 'checkbox',
+			'allow-project-overrides' => true,
+		)
 	);
 
 	static function initialize()
@@ -689,27 +687,22 @@ class ExternalModules
 
 	private static function addReservedSettings($config)
 	{
-		foreach(self::$RESERVED_SETTINGS as $type=>$reservedSettings){
-			$visibleReservedSettings = array();
+		$globalSettings = $config['global-settings'];
+		$projectSettings = $config['project-settings'];
 
-			$configSettings = @$config[$type];
-			if(!isset($configSettings)){
-				$configSettings = array();
+		$visibleReservedSettings = array();
+		foreach(self::$RESERVED_SETTINGS as $key=>$details){
+			if(isset($globalSettings[$key]) || isset($projectSettings[$key])){
+				throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
 			}
 
-			foreach($reservedSettings as $key=>$details){
-				if(isset($configSettings[$key])){
-					throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
-				}
-
-				if($details){
-					$visibleReservedSettings[$key] = $details;
-				}
+			if($details){
+				$visibleReservedSettings[$key] = $details;
 			}
-
-			// Merge arrays so that reserved settings always end up at the top of the list.
-			$config[$type] = array_merge_recursive($visibleReservedSettings, $configSettings);
 		}
+
+		// Merge arrays so that reserved settings always end up at the top of the list.
+		$config['global-settings'] = array_merge_recursive($visibleReservedSettings, $globalSettings);
 
 		return $config;
 	}
