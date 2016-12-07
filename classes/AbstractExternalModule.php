@@ -5,12 +5,21 @@ use Exception;
 
 class AbstractExternalModule
 {
-	private $PREFIX;
-	private $VERSION;
+	public $PREFIX;
+	public $VERSION;
+
 	protected $CONFIG;
 
 	function __construct($prefix, $version)
 	{
+		if(empty($prefix)){
+			throw new Exception("You must specify a module directory prefix when creating a module instance!");
+		}
+
+		if(empty($version)){
+			throw new Exception("You must specify a version when creating a module instance!");
+		}
+
 		$this->PREFIX = $prefix;
 		$this->VERSION = $version;
 

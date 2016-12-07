@@ -65,36 +65,34 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($globalValue, $array[TEST_SETTING_KEY]['global_value']);
 	}
 
-	function testAddReservedSettings(){
-		$class = new \ReflectionClass('ExternalModules\ExternalModules');
-		$method = $class->getMethod('addReservedSettings');
-		$method->setAccessible(true);
-
+	function testAddReservedSettings()
+	{
 		$settingsPlaceholder = "Normally settings would go here, but it doesn't matter for this test.";
+		$method = 'addReservedSettings';
 
 		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
-			$method->invokeArgs(null, array(array(
+			self::callPrivateMethod($method, array(
 				'global-settings' => array(
 					'version' => $settingsPlaceholder
 				)
-			)));
+			));
 		});
 
 		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
-			$method->invokeArgs(null, array(array(
+			self::callPrivateMethod($method, array(
 				'global-settings' => array(
 					'enabled' => $settingsPlaceholder
 				)
-			)));
+			));
 		});
 
 		// Make sure other settings are passed through without exception.
 		$key = 'some-non-reserved-settings';
-		$config = $method->invokeArgs(null, array(array(
+		$config = self::callPrivateMethod($method, array(
 			'global-settings' => array(
 				$key => $settingsPlaceholder
 			)
-		)));
+		));
 		$this->assertEquals($settingsPlaceholder, $config['global-settings'][$key]);
 
 		// Make sure reserved settings were merged.
@@ -102,5 +100,111 @@ class ExternalModulesTest extends BaseTest
 
 		// Make sure version was excluded, since we don't want to display it.
 		$this->assertTrue(!isset($config['global-settings']['version']));
+	}
+
+	function testCacheAllEnableData()
+	{
+		$m = $this->getInstance();
+
+		$version = rand();
+		$m->setGlobalSetting(ExternalModules::KEY_VERSION, $version);
+
+		self::callPrivateMethod('cacheAllEnableData');
+		$this->assertEquals($version, self::getPrivateVariable('enabledVersions')[TEST_MODULE_PREFIX]);
+
+		$m->removeGlobalSetting(ExternalModules::KEY_VERSION);
+
+		// the other values set by cacheAllEnableData() are tested via testGetEnabledModulePrefixesForProject()
+	}
+
+	function testGetEnabledModulePrefixesForProject_multiplePrefixes()
+	{
+		$prefix1 = TEST_MODULE_PREFIX . '-1';
+		$prefix2 = TEST_MODULE_PREFIX . '-2';
+
+		ExternalModules::setGlobalSetting($prefix1, ExternalModules::KEY_ENABLED, true);
+		ExternalModules::setGlobalSetting($prefix2, ExternalModules::KEY_ENABLED, true);
+
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNotNull($prefixes[$prefix1]);
+		$this->assertNotNull($prefixes[$prefix2]);
+
+		ExternalModules::removeGlobalSetting($prefix2, ExternalModules::KEY_ENABLED);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNotNull($prefixes[$prefix1]);
+		$this->assertNull($prefixes[$prefix2]);
+
+
+		ExternalModules::removeGlobalSetting($prefix1, ExternalModules::KEY_ENABLED);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNull($prefixes[$prefix1]);
+	}
+
+	function testGetEnabledModulePrefixesForProject_overrides()
+	{
+		$m = self::getInstance();
+		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+
+		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true, TEST_SETTING_PID);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, false, TEST_SETTING_PID);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
+
+		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
+
+		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, false);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true, TEST_SETTING_PID);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, false, TEST_SETTING_PID);
+		$prefixes = self::getEnabledModulePrefixesForProjectIgnoreCache();
+		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
+
+		$this->removeGlobalSetting(ExternalModules::KEY_ENABLED);
+	}
+
+	private function getEnabledModulePrefixesForProjectIgnoreCache()
+	{
+		self::callPrivateMethod('cacheAllEnableData'); // Call this every time to clear/reset the cache.
+		return self::callPrivateMethod('getEnabledModulePrefixesForProject', TEST_SETTING_PID);
+	}
+
+	private function callPrivateMethod($methodName)
+	{
+		$args = func_get_args();
+		array_shift($args); // remove the method name
+
+		$class = self::getReflectionClass();
+		$method = $class->getMethod($methodName);
+		$method->setAccessible(true);
+
+		return $method->invokeArgs(null, $args);
+	}
+
+	private function getPrivateVariable($name)
+	{
+		$class = self::getReflectionClass();
+		$property = $class->getProperty($name);
+		$property->setAccessible(true);
+
+		return $property->getValue(null);
+	}
+
+	private function getReflectionClass()
+	{
+		return new \ReflectionClass('ExternalModules\ExternalModules');
 	}
 }

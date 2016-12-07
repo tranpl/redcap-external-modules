@@ -5,6 +5,8 @@ require_once dirname(__FILE__) . '/../classes/ExternalModules.php';
 use PHPUnit\Framework\TestCase;
 use \Exception;
 
+const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
+const TEST_MODULE_VERSION = 'v1.0.0';
 const TEST_SETTING_KEY = 'unit-test-setting-key';
 const TEST_SETTING_PID = 1;
 
@@ -59,7 +61,7 @@ abstract class BaseTest extends TestCase
 			function __construct($config)
 			{
 				$this->CONFIG = $config;
-				parent::__construct();
+				parent::__construct(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
 			}
 
 			function __call($name, $arguments)

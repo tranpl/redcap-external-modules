@@ -19,6 +19,7 @@ class ExternalModules
 {
 	const GLOBAL_SETTING_PROJECT_ID = 'NULL';
 	const KEY_VERSION = 'version';
+	const KEY_ENABLED = 'enabled';
 
 	const DISABLE_EXTERNAL_MODULE_HOOKS = 'disable-external-module-hooks';
 
@@ -30,13 +31,18 @@ class ExternalModules
 	public static $MODULES_PATH;
 
 	private static $initialized = false;
-	private static $moduleBeingLoaded = null;
+	private static $moduleBeingLoaded;
 	private static $instanceCache = array();
+
+	private static $enabledVersions;
+	private static $globallyEnabledPrefixes;
+	private static $projectEnabledOverrides;
+	private static $enabledInstancesByPID = array();
 
 	private static $RESERVED_SETTINGS = array(
 		'global-settings' => array(
-			'version' => false, // False will cause this setting to be checked (to avoid modules from using it), but it will not actually be displayed.
-			'enabled' => array(
+			self::KEY_VERSION => false, // False will cause this setting to be checked (to avoid modules from using it), but it will not actually be displayed.
+			self::KEY_ENABLED => array(
 				'name' => 'Enable on projects by default',
 				'project-name' => 'Enabled',
 				'type' => 'checkbox',
@@ -164,6 +170,12 @@ class ExternalModules
 
 	static function setProjectSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
+		if($value === false){
+			// False gets translated to an empty string by db_real_escape_string().
+			// We much change this value to 0 for it to actually be saved.
+			$value = 0;
+		}
+
 		$externalModuleId = self::getExternalModuleId($moduleDirectoryPrefix);
 
 		$projectId = db_real_escape_string($projectId);
@@ -261,7 +273,7 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_prefix, s.project_id, s.key, s.value
+		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
@@ -394,17 +406,29 @@ class ExternalModules
 			self::safeRequire($templatePath, $arguments);
 		}
 
-		$modules = self::getModulesWithHook($name);
-		foreach($modules as $prefix=>$version){
-			self::$moduleBeingLoaded = $prefix;
-			$instance = self::getModuleInstance($prefix, $version);
-			self::$moduleBeingLoaded = null;
+		$pid = null;
 
+		// REDCap may call hooks for a project in cases where the pid get param is not set.
+		// If the pid was passed as an argument, use it.
+		if(!empty($arguments) && gettype($arguments) == 'integer'){
+			// As of REDCap 6.16.8, the above checks allow us to safely assume the first arg is the pid for all hooks.
+			$pid = $arguments[0];
+		}
+
+		if(!isset($pid)){
+			// Fallback to the pid get param.
+			// This is required in cases where we're calling a hook that's not project specific on a project specific page.
+			// ex: calling every_page_top on the project homepage
+			$pid = @$_GET['pid'];
+		}
+
+		$modules = self::getEnabledModulesForProject($pid);
+		foreach($modules as $instance){
 			$methodName = "hook_$name";
 
 			if(method_exists($instance, $methodName)){
 				if(!$instance->hasPermission($methodName)){
-					throw new Exception("The \"$prefix\" external module must request permission in order to define the following hook: $methodName()");
+					throw new Exception("The \"" . $instance->PREFIX . "\" external module must request permission in order to define the following hook: $methodName()");
 				}
 
 				call_user_func_array(array($instance,$methodName), $arguments);
@@ -426,6 +450,8 @@ class ExternalModules
 
 	private static function getModuleInstance($prefix, $version)
 	{
+		self::$moduleBeingLoaded = $prefix;
+
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$instance = @self::$instanceCache[$moduleDirectoryName];
 		if(!isset($instance)){
@@ -446,7 +472,9 @@ class ExternalModules
 			$instance = new $classNameWithNamespace($prefix, $version);
 			self::$instanceCache[$moduleDirectoryName] = $instance;
 		}
-		
+
+		self::$moduleBeingLoaded = null;
+
 		return $instance;
 	}
 
@@ -465,11 +493,79 @@ class ExternalModules
 		return $className;
 	}
 
-	static function getModulesWithHook($hookName)
+	private static function getEnabledModulesForProject($pid)
 	{
-		# TODO - Once enabled modules are stored in the database we will query for enabled modules that request permission for the specified hook.
-		# For now, simply return all enabled modules.
-		return self::getEnabledModules();
+		$instances = @self::$enabledInstancesByPID[$pid];
+		if(!isset($instances)){
+			$enabledPrefixes = self::getEnabledModulePrefixesForProject($pid);
+
+			$instances = array();
+			foreach(array_keys($enabledPrefixes) as $prefix){
+				$instances[] = self::getModuleInstance($prefix, self::$enabledVersions[$prefix]);
+			}
+
+			self::$enabledInstancesByPID[$pid] = $instances;
+		}
+
+		return $instances;
+	}
+
+	private static function getEnabledModulePrefixesForProject($pid)
+	{
+		if(!isset(self::$enabledVersions)){
+			self::cacheAllEnableData();
+		}
+
+		$enabledPrefixes = self::$globallyEnabledPrefixes;
+		$projectPrefixes = @self::$projectEnabledOverrides[$pid];
+		if(isset($projectPrefixes)){
+			foreach($projectPrefixes as $prefix => $value){
+				if($value == 1){
+					$enabledPrefixes[$prefix] = true;
+				}
+				else{
+					unset($enabledPrefixes[$prefix]);
+				}
+			}
+		}
+
+		return $enabledPrefixes;
+	}
+
+	private static function cacheAllEnableData()
+	{
+		$result = self::getProjectSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
+
+		$enabledVersions = array();
+		$projectEnabledOverrides = array();
+		$globallyEnabledPrefixes = array();
+		while($row = db_fetch_assoc($result)){
+			$pid = $row['project_id'];
+			$prefix = $row['directory_prefix'];
+			$key = $row['key'];
+			$value = $row['value'];
+
+			if($key == self::KEY_VERSION){
+				$enabledVersions[$prefix] = $value;
+			}
+			else if($key == self::KEY_ENABLED){
+				if(isset($pid)){
+					$projectEnabledOverrides[$pid][$prefix] = $value;
+				}
+				else if($value == 1) {
+					$globallyEnabledPrefixes[$prefix] = true;
+				}
+			}
+			else{
+				throw new Exception("Unexpected key: $key");
+			}
+		}
+
+		// Overwrite any previously cached results
+		self::$enabledVersions = $enabledVersions;
+		self::$globallyEnabledPrefixes = $globallyEnabledPrefixes;
+		self::$projectEnabledOverrides = $projectEnabledOverrides;
+		self::$enabledInstancesByPID = array();
 	}
 
 	static function addResource($path)
