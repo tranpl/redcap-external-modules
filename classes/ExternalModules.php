@@ -148,12 +148,12 @@ class ExternalModules
 
 	static function getGlobalSetting($moduleDirectoryPrefix, $key)
 	{
-		return self::getProjectSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
+		return self::getSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
 	}
 
 	static function getGlobalSettings($moduleDirectoryPrefixes, $keys = null)
 	{
-		return self::getProjectSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID), $keys);
+		return self::getSettings($moduleDirectoryPrefixes, self::GLOBAL_SETTING_PROJECT_ID, $keys);
 	}
 
 	static function setGlobalSetting($moduleDirectoryPrefix, $key, $value)
@@ -168,6 +168,11 @@ class ExternalModules
 
 	static function setProjectSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
+		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
+	}
+
+	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
+	{
 		if($value === false){
 			// False gets translated to an empty string by db_real_escape_string().
 			// We much change this value to 0 for it to actually be saved.
@@ -180,7 +185,7 @@ class ExternalModules
 		$key = db_real_escape_string($key);
 		$value = db_real_escape_string($value);
 
-		$oldValue = self::getProjectSetting($moduleDirectoryPrefix, $projectId, $key);
+		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 		if($value == $oldValue){
 			// We don't need to do anything.
 			return;
@@ -227,7 +232,7 @@ class ExternalModules
 
 	static function getGlobalAndProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
-		$result = self::getProjectSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
+		$result = self::getSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
 		while($row = db_fetch_assoc($result)){
@@ -255,7 +260,7 @@ class ExternalModules
 		return $settings;
 	}
 
-	static function getProjectSettings($moduleDirectoryPrefixes, $projectIds, $keys = array())
+	static function getSettings($moduleDirectoryPrefixes, $projectIds, $keys = array())
 	{
 		$whereClauses = array();
 
@@ -278,9 +283,9 @@ class ExternalModules
 							WHERE " . implode(' AND ', $whereClauses));
 	}
 
-	static function getProjectSetting($moduleDirectoryPrefix, $projectId, $key)
+	private static function getSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
-		$result = self::getProjectSettings(array($moduleDirectoryPrefix), array($projectId), array($key));
+		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
 		if($numRows == 1){
@@ -293,6 +298,17 @@ class ExternalModules
 		else{
 			throw new Exception("More than one External Module setting exists for project $projectId and key '$key'!  This should never happen!");
 		}
+	}
+
+	static function getProjectSetting($moduleDirectoryPrefix, $projectId, $key)
+	{
+		$value = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+
+		if($value == null){
+			$value =  self::getGlobalSetting($moduleDirectoryPrefix, $key);
+		}
+
+		return $value;
 	}
 
 	static function removeProjectSetting($moduleDirectoryPrefix, $projectId, $key){
@@ -530,7 +546,7 @@ class ExternalModules
 
 	private static function cacheAllEnableData()
 	{
-		$result = self::getProjectSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
+		$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
 
 		$enabledVersions = array();
 		$projectEnabledOverrides = array();

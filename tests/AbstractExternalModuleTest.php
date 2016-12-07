@@ -104,31 +104,22 @@ class AbstractExternalModuleTest extends BaseTest
 
 	function testProjectSettings()
 	{
-		$value = rand();
-		$this->setProjectSetting($value);
-		$this->assertEquals($value, $this->getProjectSetting());
+		$projectValue = rand();
+		$globalValue = rand();
+
+		$this->setProjectSetting($projectValue);
+		$this->assertEquals($projectValue, $this->getProjectSetting());
 
 		$this->removeProjectSetting();
 		$this->assertNull($this->getProjectSetting());
-	}
 
-	function testGetSetting()
-	{
-		// Only project setting exists
-		$projectValue = rand();
-		$this->setProjectSetting($projectValue);
-		$this->assertEquals($projectValue, $this->getSetting());
-
-		// Both settings exists
-		$globalValue = rand();
 		$this->setGlobalSetting($globalValue);
-		$this->assertEquals($projectValue, $this->getSetting());
+		$this->assertEquals($globalValue, $this->getProjectSetting());
 
-		// Only global setting exists
-		$this->removeProjectSetting();
-		$this->assertEquals($globalValue, $this->getSetting());
+		$this->setProjectSetting($projectValue);
+		$this->assertEquals($projectValue, $this->getProjectSetting());
 	}
-
+	
 	function testRequireProjectId()
 	{
 		$m = $this->getInstance();

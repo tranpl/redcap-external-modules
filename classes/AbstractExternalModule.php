@@ -161,21 +161,6 @@ class AbstractExternalModule
 		ExternalModules::removeProjectSetting($this->PREFIX, $pid, $key);
 	}
 
-	// Returns the project level setting if it exists, and returns the global setting if not.
-	function getSetting($key, $pid = null)
-	{
-		$pid = self::detectProjectId($pid);
-		if(isset($pid)){
-			$value = self::getProjectSetting($key, $pid);
-		}
-
-		if(!isset($value)){
-			$value = self::getGlobalSetting($key);
-		}
-
-		return $value;
-	}
-
 	private function requireProjectId($pid)
 	{
 		$pid = self::detectProjectId($pid);
