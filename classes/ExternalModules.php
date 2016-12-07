@@ -462,7 +462,7 @@ class ExternalModules
 				self::safeRequireOnce($classFilePath);
 			}
 
-			$instance = new $classNameWithNamespace($prefix, $version);
+			$instance = new $classNameWithNamespace();
 			self::$instanceCache[$moduleDirectoryName] = $instance;
 		}
 

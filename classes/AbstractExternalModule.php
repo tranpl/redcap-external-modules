@@ -10,15 +10,9 @@ class AbstractExternalModule
 
 	protected $CONFIG;
 
-	function __construct($prefix, $version)
+	function __construct()
 	{
-		if(empty($prefix)){
-			throw new Exception("You must specify a module directory prefix when creating a module instance!");
-		}
-
-		if(empty($version)){
-			throw new Exception("You must specify a version when creating a module instance!");
-		}
+		list($prefix, $version) = ExternalModules::getParseModuleDirectoryPrefixAndVersion(self::getModuleDirectoryName());
 
 		$this->PREFIX = $prefix;
 		$this->VERSION = $version;
@@ -118,6 +112,12 @@ class AbstractExternalModule
 		}
 
 		return $this->CONFIG;
+	}
+
+	function getModuleDirectoryName()
+	{
+		$reflector = new \ReflectionClass(get_class($this));
+		return basename(dirname($reflector->getFileName()));
 	}
 
 	function setGlobalSetting($key, $value)

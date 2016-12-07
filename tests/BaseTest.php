@@ -61,7 +61,10 @@ abstract class BaseTest extends TestCase
 			function __construct($config)
 			{
 				$this->CONFIG = $config;
-				parent::__construct(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
+				parent::__construct();
+
+				$this->PREFIX = TEST_MODULE_PREFIX;
+				$this->VERSION = TEST_MODULE_VERSION;
 			}
 
 			function __call($name, $arguments)
