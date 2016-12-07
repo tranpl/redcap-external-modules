@@ -310,7 +310,8 @@ $pid = $_GET['pid'];
 					return;
 				}
 
-				configureModal.modal('hide');
+				// Reload the page reload after saving settings, in case a settings affects some page behavior (like which menu items are visible).
+				location.reload();
 			});
 		});
 	});
