@@ -706,8 +706,8 @@ class ExternalModules
 		foreach($modules as $instance){
 			$config = $instance->getConfig();
 
-			foreach($config['links'][$type] as $name=>$link){
-				//something here
+			foreach($config['links'][$type] as $link){
+				$name = $link['name'];
 				$link['url'] = self::getUrl($instance->PREFIX, $link['url']);
 				$links[$name] = $link;
 			}
