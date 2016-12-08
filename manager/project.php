@@ -3,6 +3,11 @@ namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once ExternalModules::getProjectHeaderPath();
 
+if(!ExternalModules::hasDesignRights()){
+	echo "You don't have permission to manage external modules on this project.";
+	return;
+}
+
 ExternalModules::addResource('css/style.css');
 
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
