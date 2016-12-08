@@ -14,10 +14,24 @@ abstract class BaseTest extends TestCase
 {
 	protected $backupGlobals = FALSE;
 
+	protected function setUp(){
+		self::cleanupSettings();
+	}
+
 	protected function tearDown()
+	{
+		self::cleanupSettings();
+	}
+
+	private function cleanupSettings()
 	{
 		$this->removeGlobalSetting();
 		$this->removeProjectSetting();
+
+		$m = self::getInstance();
+		$m->removeGlobalSetting(ExternalModules::KEY_VERSION, TEST_SETTING_PID);
+		$m->removeGlobalSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 	}
 
 	protected function setGlobalSetting($value)

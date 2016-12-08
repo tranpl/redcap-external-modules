@@ -35,8 +35,8 @@ class ExternalModules
 	private static $instanceCache = array();
 	private static $idsByPrefix;
 
-	private static $enabledVersions;
-	private static $globallyEnabledPrefixes;
+	private static $globallyEnabledVersions;
+	private static $projectEnabledDefaults;
 	private static $projectEnabledOverrides;
 	private static $enabledInstancesByPID = array();
 
@@ -455,7 +455,7 @@ class ExternalModules
 			}
 		}
 
-		$modules = self::getEnabledModulesForProject($pid);
+		$modules = self::getEnabledModuleInstances($pid);
 		foreach($modules as $instance){
 			$methodName = "hook_$name";
 
@@ -526,20 +526,24 @@ class ExternalModules
 		return $className;
 	}
 
-	private static function getEnabledModulesForProject($pid)
+	// Accepts a project id as the first parameter.
+	// If the project id is null, all globally enabled module instances are returned.
+	// Otherwise, only instances enabled for the current project id are returned.
+	private static function getEnabledModuleInstances($pid)
 	{
 		$instances = @self::$enabledInstancesByPID[$pid];
 		if(!isset($instances)){
-			$enabledPrefixes = self::getEnabledModulePrefixesForProject($pid);
+			if($pid == null){
+				// Cache globally enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
+				$prefixes = self::getGloballyEnabledVersions();
+			}
+			else{
+				$prefixes = self::getEnabledModuleVersionsForProject($pid);
+			}
 
 			$instances = array();
-			foreach(array_keys($enabledPrefixes) as $prefix){
-				$version = @self::$enabledVersions[$prefix];
-
-				// Check the version to make sure the module is not globally disabled.
-				if(isset($version)){
-					$instances[] = self::getModuleInstance($prefix, $version);
-				}
+			foreach($prefixes as $prefix=>$version){
+				$instances[] = self::getModuleInstance($prefix, $version);
 			}
 
 			self::$enabledInstancesByPID[$pid] = $instances;
@@ -548,16 +552,41 @@ class ExternalModules
 		return $instances;
 	}
 
-	private static function getEnabledModulePrefixesForProject($pid)
+	private static function getGloballyEnabledVersions()
 	{
-		if(!isset(self::$enabledVersions)){
+		if(!isset(self::$globallyEnabledVersions)){
 			self::cacheAllEnableData();
 		}
 
-		$enabledPrefixes = self::$globallyEnabledPrefixes;
-		$projectPrefixes = @self::$projectEnabledOverrides[$pid];
-		if(isset($projectPrefixes)){
-			foreach($projectPrefixes as $prefix => $value){
+		return self::$globallyEnabledVersions;
+	}
+
+	private static function getProjectEnabledDefaults()
+	{
+		if(!isset(self::$projectEnabledDefaults)){
+			self::cacheAllEnableData();
+		}
+
+		return self::$projectEnabledDefaults;
+	}
+
+	private static function getProjectEnabledOverrides()
+	{
+		if(!isset(self::$projectEnabledOverrides)){
+			self::cacheAllEnableData();
+		}
+
+		return self::$projectEnabledOverrides;
+	}
+
+	private static function getEnabledModuleVersionsForProject($pid)
+	{
+		$projectEnabledOverrides = self::getProjectEnabledOverrides();
+
+		$enabledPrefixes = self::getProjectEnabledDefaults();
+		$overrides = @$projectEnabledOverrides[$pid];
+		if(isset($overrides)){
+			foreach($overrides as $prefix => $value){
 				if($value == 1){
 					$enabledPrefixes[$prefix] = true;
 				}
@@ -567,16 +596,28 @@ class ExternalModules
 			}
 		}
 
-		return $enabledPrefixes;
+		$globallyEnabledVersions = self::getGloballyEnabledVersions();
+
+		$enabledVersions = array();
+		foreach(array_keys($enabledPrefixes) as $prefix){
+			$version = @$globallyEnabledVersions[$prefix];
+
+			// Check the version to make sure the module is not globally disabled.
+			if(isset($version)){
+				$enabledVersions[$prefix] = $version;
+			}
+		}
+
+		return $enabledVersions;
 	}
 
 	private static function cacheAllEnableData()
 	{
 		$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
 
-		$enabledVersions = array();
+		$globallyEnabledVersions = array();
 		$projectEnabledOverrides = array();
-		$globallyEnabledPrefixes = array();
+		$projectEnabledDefaults = array();
 		while($row = db_fetch_assoc($result)){
 			$pid = $row['project_id'];
 			$prefix = $row['directory_prefix'];
@@ -584,14 +625,14 @@ class ExternalModules
 			$value = $row['value'];
 
 			if($key == self::KEY_VERSION){
-				$enabledVersions[$prefix] = $value;
+				$globallyEnabledVersions[$prefix] = $value;
 			}
 			else if($key == self::KEY_ENABLED){
 				if(isset($pid)){
 					$projectEnabledOverrides[$pid][$prefix] = $value;
 				}
 				else if($value == 1) {
-					$globallyEnabledPrefixes[$prefix] = true;
+					$projectEnabledDefaults[$prefix] = true;
 				}
 			}
 			else{
@@ -600,8 +641,8 @@ class ExternalModules
 		}
 
 		// Overwrite any previously cached results
-		self::$enabledVersions = $enabledVersions;
-		self::$globallyEnabledPrefixes = $globallyEnabledPrefixes;
+		self::$globallyEnabledVersions = $globallyEnabledVersions;
+		self::$projectEnabledDefaults = $projectEnabledDefaults;
 		self::$projectEnabledOverrides = $projectEnabledOverrides;
 		self::$enabledInstancesByPID = array();
 	}
@@ -661,7 +702,7 @@ class ExternalModules
 
 		$links = array();
 
-		$modules = self::getEnabledModulesForProject($pid);
+		$modules = self::getEnabledModuleInstances($pid);
 		foreach($modules as $instance){
 			$config = $instance->getConfig();
 
