@@ -33,6 +33,7 @@ class ExternalModules
 	private static $initialized = false;
 	private static $moduleBeingLoaded;
 	private static $instanceCache = array();
+	private static $idsByPrefix;
 
 	private static $enabledVersions;
 	private static $globallyEnabledPrefixes;
@@ -58,9 +59,14 @@ class ExternalModules
 			error_reporting(E_ALL);
 		}
 
+		$modulesDirectoryName = '/modules/';
+
+		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
+			die('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
+		}
+
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
-		self::$MODULES_URL = APP_PATH_WEBROOT . '../modules/';
-		self::$MODULES_PATH = __DIR__ . "/../../modules/";
+		self::$MODULES_PATH = __DIR__ . "/../.." . $modulesDirectoryName;
 
 		register_shutdown_function(function(){
 			$moduleBeingIncluded = self::$moduleBeingLoaded;
@@ -179,7 +185,7 @@ class ExternalModules
 			$value = 0;
 		}
 
-		$externalModuleId = self::getExternalModuleId($moduleDirectoryPrefix);
+		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
 		$projectId = db_real_escape_string($projectId);
 		$key = db_real_escape_string($key);
@@ -315,20 +321,33 @@ class ExternalModules
 		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
 	}
 
-	private static function getExternalModuleId($moduleDirectoryPrefix)
+	private static function getIdForPrefix($prefix)
 	{
-		$moduleDirectoryPrefix = db_real_escape_string($moduleDirectoryPrefix);
+		if(!isset(self::$idsByPrefix)){
+			$result = self::query("SELECT external_module_id, directory_prefix FROM redcap_external_modules");
 
-		$result = self::query("SELECT external_module_id FROM redcap_external_modules WHERE directory_prefix = '$moduleDirectoryPrefix'");
+			$idsByPrefix = array();
+			while($row = db_fetch_assoc($result)){
+				$idsByPrefix[$row['directory_prefix']] = $row['external_module_id'];
+			}
+
+			self::$idsByPrefix = $idsByPrefix;
+		}
+
+		return self::$idsByPrefix[$prefix];
+	}
+
+	public static function getPrefixForID($id){
+		$id = db_real_escape_string($id);
+
+		$result = self::query("SELECT directory_prefix FROM redcap_external_modules WHERE external_module_id = '$id'");
 
 		$row = db_fetch_assoc($result);
 		if($row){
-			return $row['external_module_id'];
+			return $row['directory_prefix'];
 		}
-		else{
-			self::query("INSERT INTO redcap_external_modules (directory_prefix) VALUES ('$moduleDirectoryPrefix')");
-			return db_insert_id();
-		}
+
+		return null;
 	}
 
 	private static function query($sql)
@@ -616,7 +635,7 @@ class ExternalModules
 		if(self::hasDesignRights()){
 			$links['Manage External Modules'] = array(
 				'icon' => 'brick',
-				'url' => ExternalModules::$BASE_URL  . 'manager/project.php'
+				'url' => ExternalModules::$BASE_URL  . 'manager/project.php?'
 			);
 		}
 
@@ -640,7 +659,8 @@ class ExternalModules
 			$config = $instance->getConfig();
 
 			foreach($config['links'][$type] as $name=>$link){
-				$link['url'] = self::$MODULES_URL . self::getModuleDirectoryName($instance->PREFIX, $instance->VERSION) . '/' . $link['url'];
+				//something here
+				$link['url'] = self::getUrl($instance->PREFIX, $link['url']);
 				$links[$name] = $link;
 			}
 		}
@@ -648,6 +668,13 @@ class ExternalModules
 		ksort($links);
 
 		return $links;
+	}
+
+	private static function getUrl($prefix, $page)
+	{
+		$id = self::getIdForPrefix($prefix);
+		$page = preg_replace('/\.php$/', '', $page); // remove .php extension if it exists
+		return self::$BASE_URL . "?id=$id&page=$page";
 	}
 
 	static function getDisabledModuleConfigs($enabledModules)
@@ -723,7 +750,7 @@ class ExternalModules
 		return $config;
 	}
 
-	private static function getModuleDirectoryName($prefix, $version){
+	static function getModuleDirectoryName($prefix, $version){
 		return $prefix . '_' . $version;
 	}
 

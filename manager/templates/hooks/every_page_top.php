@@ -47,7 +47,7 @@ $project_id = $arguments[0];
 				?>
 				newLink = exampleLink.clone()
 				newLink.find('img').attr('src', '<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png')
-				newLink.find('a').attr('href', '<?= $link['url'] ?>?pid=<?= $project_id ?>')
+				newLink.find('a').attr('href', '<?= $link['url'] ?>&pid=<?= $project_id ?>')
 				newLink.find('a').html('<?= $name ?>')
 				menubox.append(newLink)
 				<?php

@@ -119,7 +119,7 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->setProjectSetting($projectValue);
 		$this->assertEquals($projectValue, $this->getProjectSetting());
 	}
-	
+
 	function testRequireProjectId()
 	{
 		$m = $this->getInstance();
