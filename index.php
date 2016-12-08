@@ -16,9 +16,11 @@ if(empty($version)){
 	die("The requested module is currently disabled globally.");
 }
 
-$enabled = ExternalModules::getProjectSetting($prefix, $pid, ExternalModules::KEY_ENABLED);
-if(!$enabled){
-	die("The requested module is currently disabled on this project.");
+if($pid != null){
+	$enabled = ExternalModules::getProjectSetting($prefix, $pid, ExternalModules::KEY_ENABLED);
+	if(!$enabled){
+		die("The requested module is currently disabled on this project.");
+	}
 }
 
 $pagePath = ExternalModules::$MODULES_PATH . ExternalModules::getModuleDirectoryName($prefix, $version) . "/$page.php";
