@@ -6,5 +6,5 @@ require_once '../../classes/ExternalModules.php';
 header('Content-type: application/json');
 echo json_encode(array(
 	'status' => 'success',
-	'settings' => ExternalModules::getGlobalAndProjectSettingsAsArray($_POST['moduleDirectoryPrefix'], @$_POST['pid'])
+	'settings' => ExternalModules::getProjectSettingsAsArray($_POST['moduleDirectoryPrefix'], @$_POST['pid'])
 ));

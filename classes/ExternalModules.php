@@ -236,7 +236,7 @@ class ExternalModules
 		}
 	}
 
-	static function getGlobalAndProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
+	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
 
