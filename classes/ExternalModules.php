@@ -334,7 +334,14 @@ class ExternalModules
 			self::$idsByPrefix = $idsByPrefix;
 		}
 
-		return self::$idsByPrefix[$prefix];
+		$id = @self::$idsByPrefix[$prefix];
+		if($id == null){
+			self::query("INSERT INTO redcap_external_modules (directory_prefix) VALUES ('$prefix')");
+			$id = db_insert_id();
+			self::$idsByPrefix[$prefix] = $id;
+		}
+
+		return $id;
 	}
 
 	public static function getPrefixForID($id){
