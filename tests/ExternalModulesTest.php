@@ -12,7 +12,8 @@ class ExternalModulesTest extends BaseTest
 
 		$m = $this->getInstance([
 			'global-settings' => [
-				TEST_SETTING_KEY => [
+				[
+					'key' => TEST_SETTING_KEY,
 					'default' => $defaultValue
 				]
 			]
@@ -67,21 +68,20 @@ class ExternalModulesTest extends BaseTest
 
 	function testAddReservedSettings()
 	{
-		$settingsPlaceholder = "Normally settings would go here, but it doesn't matter for this test.";
 		$method = 'addReservedSettings';
 
-		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
+		$this->assertThrowsException(function() use ($method){
 			self::callPrivateMethod($method, array(
 				'global-settings' => array(
-					ExternalModules::KEY_VERSION => $settingsPlaceholder
+					array('key' => ExternalModules::KEY_VERSION)
 				)
 			));
 		});
 
-		$this->assertThrowsException(function() use ($method, $settingsPlaceholder){
+		$this->assertThrowsException(function() use ($method){
 			self::callPrivateMethod($method, array(
 				'project-settings' => array(
-					ExternalModules::KEY_ENABLED => $settingsPlaceholder
+					array('key' => ExternalModules::KEY_ENABLED)
 				)
 			));
 		});
@@ -90,16 +90,14 @@ class ExternalModulesTest extends BaseTest
 		$key = 'some-non-reserved-settings';
 		$config = self::callPrivateMethod($method, array(
 			'global-settings' => array(
-				$key => $settingsPlaceholder
+				array('key' => $key)
 			)
 		));
-		$this->assertEquals($settingsPlaceholder, $config['global-settings'][$key]);
 
-		// Make sure reserved settings were merged.
-		$this->assertTrue(is_array($config['global-settings']['enabled']));
-
-		// Make sure version was excluded, since we don't want to display it.
-		$this->assertTrue(!isset($config['global-settings']['version']));
+		$globalSettings = $config['global-settings'];
+		$this->assertEquals(2, count($globalSettings));
+		$this->assertEquals(ExternalModules::KEY_ENABLED, $globalSettings[0]['key']);
+		$this->assertEquals($key, $globalSettings[1]['key']);
 	}
 
 	function testCacheAllEnableData()

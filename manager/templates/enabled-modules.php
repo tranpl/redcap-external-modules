@@ -183,17 +183,15 @@ $pid = $_GET['pid'];
 		var getSettingRows = function(global, configSettings, savedSettings){
 			var rowsHtml = ''
 
-			for(var key in configSettings){
-				var setting = $.extend({}, configSettings[key]);
-				setting.key = key;
-
-				var saved = savedSettings[key];
+			configSettings.forEach(function(setting){
+				var setting = $.extend({}, setting);
+				var saved = savedSettings[setting.key];
 				if(saved){
 					setting.value = saved.value;
 					setting.globalValue = saved.global_value;
 				}
 
-				setting.overrideLevelKey = key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
+				setting.overrideLevelKey = setting.key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
 				var overrideLevel = savedSettings[setting.overrideLevelKey];
 				if(overrideLevel){
 					setting.overrideLevelValue = overrideLevel.value
@@ -205,7 +203,7 @@ $pid = $_GET['pid'];
 				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
 					rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
 				}
-			}
+			})
 
 			return rowsHtml;
 		};

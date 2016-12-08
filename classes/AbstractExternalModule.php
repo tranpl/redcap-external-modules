@@ -24,26 +24,44 @@ class AbstractExternalModule
 	protected function checkSettings()
 	{
 		$config = $this->getConfig();
-		$globalSettings = @$config['global-settings'];
-		$projectSettings = @$config['project-settings'];
+		$globalSettings = $config['global-settings'];
+		$projectSettings = $config['project-settings'];
 
-		if(isset($globalSettings)){
-			foreach($globalSettings as $key=> $details){
-				self::checkSettingKey($key);
+		$handleDuplicate = function($key, $type){
+			throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" $type setting multiple times!");
+		};
+
+		$globalSettingKeys = array();
+		foreach($globalSettings as $details){
+			$key = $details['key'];
+			self::checkSettingKey($key);
+
+			if(isset($globalSettingKeys[$key])){
+				$handleDuplicate($key, 'global');
+			}
+			else{
+				$globalSettingKeys[$key] = true;
 			}
 		}
 
-		if(isset($projectSettings)){
-			foreach($projectSettings as $key=> $details){
-				self::checkSettingKey($key);
-			}
+		$projectSettingKeys = array();
+		foreach($projectSettings as $details){
+			$key = $details['key'];
+			self::checkSettingKey($key);
 
-			if(array_key_exists($key, $globalSettings)){
+			if(array_key_exists($key, $globalSettingKeys)){
 				throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting on both the global and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the global setting configuration instead.  If you want this setting to have a different name on the project management page, specify a 'project-name' under the global setting.");
 			}
 
 			if(array_key_exists('default', $details)){
 				throw new Exception("The \"" . $this->PREFIX . "\" module defines a default value for the the \"$key\" project setting.  Default values are only allowed on global settings.");
+			}
+
+			if(isset($projectSettingKeys[$key])){
+				$handleDuplicate($key, 'global');
+			}
+			else{
+				$globalSettingKeys[$key] = true;
 			}
 		}
 	}
@@ -111,8 +129,8 @@ class AbstractExternalModule
 			$config = ExternalModules::getConfig($this->PREFIX, $this->VERSION);
 
 			foreach(array('global-settings', 'project-settings') as $type){
-				if(!isset($config[type])){
-					$config[type] = array();
+				if(!isset($config[$type])){
+					$config[$type] = array();
 				}
 			}
 

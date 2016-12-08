@@ -15,10 +15,24 @@ class AbstractExternalModuleTest extends BaseTest
     {
 		self::assertConfigInvalid([
 			'global-settings' => [
-				'someKey' => true
+				['key' => 'someKey']
 			],
 			'project-settings' => [
-				'someKey' => true
+				['key' => 'someKey']
+			],
+		]);
+
+		self::assertConfigInvalid([
+			'global-settings' => [
+				['key' => 'someKey'],
+				['key' => 'someKey'],
+			],
+		]);
+
+		self::assertConfigInvalid([
+			'project-settings' => [
+				['key' => 'someKey'],
+				['key' => 'someKey'],
 			],
 		]);
     }
@@ -27,7 +41,8 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		self::assertConfigInvalid([
 			'project-settings' => [
-				'some-setting' => [
+				[
+					'key' => 'some-setting',
 					'default' => true
 				]
 			]
@@ -38,10 +53,10 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		self::assertConfigValid([
 			'global-settings' => [
-				'key1' => true
+				['key' => 'key1']
 			],
 			'project-settings' => [
-				'key-two' => true
+				['key' => 'key-two']
 			],
 		]);
 	}
@@ -50,7 +65,7 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		self::assertConfigInvalid([
 			'global-settings' => [
-				"A" => true
+				['key' => 'A']
 			]
 		]);
 	}
@@ -59,7 +74,7 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		self::assertConfigInvalid([
 			'project-settings' => [
-				"!" => true
+				['key' => '!']
 			]
 		]);
 	}

@@ -41,8 +41,12 @@ class ExternalModules
 	private static $enabledInstancesByPID = array();
 
 	private static $RESERVED_SETTINGS = array(
-		self::KEY_VERSION => false, // False will cause this setting to be checked (to avoid modules from using it), but it will not actually be displayed.
-		self::KEY_ENABLED => array(
+		array(
+			'key' => self::KEY_VERSION,
+			'hidden' => true,
+		),
+		array(
+			'key' => self::KEY_ENABLED,
 			'name' => 'Enable on projects by default',
 			'project-name' => 'Enable on this project',
 			'type' => 'checkbox',
@@ -143,7 +147,8 @@ class ExternalModules
 	static function initializeSettingDefaults($moduleInstance)
 	{
 		$config = $moduleInstance->getConfig();
-		foreach($config['global-settings'] as $key=>$details){
+		foreach($config['global-settings'] as $details){
+			$key = $details['key'];
 			$default = @$details['default'];
 			$existingValue = $moduleInstance->getGlobalSetting($key);
 			if(isset($default) && $existingValue == null){
@@ -781,19 +786,29 @@ class ExternalModules
 		$globalSettings = $config['global-settings'];
 		$projectSettings = $config['project-settings'];
 
+		$existingSettingKeys = array();
+		foreach($globalSettings as $details){
+			$existingSettingKeys[$details['key']] = true;
+		}
+
+		foreach($projectSettings as $details){
+			$existingSettingKeys[$details['key']] = true;
+		}
+
 		$visibleReservedSettings = array();
-		foreach(self::$RESERVED_SETTINGS as $key=>$details){
-			if(isset($globalSettings[$key]) || isset($projectSettings[$key])){
+		foreach(self::$RESERVED_SETTINGS as $details){
+			$key = $details['key'];
+			if(isset($existingSettingKeys[$key])){
 				throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
 			}
 
-			if($details){
-				$visibleReservedSettings[$key] = $details;
+			if(@$details['hidden'] != true){
+				$visibleReservedSettings[] = $details;
 			}
 		}
 
 		// Merge arrays so that reserved settings always end up at the top of the list.
-		$config['global-settings'] = array_merge_recursive($visibleReservedSettings, $globalSettings);
+		$config['global-settings'] = array_merge($visibleReservedSettings, $globalSettings);
 
 		return $config;
 	}
@@ -823,8 +838,15 @@ class ExternalModules
 	static function isGlobalSetting($moduleDirectoryPrefix, $key)
 	{
 		$version = self::getGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION);
-		$instance = self::getModuleInstance($moduleDirectoryPrefix, $version);
-		return isset($instance->getConfig()['global-settings'][$key]);
+		$config = self::getConfig($moduleDirectoryPrefix, $version);
+
+		foreach($config['global-settings'] as $details){
+			if($details['key'] == $key){
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	static function hasDesignRights()
