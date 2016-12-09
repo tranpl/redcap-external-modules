@@ -623,30 +623,33 @@ class ExternalModules
 
 	private static function cacheAllEnableData()
 	{
-		$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
-
 		$globallyEnabledVersions = array();
 		$projectEnabledOverrides = array();
 		$projectEnabledDefaults = array();
-		while($row = db_fetch_assoc($result)){
-			$pid = $row['project_id'];
-			$prefix = $row['directory_prefix'];
-			$key = $row['key'];
-			$value = $row['value'];
 
-			if($key == self::KEY_VERSION){
-				$globallyEnabledVersions[$prefix] = $value;
-			}
-			else if($key == self::KEY_ENABLED){
-				if(isset($pid)){
-					$projectEnabledOverrides[$pid][$prefix] = $value;
+		// Only attempt to detect enabled modules if the external module tables exist.
+		if(self::areTablesPresent()){
+			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
+			while($row = db_fetch_assoc($result)){
+				$pid = $row['project_id'];
+				$prefix = $row['directory_prefix'];
+				$key = $row['key'];
+				$value = $row['value'];
+
+				if($key == self::KEY_VERSION){
+					$globallyEnabledVersions[$prefix] = $value;
 				}
-				else if($value == 1) {
-					$projectEnabledDefaults[$prefix] = true;
+				else if($key == self::KEY_ENABLED){
+					if(isset($pid)){
+						$projectEnabledOverrides[$pid][$prefix] = $value;
+					}
+					else if($value == 1) {
+						$projectEnabledDefaults[$prefix] = true;
+					}
 				}
-			}
-			else{
-				throw new Exception("Unexpected key: $key");
+				else{
+					throw new Exception("Unexpected key: $key");
+				}
 			}
 		}
 
@@ -655,6 +658,12 @@ class ExternalModules
 		self::$projectEnabledDefaults = $projectEnabledDefaults;
 		self::$projectEnabledOverrides = $projectEnabledOverrides;
 		self::$enabledInstancesByPID = array();
+	}
+
+	static function areTablesPresent()
+	{
+		$result = self::query("SHOW TABLES LIKE 'redcap_external_module%'");
+		return db_num_rows($result) > 0;
 	}
 
 	static function addResource($path)

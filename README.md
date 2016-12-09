@@ -5,6 +5,7 @@ An example module can be found here: https://github.com/mmcev106/redcap-external
 
 ## Installation
 1. Clone this repo into to an **external_modules** directory under your REDCap web root.
+1. Run ```sql/create tables.sql``` on your redcap database to create the required tables.
 1. In **Control Center -> General Configuration -> REDCap Hooks**, select the **hooks.php** file under the new **external_modules** directory.
 	* If you wish to use a different hooks file, you can still add External Module support via the following steps:
 		1. Insert the following at the top of your hooks file:

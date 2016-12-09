@@ -2,6 +2,12 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 
+if(!ExternalModules::areTablesPresent()){
+	echo 'Before using External Modules, you must run the following sql to create the appropriate tables:<br><br>';
+	echo '<textarea style="width: 100%; height: 300px">' . htmlspecialchars(file_get_contents(__DIR__ . '/../../sql/create tables.sql')) . '</textarea>';
+	return;
+}
+
 $pid = $_GET['pid'];
 ?>
 
