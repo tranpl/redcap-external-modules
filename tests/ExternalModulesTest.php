@@ -76,7 +76,7 @@ class ExternalModulesTest extends BaseTest
 					array('key' => ExternalModules::KEY_VERSION)
 				)
 			));
-		});
+		}, 'reserved for internal use');
 
 		$this->assertThrowsException(function() use ($method){
 			self::callPrivateMethod($method, array(
@@ -84,7 +84,7 @@ class ExternalModulesTest extends BaseTest
 					array('key' => ExternalModules::KEY_ENABLED)
 				)
 			));
-		});
+		}, 'reserved for internal use');
 
 		// Make sure other settings are passed through without exception.
 		$key = 'some-non-reserved-settings';

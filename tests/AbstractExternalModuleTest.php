@@ -15,26 +15,26 @@ class AbstractExternalModuleTest extends BaseTest
     {
 		self::assertConfigInvalid([
 			'global-settings' => [
-				['key' => 'someKey']
+				['key' => 'some-key']
 			],
 			'project-settings' => [
-				['key' => 'someKey']
+				['key' => 'some-key']
 			],
-		]);
+		], 'both the global and project level');
 
 		self::assertConfigInvalid([
 			'global-settings' => [
-				['key' => 'someKey'],
-				['key' => 'someKey'],
+				['key' => 'some-key'],
+				['key' => 'some-key'],
 			],
-		]);
+		], 'global setting multiple times!');
 
 		self::assertConfigInvalid([
 			'project-settings' => [
-				['key' => 'someKey'],
-				['key' => 'someKey'],
+				['key' => 'some-key'],
+				['key' => 'some-key'],
 			],
-		]);
+		], 'project setting multiple times!');
     }
 
 	function testCheckSettings_projectDefaults()
@@ -46,7 +46,7 @@ class AbstractExternalModuleTest extends BaseTest
 					'default' => true
 				]
 			]
-		]);
+		], 'Default values are only allowed on global settings');
 	}
 
 	function testCheckSettingKey_valid()
@@ -61,22 +61,21 @@ class AbstractExternalModuleTest extends BaseTest
 		]);
 	}
 
-	function testCheckSettingKey_globalInvalid()
+	function testCheckSettingKey_invalidChars()
 	{
+		$expected = 'contains invalid characters';
+
 		self::assertConfigInvalid([
 			'global-settings' => [
 				['key' => 'A']
 			]
-		]);
-	}
+		], $expected);
 
-	function testCheckSettingKey_projectInvalid()
-	{
 		self::assertConfigInvalid([
 			'project-settings' => [
 				['key' => '!']
 			]
-		]);
+		], $expected);
 	}
 
 	function testIsSettingKeyValid()
@@ -100,11 +99,11 @@ class AbstractExternalModuleTest extends BaseTest
 		self::getInstance($config);
 	}
 
-	function assertConfigInvalid($config)
+	function assertConfigInvalid($config, $exceptionExcerpt)
 	{
 		$this->assertThrowsException(function() use ($config){
 			self::assertConfigValid($config);
-		});
+		}, $exceptionExcerpt);
 	}
 
 	function testGlobalSettings()
@@ -141,7 +140,7 @@ class AbstractExternalModuleTest extends BaseTest
 
 		$this->assertThrowsException(function() use ($m){
 			$m->requireProjectId(null);
-		});
+		}, 'must supply a project id');
 
 		$pid = rand();
 		$this->assertEquals($pid, $m->requireProjectId($pid));

@@ -88,12 +88,19 @@ abstract class BaseTest extends TestCase
 		};
 	}
 
-	protected function assertThrowsException($callable){
+	protected function assertThrowsException($callable, $exceptionExcerpt){
 		$exceptionThrown = false;
 		try{
 			$callable();
 		}
 		catch(Exception $e){
+			if(empty($exceptionExcerpt)){
+				throw new Exception('You must specify an exception excerpt!  Here\'s a hint: ' . $e->getMessage());
+			}
+			else if(strpos($e->getMessage(), $exceptionExcerpt) === false){
+				throw new Exception("Could not find the string '$exceptionExcerpt' in the following exception message: " . $e->getMessage());
+			}
+
 			$exceptionThrown = true;
 		}
 

@@ -58,10 +58,10 @@ class AbstractExternalModule
 			}
 
 			if(isset($projectSettingKeys[$key])){
-				$handleDuplicate($key, 'global');
+				$handleDuplicate($key, 'project');
 			}
 			else{
-				$globalSettingKeys[$key] = true;
+				$projectSettingKeys[$key] = true;
 			}
 		}
 	}
