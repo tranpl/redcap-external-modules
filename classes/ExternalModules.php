@@ -504,7 +504,14 @@ class ExternalModules
 				}
 
 				self::setActiveModulePrefix($instance->PREFIX);
-				call_user_func_array(array($instance,$methodName), $arguments);
+				try{
+					call_user_func_array(array($instance,$methodName), $arguments);
+				}
+				catch(Exception $e){
+					$message = "The '" . $instance->PREFIX . "' module threw the following exception when calling the hook method '$methodName':\n\n" . $e;
+					error_log($message);
+					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $instance->PREFIX", $message);
+				}
 				self::setActiveModulePrefix(null);
 			}
 		}
