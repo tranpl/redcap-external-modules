@@ -47,7 +47,7 @@ class ExternalModules
 		),
 		array(
 			'key' => self::KEY_ENABLED,
-			'name' => 'Enable on projects by default',
+			'name' => 'Enable on all projects by default',
 			'project-name' => 'Enable on this project',
 			'type' => 'checkbox',
 			'allow-project-overrides' => true,
