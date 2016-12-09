@@ -469,7 +469,12 @@ class ExternalModules
 					throw new Exception("The \"" . $instance->PREFIX . "\" external module must request permission in order to define the following hook: $methodName()");
 				}
 
-				call_user_func_array(array($instance,$methodName), $arguments);
+				try{
+					call_user_func_array(array($instance,$methodName), $arguments);
+				}
+				catch(Exception $e){
+					error_log($e);
+				}
 			}
 		}
 	}
