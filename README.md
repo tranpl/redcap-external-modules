@@ -20,6 +20,7 @@ Development work for REDCap External Modules/Packages to support a standardized 
 			```
 3. An **External Modules** section will now be available under both the Control Center and Project menus.
 
+
 ## Usage
 
 The best way to get started is to download the example module from here:
@@ -35,3 +36,16 @@ Here are a few details on managing modules:
 * To enable a module on ALL projects by default, go to the **Manage External Modules** link under **Control Center**, click **Configure** next to the module name, check the **Enable on all projects by default** checkbox, then click save.
 
 The only setting that actually does anything in the example module is the **Project Menu Background CSS** setting.  This will change the background color of the menu on project pages, and is a great demo of simple hook usage, and how a setting can be set globally and/or overridden per project.
+
+
+## AbstractExternalModule
+
+The **AbstractExternalModule** class must be extended when creating an external module.  Module creators may make use of the following methods to store and manage settings for their module.  This includes both settings set via the **Manage External Modules** interface, as well as any other data the module creator wants to store:
+| Method  | Description |
+| ------- | ----------- |
+| setGlobalSetting($key,&nbsp;$value) | Set the setting specified by the key to the specified value globally (shared by all projects). |
+| getGlobalSetting($key) | Get the value stored globally for the specified key. |
+| removeGlobalSetting($key) | Remove the value stored globally for the specified key. |
+| setProjectSetting($key,&nbsp;$value&nbsp;[,&nbsp;$pid]) | Set the setting specified by the key to the specified value for this project (override the global setting).  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead. |
+| getProjectSetting($key&nbsp;[,&nbsp;$pid]) | Returns the value stored for the specified key for the current project if it exists.  If this setting key is not set (overriden) for the current project, the global value for this key is returned.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead. |
+| removeProjectSetting($key&nbsp;[,&nbsp;$pid]) | Remove the value stored for this project and the specified key.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead. | 
