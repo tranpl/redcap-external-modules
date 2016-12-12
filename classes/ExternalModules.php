@@ -273,7 +273,15 @@ class ExternalModules
 		$affectedRows = db_affected_rows();
 
 		$description = ucfirst(strtolower($event)) . ' External Module setting';
-		log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+
+		if(class_exists('Logging')){
+			// REDCap v6.18.3 or later
+			\Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+		}
+		else{
+			// REDCap prior to v6.18.3
+			log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+		}
 
 		if($affectedRows != 1){
 			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
