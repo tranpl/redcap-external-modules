@@ -11,7 +11,13 @@ if(PHP_SAPI == 'cli'){
 	// This is required for redcap when running on the command line (including unit testing).
 	define('NOAUTH', true);
 }
-require_once __DIR__ . "/../../redcap_connect.php";
+
+if(!defined('APP_PATH_WEBROOT')){
+	// Only include redcap_connect.php if it hasn't been included at some point before.
+	// Upgrades crash without this check.
+	// Perhaps it has something to do with loading both the new and old version of redcap_connect.php......
+	require_once __DIR__ . "/../../redcap_connect.php";
+}
 
 use \Exception;
 
