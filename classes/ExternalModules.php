@@ -76,7 +76,6 @@ class ExternalModules
 			$activeModulePrefix = self::getActiveModulePrefix();
 			if($activeModulePrefix != null){
 				$error = error_get_last();
-				var_dump($error);
 				$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 				$message .= 'Error Message: ' . $error['message'] . "\n";
 				$message .= 'File: ' . $error['file'] . "\n";
