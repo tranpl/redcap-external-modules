@@ -107,7 +107,7 @@ class AbstractExternalModule
 		throw new Exception('Not yet implemented!');
 	}
 
-	function checkPermissions($methodName)
+	private function checkPermissions($methodName)
 	{
 		# Convert from camel to snake case.
 		# Taken from the second solution here: http://stackoverflow.com/questions/1993721/how-to-convert-camelcase-to-camel-case
