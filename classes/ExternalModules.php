@@ -843,6 +843,12 @@ class ExternalModules
 			throw new Exception("An error occurred while parsing configuration file for the \"$prefix\" module!  It is likely not valid JSON.");
 		}
 
+		foreach(['global-settings', 'project-settings'] as $key){
+			if(!isset($config[$key])){
+				$config[$key] = array();
+			}
+		}
+
 		return self::addReservedSettings($config);
 	}
 
