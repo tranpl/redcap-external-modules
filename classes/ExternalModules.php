@@ -235,7 +235,8 @@ class ExternalModules
 		$key = db_real_escape_string($key);
 		$value = db_real_escape_string($value);
 
-		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+		// Escape the old value as well, so == will correctly compare it to $value.
+		$oldValue = db_real_escape_string(self::getSetting($moduleDirectoryPrefix, $projectId, $key));
 		if($value == $oldValue){
 			// We don't need to do anything.
 			return;
