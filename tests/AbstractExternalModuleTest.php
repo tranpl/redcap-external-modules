@@ -85,10 +85,10 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertTrue($m->isSettingKeyValid('a'));
 		$this->assertTrue($m->isSettingKeyValid('2'));
 		$this->assertTrue($m->isSettingKeyValid('-'));
+		$this->assertTrue($m->isSettingKeyValid('_'));
 
 		$this->assertFalse($m->isSettingKeyValid('A'));
 		$this->assertFalse($m->isSettingKeyValid('!'));
-		$this->assertFalse($m->isSettingKeyValid('_'));
 		$this->assertFalse($m->isSettingKeyValid('"'));
 		$this->assertFalse($m->isSettingKeyValid('\''));
 		$this->assertFalse($m->isSettingKeyValid(' '));

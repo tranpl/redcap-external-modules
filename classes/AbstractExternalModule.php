@@ -75,8 +75,8 @@ class AbstractExternalModule
 
 	protected function isSettingKeyValid($key)
 	{
-		// Only allow lowercase characters, numbers, and dashes to ensure consistency between modules (and so we don't have to worry about escaping).
-		return !preg_match("/[^a-z0-9-]/", $key);
+		// Only allow lowercase characters, numbers, dashes, and underscores to ensure consistency between modules (and so we don't have to worry about escaping).
+		return !preg_match("/[^a-z0-9-_]/", $key);
 	}
 
 	function selectData($some, $params)
