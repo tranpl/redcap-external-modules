@@ -62,7 +62,7 @@ class ExternalModules
 
 	static function initialize()
 	{
-		if($_SERVER[HTTP_HOST] == 'localhost'){
+		if($_SERVER['HTTP_HOST'] == 'localhost'){
 			// Assume this is a developer's machine and enable errors.
 			ini_set('display_errors', 1);
 			ini_set('display_startup_errors', 1);
