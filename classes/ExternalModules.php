@@ -838,10 +838,11 @@ class ExternalModules
 	static function getConfig($prefix, $version)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$config = json_decode(file_get_contents(self::$MODULES_PATH . "$moduleDirectoryName/config.json"), true);
+		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
+		$config = json_decode(file_get_contents($configFilePath), true);
 
 		if($config == NULL){
-			throw new Exception("An error occurred while parsing configuration file for the \"$prefix\" module!  It is likely not valid JSON.");
+			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 		}
 
 		foreach(['global-settings', 'project-settings'] as $key){
