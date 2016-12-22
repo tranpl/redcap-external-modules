@@ -835,7 +835,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-	static function getConfig($prefix, $version)
+	static function getConfig($prefix, $version, $pid)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$config = json_decode(file_get_contents(self::$MODULES_PATH . "$moduleDirectoryName/config.json"), true);
@@ -847,6 +847,43 @@ class ExternalModules
 		foreach(['global-settings', 'project-settings'] as $key){
 			if(!isset($config[$key])){
 				$config[$key] = array();
+			}
+		}
+
+		## Pull form and field list for choice list of project-settings field-list and form-list settings
+		if($pid != "") {
+			foreach($config['project-settings'] as $configKey => $configRow) {
+				if($configRow['type'] == 'field-list') {
+					$choices = [];
+
+					$sql = "SELECT field_name,element_label
+							FROM redcap_metadata
+							WHERE project_id = '".db_real_escape_string($pid)."'
+							ORDER BY field_order";
+					$result = self::query($sql);
+
+					while($row = db_fetch_assoc($result)){
+						$choices[] = ['value' => $row['field_name'],'name' => $row['field_name'] . " - " . substr($row['element_label'],0,20)];
+					}
+
+					$config['project-settings'][$configKey]['choices'] = $choices;
+				}
+				else if($configRow['type'] == 'form-list') {
+					$choices = [];
+
+
+					$sql = "SELECT DISTINCT form_name
+							FROM redcap_metadata
+							WHERE project_id = '".db_real_escape_string($pid)."'
+							ORDER BY field_order";
+					$result = self::query($sql);
+
+					while($row = db_fetch_assoc($result)){
+						$choices[] = ['value' => $row['form_name'],'name' => $row['form_name']];
+					}
+
+					$config['project-settings'][$configKey]['choices'] = $choices;
+				}
 			}
 		}
 

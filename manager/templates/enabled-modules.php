@@ -23,7 +23,7 @@ $pid = $_GET['pid'];
 		echo 'None';
 	} else {
 		foreach ($versionsByPrefix as $prefix => $version) {
-			$config = ExternalModules::getConfig($prefix, $version);
+			$config = ExternalModules::getConfig($prefix, $version,$pid);
 			$configsByPrefix[$prefix] = $config;
 			?>
 			<tr data-module='<?= $prefix ?>'>
@@ -83,6 +83,12 @@ $pid = $_GET['pid'];
 
 			var inputHtml;
 			if(type == 'dropdown'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'field-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'form-list'){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 			}
 			else if(type == 'radio'){
