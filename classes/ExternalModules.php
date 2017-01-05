@@ -225,7 +225,7 @@ class ExternalModules
 	{
 		if($value === false){
 			// False gets translated to an empty string by db_real_escape_string().
-			// We much change this value to 0 for it to actually be saved.
+			// We must change this value to 0 for it to actually be saved.
 			$value = 0;
 		}
 
