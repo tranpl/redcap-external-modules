@@ -43,7 +43,12 @@ $pid = $_GET['pid'];
 </table>
 
 <?php
-$configsByPrefixJSON = json_encode($configsByPrefix);
+// JSON_PARTIAL_OUTPUT_ON_ERROR was added her to fix an odd conflict between field-list and form-list types
+// and some Hebrew characters on the "Israel: Healthcare Personnel (Hebrew)" project that could not be encoded.
+// This workaround allows configs to be encoded anyway, even though the unencodable characters will be excluded
+// (causing form-list and field-list to not work for any fields with unencodeable characters).
+// I spent a couple of hours trying to find a solution, but was unable.  This workaround will have to do for now.
+$configsByPrefixJSON = json_encode($configsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
 if($configsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
 	die();
