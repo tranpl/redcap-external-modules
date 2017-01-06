@@ -43,8 +43,8 @@ $pid = $_GET['pid'];
 </table>
 
 <?php
-// JSON_PARTIAL_OUTPUT_ON_ERROR was added her to fix an odd conflict between field-list and form-list types
-// and some Hebrew characters on the "Israel: Healthcare Personnel (Hebrew)" project that could not be encoded.
+// JSON_PARTIAL_OUTPUT_ON_ERROR was added here to fix an odd conflict between field-list and form-list types
+// and some Hebrew characters on the "Israel: Healthcare Personnel (Hebrew)" project that could not be json_encoded.
 // This workaround allows configs to be encoded anyway, even though the unencodable characters will be excluded
 // (causing form-list and field-list to not work for any fields with unencodeable characters).
 // I spent a couple of hours trying to find a solution, but was unable.  This workaround will have to do for now.
