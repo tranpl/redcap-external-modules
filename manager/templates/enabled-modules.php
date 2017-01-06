@@ -42,10 +42,18 @@ $pid = $_GET['pid'];
 	?>
 </table>
 
+<?php
+$configsByPrefixJSON = json_encode($configsByPrefix);
+if($configsByPrefixJSON == null){
+	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
+	die();
+}
+?>
+
 <script>
 	$(function(){
 		var pid = <?=json_encode($pid)?>;
-		var configsByPrefix = <?=json_encode($configsByPrefix)?>;
+		var configsByPrefix = <?=$configsByPrefixJSON?>;
 		var configureModal = $('#external-modules-configure-modal');
 		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
