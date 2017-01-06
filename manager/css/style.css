@@ -56,3 +56,7 @@
 	/* match text input disabled backgrounds */
 	background-color: rgb(235, 235, 228);
 }
+
+#external-modules-configure-modal select {
+	max-width: 275px;
+}
