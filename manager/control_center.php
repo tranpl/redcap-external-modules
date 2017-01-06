@@ -5,6 +5,10 @@ require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/header.php';
 
 ExternalModules::addResource('css/style.css');
 
+ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
+ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
+ExternalModules::addResource('js/project_lookup.js');
+
 ?>
 
 <h4 style="margin-top: 0;">

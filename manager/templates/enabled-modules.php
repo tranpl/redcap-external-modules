@@ -91,6 +91,10 @@ $pid = $_GET['pid'];
 			else if(type == 'form-list'){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 			}
+			else if(type == 'project-id'){
+				inputAttributes += ' class="project_id_textbox" id="test-id"';
+				inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, inputAttributes) + "</div>";
+			}
 			else if(type == 'radio'){
 				inputHtml = "";
 				for(var i in setting.choices ){
@@ -245,6 +249,8 @@ $pid = $_GET['pid'];
 				}
 
 				tbody.html(settingsHtml);
+
+				configureSettings(config['global-settings'], savedSettings);
 			});
 		});
 
