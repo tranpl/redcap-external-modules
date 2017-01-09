@@ -138,12 +138,8 @@ if($configsByPrefixJSON == null){
 
 <script>
 	$(function(){
-<<<<<<< HEAD
-		var configsByPrefix = <?=json_encode($configsByPrefix)?>;
-=======
-		var pid = <?=json_encode($pid)?>;
 		var configsByPrefix = <?=$configsByPrefixJSON?>;
->>>>>>> origin/master
+		var pid = <?=json_encode($pid)?>;
 		var configureModal = $('#external-modules-configure-modal');
 		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 

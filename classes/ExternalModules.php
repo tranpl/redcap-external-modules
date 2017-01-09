@@ -224,15 +224,7 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
-<<<<<<< HEAD
                 $value = self::transformValueToDB($value);
-=======
-		if($value === false){
-			// False gets translated to an empty string by db_real_escape_string().
-			// We must change this value to 0 for it to actually be saved.
-			$value = 0;
-		}
->>>>>>> origin/master
 
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
@@ -873,11 +865,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-<<<<<<< HEAD
 	static function getConfig($prefix, $version, $pid = "")
-=======
-	static function getConfig($prefix, $version, $pid = null)
->>>>>>> origin/master
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
