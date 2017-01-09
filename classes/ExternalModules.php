@@ -844,7 +844,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-	static function getConfig($prefix, $version, $pid)
+	static function getConfig($prefix, $version, $pid = null)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
@@ -861,7 +861,7 @@ class ExternalModules
 		}
 
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
-		if($pid != "") {
+		if(!empty($pid)) {
 			foreach($config['project-settings'] as $configKey => $configRow) {
 				if($configRow['type'] == 'field-list') {
 					$choices = [];
