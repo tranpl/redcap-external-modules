@@ -123,9 +123,27 @@ here. In turn, each project can override this set of defaults with their own val
 	?>
 </table>
 
+<?php
+// JSON_PARTIAL_OUTPUT_ON_ERROR was added here to fix an odd conflict between field-list and form-list types
+// and some Hebrew characters on the "Israel: Healthcare Personnel (Hebrew)" project that could not be json_encoded.
+// This workaround allows configs to be encoded anyway, even though the unencodable characters will be excluded
+// (causing form-list and field-list to not work for any fields with unencodeable characters).
+// I spent a couple of hours trying to find a solution, but was unable.  This workaround will have to do for now.
+$configsByPrefixJSON = json_encode($configsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
+if($configsByPrefixJSON == null){
+	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
+	die();
+}
+?>
+
 <script>
 	$(function(){
+<<<<<<< HEAD
 		var configsByPrefix = <?=json_encode($configsByPrefix)?>;
+=======
+		var pid = <?=json_encode($pid)?>;
+		var configsByPrefix = <?=$configsByPrefixJSON?>;
+>>>>>>> origin/master
 		var configureModal = $('#external-modules-configure-modal');
 		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
@@ -197,6 +215,10 @@ here. In turn, each project can override this set of defaults with their own val
 			}
 			else if(type == 'form-list'){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes, default_setting);
+			}
+			else if(type == 'project-id'){
+				inputAttributes += ' class="project_id_textbox" id="test-id"';
+				inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, inputAttributes) + "</div>";
 			}
 			else if(type == 'radio'){
 				inputHtml = "<div style='text-align: left; display: inline-block;'>";
@@ -377,6 +399,8 @@ here. In turn, each project can override this set of defaults with their own val
                                 }
 
 				tbody.html(settingsHtml);
+
+				configureSettings(config['global-settings'], savedSettings);
 			});
 		});
 

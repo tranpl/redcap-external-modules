@@ -224,7 +224,15 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
+<<<<<<< HEAD
                 $value = self::transformValueToDB($value);
+=======
+		if($value === false){
+			// False gets translated to an empty string by db_real_escape_string().
+			// We must change this value to 0 for it to actually be saved.
+			$value = 0;
+		}
+>>>>>>> origin/master
 
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
@@ -741,15 +749,24 @@ class ExternalModules
 
 	static function addResource($path)
 	{
-		$path = "manager/$path";
-		$fullLocalPath = __DIR__ . "/../$path";
-		$extension = pathinfo($fullLocalPath, PATHINFO_EXTENSION);
+		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
-		// Add the filemtime to the url for cache busting.
-		$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+		if(substr($path,0,8) == "https://") {
+			$url = $path;
+		}
+		else {
+			$path = "manager/$path";
+			$fullLocalPath = __DIR__ . "/../$path";
+
+			// Add the filemtime to the url for cache busting.
+			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+		}
 
 		if ($extension == 'css') {
 			echo "<link rel='stylesheet' type='text/css' href='" . $url . "'>";
+		}
+		else if ($extension == 'js') {
+			echo "<script src='" . $url . "'></script>";
 		}
 		else {
 			throw new Exception('Unsupported resource added: ' . $path);
@@ -856,7 +873,11 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
+<<<<<<< HEAD
 	static function getConfig($prefix, $version, $pid = "")
+=======
+	static function getConfig($prefix, $version, $pid = null)
+>>>>>>> origin/master
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
@@ -898,7 +919,7 @@ class ExternalModules
 
 
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
-		if($pid != "") {
+		if(!empty($pid)) {
 			foreach($config['project-settings'] as $configKey => $configRow) {
 				if($configRow['type'] == 'field-list') {
 					$choices = [];
