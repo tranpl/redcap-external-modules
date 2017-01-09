@@ -11,7 +11,7 @@ class ExternalModulesTest extends BaseTest
 		$defaultValue = rand();
 
 		$m = $this->getInstance([
-			'global-settings' => [
+			'system-settings' => [
 				[
 					'key' => TEST_SETTING_KEY,
 					'default' => $defaultValue
@@ -19,23 +19,23 @@ class ExternalModulesTest extends BaseTest
 			]
 		]);
 
-		$this->assertNull($this->getGlobalSetting());
+		$this->assertNull($this->getSystemSetting());
 		ExternalModules::initializeSettingDefaults($m);
-		$this->assertEquals($defaultValue, $this->getGlobalSetting());
+		$this->assertEquals($defaultValue, $this->getSystemSetting());
 
 		// Make sure defaults do NOT overwrite any existing settings.
-		$this->setGlobalSetting(rand());
+		$this->setSystemSetting(rand());
 		ExternalModules::initializeSettingDefaults($m);
-		$this->assertNotEquals($defaultValue, $this->getGlobalSetting());
+		$this->assertNotEquals($defaultValue, $this->getSystemSetting());
 	}
 
-	function testgetProjectSettingsAsArray_globalOnly()
+	function testgetProjectSettingsAsArray_systemOnly()
 	{
 		$value = rand();
-		$this->setGlobalSetting($value);
+		$this->setSystemSetting($value);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertEquals($value, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals($value, $array[TEST_SETTING_KEY]['global_value']);
+		$this->assertEquals($value, $array[TEST_SETTING_KEY]['system_value']);
 	}
 
 	function testgetProjectSettingsAsArray_projectOnly()
@@ -44,26 +44,26 @@ class ExternalModulesTest extends BaseTest
 		$this->setProjectSetting($value);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertEquals($value, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals(null, $array[TEST_SETTING_KEY]['global_value']);
+		$this->assertEquals(null, $array[TEST_SETTING_KEY]['system_value']);
 	}
 
 	function testgetProjectSettingsAsArray_both()
 	{
-		$globalValue = rand();
+		$systemValue = rand();
 		$projectValue = rand();
 
-		$this->setGlobalSetting($globalValue);
+		$this->setSystemSetting($systemValue);
 		$this->setProjectSetting($projectValue);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertEquals($projectValue, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals($globalValue, $array[TEST_SETTING_KEY]['global_value']);
+		$this->assertEquals($systemValue, $array[TEST_SETTING_KEY]['system_value']);
 
 		// Re-test reversing the insert order to make sure it doesn't matter.
 		$this->setProjectSetting($projectValue);
-		$this->setGlobalSetting($globalValue);
+		$this->setSystemSetting($systemValue);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertEquals($projectValue, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals($globalValue, $array[TEST_SETTING_KEY]['global_value']);
+		$this->assertEquals($systemValue, $array[TEST_SETTING_KEY]['system_value']);
 	}
 
 	function testAddReservedSettings()
@@ -72,7 +72,7 @@ class ExternalModulesTest extends BaseTest
 
 		$this->assertThrowsException(function() use ($method){
 			self::callPrivateMethod($method, array(
-				'global-settings' => array(
+				'system-settings' => array(
 					array('key' => ExternalModules::KEY_VERSION)
 				)
 			));
@@ -89,15 +89,15 @@ class ExternalModulesTest extends BaseTest
 		// Make sure other settings are passed through without exception.
 		$key = 'some-non-reserved-settings';
 		$config = self::callPrivateMethod($method, array(
-			'global-settings' => array(
+			'system-settings' => array(
 				array('key' => $key)
 			)
 		));
 
-		$globalSettings = $config['global-settings'];
-		$this->assertEquals(2, count($globalSettings));
-		$this->assertEquals(ExternalModules::KEY_ENABLED, $globalSettings[0]['key']);
-		$this->assertEquals($key, $globalSettings[1]['key']);
+		$systemSettings = $config['system-settings'];
+		$this->assertEquals(2, count($systemSettings));
+		$this->assertEquals(ExternalModules::KEY_ENABLED, $systemSettings[0]['key']);
+		$this->assertEquals($key, $systemSettings[1]['key']);
 	}
 
 	function testCacheAllEnableData()
@@ -105,12 +105,12 @@ class ExternalModulesTest extends BaseTest
 		$m = $this->getInstance();
 
 		$version = rand();
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, $version);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, $version);
 
 		self::callPrivateMethod('cacheAllEnableData');
-		$this->assertEquals($version, self::callPrivateMethod('getGloballyEnabledVersions')[TEST_MODULE_PREFIX]);
+		$this->assertEquals($version, self::callPrivateMethod('getSystemlyEnabledVersions')[TEST_MODULE_PREFIX]);
 
-		$m->removeGlobalSetting(ExternalModules::KEY_VERSION);
+		$m->removeSystemSetting(ExternalModules::KEY_VERSION);
 
 		// the other values set by cacheAllEnableData() are tested via testgetEnabledModuleVersionsForProject()
 	}
@@ -120,37 +120,37 @@ class ExternalModulesTest extends BaseTest
 		$prefix1 = TEST_MODULE_PREFIX . '-1';
 		$prefix2 = TEST_MODULE_PREFIX . '-2';
 
-		ExternalModules::setGlobalSetting($prefix1, ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
-		ExternalModules::setGlobalSetting($prefix2, ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
-		ExternalModules::setGlobalSetting($prefix1, ExternalModules::KEY_ENABLED, true);
-		ExternalModules::setGlobalSetting($prefix2, ExternalModules::KEY_ENABLED, true);
+		ExternalModules::setSystemSetting($prefix1, ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		ExternalModules::setSystemSetting($prefix2, ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		ExternalModules::setSystemSetting($prefix1, ExternalModules::KEY_ENABLED, true);
+		ExternalModules::setSystemSetting($prefix2, ExternalModules::KEY_ENABLED, true);
 
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[$prefix1]);
 		$this->assertNotNull($prefixes[$prefix2]);
 
-		ExternalModules::removeGlobalSetting($prefix2, ExternalModules::KEY_VERSION);
+		ExternalModules::removeSystemSetting($prefix2, ExternalModules::KEY_VERSION);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[$prefix1]);
 		$this->assertNull($prefixes[$prefix2]);
 
-		ExternalModules::removeGlobalSetting($prefix1, ExternalModules::KEY_ENABLED);
+		ExternalModules::removeSystemSetting($prefix1, ExternalModules::KEY_ENABLED);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNull($prefixes[$prefix1]);
 
-		ExternalModules::removeGlobalSetting($prefix1, ExternalModules::KEY_VERSION);
-		ExternalModules::removeGlobalSetting($prefix2, ExternalModules::KEY_ENABLED);
+		ExternalModules::removeSystemSetting($prefix1, ExternalModules::KEY_VERSION);
+		ExternalModules::removeSystemSetting($prefix2, ExternalModules::KEY_ENABLED);
 	}
 
 	function testgetEnabledModuleVersionsForProject_overrides()
 	{
 		$m = self::getInstance();
 
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 
-		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, true);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
 
@@ -166,7 +166,7 @@ class ExternalModulesTest extends BaseTest
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
 
-		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, false);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, false);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 

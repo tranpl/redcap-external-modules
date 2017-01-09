@@ -14,20 +14,20 @@ class AbstractExternalModuleTest extends BaseTest
     function testCheckSettings_duplicateKeys()
     {
 		self::assertConfigInvalid([
-			'global-settings' => [
+			'system-settings' => [
 				['key' => 'some-key']
 			],
 			'project-settings' => [
 				['key' => 'some-key']
 			],
-		], 'both the global and project level');
+		], 'both the system and project level');
 
 		self::assertConfigInvalid([
-			'global-settings' => [
+			'system-settings' => [
 				['key' => 'some-key'],
 				['key' => 'some-key'],
 			],
-		], 'global setting multiple times!');
+		], 'system setting multiple times!');
 
 		self::assertConfigInvalid([
 			'project-settings' => [
@@ -46,13 +46,13 @@ class AbstractExternalModuleTest extends BaseTest
 					'default' => true
 				]
 			]
-		], 'Default values are only allowed on global settings');
+		], 'Default values are only allowed on system settings');
 	}
 
 	function testCheckSettingKey_valid()
 	{
 		self::assertConfigValid([
-			'global-settings' => [
+			'system-settings' => [
 				['key' => 'key1']
 			],
 			'project-settings' => [
@@ -66,7 +66,7 @@ class AbstractExternalModuleTest extends BaseTest
 		$expected = 'contains invalid characters';
 
 		self::assertConfigInvalid([
-			'global-settings' => [
+			'system-settings' => [
 				['key' => 'A']
 			]
 		], $expected);
@@ -106,20 +106,20 @@ class AbstractExternalModuleTest extends BaseTest
 		}, $exceptionExcerpt);
 	}
 
-	function testGlobalSettings()
+	function testSystemSettings()
 	{
 		$value = rand();
-		$this->setGlobalSetting($value);
-		$this->assertEquals($value, $this->getGlobalSetting());
+		$this->setSystemSetting($value);
+		$this->assertEquals($value, $this->getSystemSetting());
 
-		$this->removeGlobalSetting();
-		$this->assertNull($this->getGlobalSetting());
+		$this->removeSystemSetting();
+		$this->assertNull($this->getSystemSetting());
 	}
 
 	function testProjectSettings()
 	{
 		$projectValue = rand();
-		$globalValue = rand();
+		$systemValue = rand();
 
 		$this->setProjectSetting($projectValue);
 		$this->assertEquals($projectValue, $this->getProjectSetting());
@@ -127,8 +127,8 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->removeProjectSetting();
 		$this->assertNull($this->getProjectSetting());
 
-		$this->setGlobalSetting($globalValue);
-		$this->assertEquals($globalValue, $this->getProjectSetting());
+		$this->setSystemSetting($systemValue);
+		$this->assertEquals($systemValue, $this->getProjectSetting());
 
 		$this->setProjectSetting($projectValue);
 		$this->assertEquals($projectValue, $this->getProjectSetting());
