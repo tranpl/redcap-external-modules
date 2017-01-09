@@ -19,6 +19,10 @@ if(!defined('APP_PATH_WEBROOT')){
 	require_once __DIR__ . "/../../redcap_connect.php";
 }
 
+if (class_exists('ExternalModules\ExternalModules')) {
+	return;
+}
+
 use \Exception;
 
 class ExternalModules
@@ -303,10 +307,10 @@ class ExternalModules
 				        $setting = array();
 				        $settings[$key] =& $setting;
 			        }
-        
+
 			        if($row['project_id'] === null){
 				        $setting['system_value'] = $value;
-        
+
 				        if(!isset($setting['value'])){
 					        $setting['value'] = $value;
 				        }
@@ -1064,4 +1068,3 @@ class ExternalModules
 		}
 	}
 }
-
