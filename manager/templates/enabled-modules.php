@@ -261,12 +261,10 @@ if($configsByPrefixJSON == null){
 		};
 
 		var getAttributeValueHtml = function(s){
-			if(s == null){
-				return ''
+			if(typeof s == 'string'){
+				s = s.replace(/"/g, '&quot;');
+				s = s.replace(/'/g, '&apos;');
 			}
-
-			s = s.replace(/"/g, '&quot;');
-			s = s.replace(/'/g, '&apos;');
 
 			return s;
 		}
