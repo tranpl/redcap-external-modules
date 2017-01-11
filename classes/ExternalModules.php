@@ -879,7 +879,7 @@ class ExternalModules
 			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 		}
 
-		foreach(['system-settings', 'project-settings'] as $key){
+		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
 			if(!isset($config[$key])){
 				$config[$key] = array();
 			}
