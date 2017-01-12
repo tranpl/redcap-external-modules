@@ -271,13 +271,20 @@ class ExternalModules
                         if($oldValue == null) {
 			        $event = "INSERT";
 			        $sql = "INSERT INTO redcap_external_module_settings
+							(
+								`external_module_id`,
+								`project_id`,
+								`key`,
+								`type`,
+								`value`
+							)
 					        VALUES
 					        (
 						        $externalModuleId,
 						        $projectId,
 						        '$key',
-						        '$value',
-                                                        '$type'
+						        '$type',
+						        '$value'
 					        )";
 		        } else {
 			        $event = "UPDATE";
@@ -292,6 +299,7 @@ class ExternalModules
                 }
 
 		self::query($sql);
+		
 		$affectedRows = db_affected_rows();
 
 		$description = ucfirst(strtolower($event)) . ' External Module setting';
