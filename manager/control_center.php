@@ -1,7 +1,7 @@
 <?php
 namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
-require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/header.php';
+require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
 
 ExternalModules::addResource('css/style.css');
 
@@ -15,13 +15,6 @@ ExternalModules::addResource('js/project_lookup.js');
 	<img src="<?= APP_PATH_WEBROOT . 'Resources/images/brick.png' ?>">
 	Module Management
 </h4>
-
-<br>
-<br>
-<br>
-<button id="external-modules-enable-modules-button">Enable Module(s)</button>
-<br>
-<br>
 
 <?php ExternalModules::safeRequireOnce('templates/enabled-modules.php'); ?>
 
@@ -70,7 +63,7 @@ ExternalModules::addResource('js/project_lookup.js');
 				<table class="table table-no-top-row-border">
 					<thead>
 						<tr>
-							<th colspan="2">Global Settings</th>
+							<th colspan="2">System Settings for All Projects</th>
 							<th>Project Override<br>Permission Level</th>
 						</tr>
 					</thead>
@@ -95,6 +88,7 @@ ExternalModules::addResource('js/project_lookup.js');
 		$('#sub-nav a[href*="ControlCenter"]').closest('li').addClass('active');
 
 		var disabledModal = $('#external-modules-disabled-modal');
+<?php if (!isset($_GET['pid'])) { ?>
 		$('#external-modules-enable-modules-button').click(function(){
 			var form = disabledModal.find('.modal-body form');
 			var loadingIndicator = $('<div class="loading-indicator"></div>');
@@ -110,6 +104,7 @@ ExternalModules::addResource('js/project_lookup.js');
 
 			disabledModal.modal('show');
 		});
+<?php } ?>
 
 		var configureModal = $('#external-modules-configure-modal');
 		configureModal.on('show.bs.modal', function () {
@@ -121,15 +116,15 @@ ExternalModules::addResource('js/project_lookup.js');
 		$('.external-modules-disable-button').click(function (event) {
 			var button = $(event.target);
 			button.attr('disabled', true);
-			button.html('Disabling...');
 
 			var row = button.closest('tr');
 			var module = row.data('module');
 			$.post('ajax/disable-module.php', {module: module}, function (data) {
 				if (data == 'success') {
+                                        button.attr('disabled', false);
 					var table = row.closest('table');
 					row.remove();
-
+    
 					if(table.find('tr').length == 0){
 						table.html('None');
 					}
@@ -139,9 +134,9 @@ ExternalModules::addResource('js/project_lookup.js');
 				}
 			});
 		});
-	})
+	});
 </script>
 
 <?php
 
-require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/footer.php';
+require_once APP_PATH_DOCROOT . 'ControlCenter/footer.php';
