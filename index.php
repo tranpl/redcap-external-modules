@@ -11,9 +11,9 @@ if(empty($prefix)){
 	die("A module with id $id could not be found!");
 }
 
-$version = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_VERSION);
+$version = ExternalModules::getGlobalSetting($prefix, ExternalModules::KEY_VERSION);
 if(empty($version)){
-	die("The requested module is currently disabled system-wide.");
+	die("The requested module is currently disabled globally.");
 }
 
 if($pid != null){

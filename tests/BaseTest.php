@@ -12,7 +12,7 @@ const TEST_SETTING_PID = 1;
 
 abstract class BaseTest extends TestCase
 {
-	protected $backupSystems = FALSE;
+	protected $backupGlobals = FALSE;
 
 	protected function setUp(){
 		self::cleanupSettings();
@@ -25,28 +25,28 @@ abstract class BaseTest extends TestCase
 
 	private function cleanupSettings()
 	{
-		$this->removeSystemSetting();
+		$this->removeGlobalSetting();
 		$this->removeProjectSetting();
 
 		$m = self::getInstance();
-		$m->removeSystemSetting(ExternalModules::KEY_VERSION, TEST_SETTING_PID);
-		$m->removeSystemSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+		$m->removeGlobalSetting(ExternalModules::KEY_VERSION, TEST_SETTING_PID);
+		$m->removeGlobalSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 	}
 
-	protected function setSystemSetting($value)
+	protected function setGlobalSetting($value)
 	{
-		self::getInstance()->setSystemSetting(TEST_SETTING_KEY, $value);
+		self::getInstance()->setGlobalSetting(TEST_SETTING_KEY, $value);
 	}
 
-	protected function getSystemSetting()
+	protected function getGlobalSetting()
 	{
-		return self::getInstance()->getSystemSetting(TEST_SETTING_KEY);
+		return self::getInstance()->getGlobalSetting(TEST_SETTING_KEY);
 	}
 
-	protected function removeSystemSetting()
+	protected function removeGlobalSetting()
 	{
-		self::getInstance()->removeSystemSetting(TEST_SETTING_KEY);
+		self::getInstance()->removeGlobalSetting(TEST_SETTING_KEY);
 	}
 
 	protected function setProjectSetting($value)

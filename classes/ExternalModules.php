@@ -27,7 +27,7 @@ use \Exception;
 
 class ExternalModules
 {
-	const SYSTEM_SETTING_PROJECT_ID = 'NULL';
+	const GLOBAL_SETTING_PROJECT_ID = 'NULL';
 	const KEY_VERSION = 'version';
 	const KEY_ENABLED = 'enabled';
 
@@ -45,7 +45,7 @@ class ExternalModules
 	private static $instanceCache = array();
 	private static $idsByPrefix;
 
-	private static $systemlyEnabledVersions;
+	private static $globallyEnabledVersions;
 	private static $projectEnabledDefaults;
 	private static $projectEnabledOverrides;
 	private static $enabledInstancesByPID = array();
@@ -61,7 +61,6 @@ class ExternalModules
 			'project-name' => 'Enable on this project',
 			'type' => 'checkbox',
 			'allow-project-overrides' => true,
-                        'default' => 'false',
 		)
 	);
 
@@ -162,11 +161,11 @@ class ExternalModules
 
 	static function getEnabledModules()
 	{
-		$result = self::getSystemSettings(null, array(self::KEY_VERSION));
+		$result = self::getGlobalSettings(null, array(self::KEY_VERSION));
 
 		$modules = array();
 		while($row = db_fetch_assoc($result)){
-			$modules[$row['directory_prefix']] = self::transformValueFromDB($row['value']);
+			$modules[$row['directory_prefix']] = $row['value'];
 		}
 
 		return $modules;
@@ -174,7 +173,7 @@ class ExternalModules
 
 	static function disable($moduleDirectoryPrefix)
 	{
-		self::removeSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
+		self::removeGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION);
 	}
 
 	static function enable($moduleDirectoryPrefix, $version)
@@ -185,50 +184,54 @@ class ExternalModules
 
 		self::initializeSettingDefaults($instance);
 
-		self::setSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION, $version);
+		self::setGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION, $version);
 	}
 
 	static function initializeSettingDefaults($moduleInstance)
 	{
 		$config = $moduleInstance->getConfig();
-		foreach($config['system-settings'] as $details){
+		foreach($config['global-settings'] as $details){
 			$key = $details['key'];
 			$default = @$details['default'];
-			$existingValue = $moduleInstance->getSystemSetting($key);
+			$existingValue = $moduleInstance->getGlobalSetting($key);
 			if(isset($default) && $existingValue == null){
-				$moduleInstance->setSystemSetting($key, $default);
+				$moduleInstance->setGlobalSetting($key, $default);
 			}
 		}
 	}
 
-	static function getSystemSetting($moduleDirectoryPrefix, $key)
+	static function getGlobalSetting($moduleDirectoryPrefix, $key)
 	{
-		return self::getSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key);
+		return self::getSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
 	}
 
-	static function getSystemSettings($moduleDirectoryPrefixes, $keys = null)
+	static function getGlobalSettings($moduleDirectoryPrefixes, $keys = null)
 	{
-		return self::getSettings($moduleDirectoryPrefixes, self::SYSTEM_SETTING_PROJECT_ID, $keys);
+		return self::getSettings($moduleDirectoryPrefixes, self::GLOBAL_SETTING_PROJECT_ID, $keys);
 	}
 
-	static function setSystemSetting($moduleDirectoryPrefix, $key, $value)
+	static function setGlobalSetting($moduleDirectoryPrefix, $key, $value)
 	{
-		self::setProjectSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key, $value);
+		self::setProjectSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
 	}
 
-	static function removeSystemSetting($moduleDirectoryPrefix, $key)
+	static function removeGlobalSetting($moduleDirectoryPrefix, $key)
 	{
-		self::removeProjectSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key);
+		self::removeProjectSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
 	}
 
 	static function setProjectSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
-		return self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
+		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
 	}
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
-                $value = self::transformValueToDB($value);
+		if($value === false){
+			// False gets translated to an empty string by db_real_escape_string().
+			// We much change this value to 0 for it to actually be saved.
+			$value = 0;
+		}
 
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
@@ -240,7 +243,7 @@ class ExternalModules
 		$oldValue = db_real_escape_string(self::getSetting($moduleDirectoryPrefix, $projectId, $key));
 		if($value == $oldValue){
 			// We don't need to do anything.
-			return "$value == $oldValue";
+			return;
 		}
 		else if($value == null){
 			$event = "DELETE";
@@ -292,34 +295,30 @@ class ExternalModules
 
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
-                $results = array();
-		$results[] = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
-		// $results[] = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID));
+		$result = self::getSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
-                foreach ($results as $result) {
-		        while($row = db_fetch_assoc($result)){
-			        $key = $row['key'];
-			        $value = self::transformValueFromDB($row['value']);
+		while($row = db_fetch_assoc($result)){
+			$key = $row['key'];
+			$value = $row['value'];
 
-			        $setting =& $settings[$key];
-			        if(!isset($setting)){
-				        $setting = array();
-				        $settings[$key] =& $setting;
-			        }
+			$setting =& $settings[$key];
+			if(!isset($setting)){
+				$setting = array();
+				$settings[$key] =& $setting;
+			}
 
-			        if($row['project_id'] === null){
-				        $setting['system_value'] = $value;
+			if($row['project_id'] === null){
+				$setting['global_value'] = $value;
 
-				        if(!isset($setting['value'])){
-					        $setting['value'] = $value;
-				        }
-			        }
-			        else{
-				        $setting['value'] = $value;
-			        }
-		        }
-                }
+				if(!isset($setting['value'])){
+					$setting['value'] = $value;
+				}
+			}
+			else{
+				$setting['value'] = $value;
+			}
+		}
 
 		return $settings;
 	}
@@ -354,7 +353,7 @@ class ExternalModules
 		$numRows = db_num_rows($result);
 		if($numRows == 1){
 			$row = db_fetch_assoc($result);
-			return self::transformValueFromDB($row['value']);
+			return $row['value'];
 		}
 		else if($numRows == 0){
 			return null;
@@ -369,7 +368,7 @@ class ExternalModules
 		$value = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
 		if($value == null){
-			$value =  self::getSystemSetting($moduleDirectoryPrefix, $key);
+			$value =  self::getGlobalSetting($moduleDirectoryPrefix, $key);
 		}
 
 		return $value;
@@ -594,15 +593,15 @@ class ExternalModules
 	}
 
 	// Accepts a project id as the first parameter.
-	// If the project id is null, all systemly enabled module instances are returned.
+	// If the project id is null, all globally enabled module instances are returned.
 	// Otherwise, only instances enabled for the current project id are returned.
 	private static function getEnabledModuleInstances($pid)
 	{
 		$instances = @self::$enabledInstancesByPID[$pid];
 		if(!isset($instances)){
 			if($pid == null){
-				// Cache systemly enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
-				$prefixes = self::getSystemlyEnabledVersions();
+				// Cache globally enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
+				$prefixes = self::getGloballyEnabledVersions();
 			}
 			else{
 				$prefixes = self::getEnabledModuleVersionsForProject($pid);
@@ -619,13 +618,13 @@ class ExternalModules
 		return $instances;
 	}
 
-	private static function getSystemlyEnabledVersions()
+	private static function getGloballyEnabledVersions()
 	{
-		if(!isset(self::$systemlyEnabledVersions)){
+		if(!isset(self::$globallyEnabledVersions)){
 			self::cacheAllEnableData();
 		}
 
-		return self::$systemlyEnabledVersions;
+		return self::$globallyEnabledVersions;
 	}
 
 	private static function getProjectEnabledDefaults()
@@ -663,13 +662,13 @@ class ExternalModules
 			}
 		}
 
-		$systemlyEnabledVersions = self::getSystemlyEnabledVersions();
+		$globallyEnabledVersions = self::getGloballyEnabledVersions();
 
 		$enabledVersions = array();
 		foreach(array_keys($enabledPrefixes) as $prefix){
-			$version = @$systemlyEnabledVersions[$prefix];
+			$version = @$globallyEnabledVersions[$prefix];
 
-			// Check the version to make sure the module is not systemly disabled.
+			// Check the version to make sure the module is not globally disabled.
 			if(isset($version)){
 				$enabledVersions[$prefix] = $version;
 			}
@@ -678,29 +677,9 @@ class ExternalModules
 		return $enabledVersions;
 	}
 
-        private static function transformValueToDB($value) {
-                if ($value === false) {
-                        return "|false";
-                } else if ($value === true) {
-                        return "|true";
-                } else {
-                        return $value;
-                }
-        }
-
-        private static function transformValueFromDB($value) {
-                if ($value == "|false") {
-                        return false;
-                } else if ($value == "|true") {
-                        return true;
-                } else {
-                        return $value;
-                }
-        }
-
 	private static function cacheAllEnableData()
 	{
-		$systemlyEnabledVersions = array();
+		$globallyEnabledVersions = array();
 		$projectEnabledOverrides = array();
 		$projectEnabledDefaults = array();
 
@@ -711,10 +690,10 @@ class ExternalModules
 				$pid = $row['project_id'];
 				$prefix = $row['directory_prefix'];
 				$key = $row['key'];
-				$value = self::transformValueFromDB($row['value']);
+				$value = $row['value'];
 
 				if($key == self::KEY_VERSION){
-					$systemlyEnabledVersions[$prefix] = $value;
+					$globallyEnabledVersions[$prefix] = $value;
 				}
 				else if($key == self::KEY_ENABLED){
 					if(isset($pid)){
@@ -731,7 +710,7 @@ class ExternalModules
 		}
 
 		// Overwrite any previously cached results
-		self::$systemlyEnabledVersions = $systemlyEnabledVersions;
+		self::$globallyEnabledVersions = $globallyEnabledVersions;
 		self::$projectEnabledDefaults = $projectEnabledDefaults;
 		self::$projectEnabledOverrides = $projectEnabledOverrides;
 		self::$enabledInstancesByPID = array();
@@ -869,7 +848,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-	static function getConfig($prefix, $version, $pid = "")
+	static function getConfig($prefix, $version, $pid)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
@@ -879,36 +858,11 @@ class ExternalModules
 			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 		}
 
-		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
+		foreach(['permissions', 'global-settings', 'project-settings'] as $key){
 			if(!isset($config[$key])){
 				$config[$key] = array();
 			}
 		}
-
-                $result = self::getSystemSettings();
-		while($dbRow = db_fetch_assoc($result)){
-                        if (!in_array($dbRow['key'], array("version"))) {
-                                $i = 0;
-                                $found = false;
-                                foreach ($config['system-settings'] as $configRow) {
-                                        if (($dbRow['key'] == $configRow['key']) && (isset($dbRow['value']))) {
-                                                $config['system-settings'][$i]['default'] = $dbRow['value'];
-                                                $found = true;
-                                                break;    // inner loop
-                                        }
-                                        $i++;
-                                }
-                                if ((!$found) && (isset($dbRow['value']))) {
-                                        $c = array (
-                                                     "key" => $dbRow['key'],
-                                                     "default" => $dbRow['value'],
-                                                   );
-                                        // put in front
-                                        array_unshift($config['system-settings'], $c);
-                                }
-                        }
-                }
-
 
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
 		if(!empty($pid)) {
@@ -952,11 +906,11 @@ class ExternalModules
 
 	private static function addReservedSettings($config)
 	{
-		$systemSettings = $config['system-settings'];
+		$globalSettings = $config['global-settings'];
 		$projectSettings = $config['project-settings'];
 
 		$existingSettingKeys = array();
-		foreach($systemSettings as $details){
+		foreach($globalSettings as $details){
 			$existingSettingKeys[$details['key']] = true;
 		}
 
@@ -968,29 +922,16 @@ class ExternalModules
 		foreach(self::$RESERVED_SETTINGS as $details){
 			$key = $details['key'];
 			if(isset($existingSettingKeys[$key])){
-                                for ($i=0; $i < count($systemSettings); $i++) {
-                                        if ($key == $systemSettings[$i]['key']) {
-                                                foreach ($details as $k => $v) {
-                                                        if (!isset($systemSettings[$i][$k])) {
-                                                                $systemSettings[$i][$k] = $v;
-                                                        }
-                                                }
-                                        }
-                                }
-                                for ($i=0; $i < count($projectSettings); $i++) {
-                                        if ($key == $projectSettings[$i]["key"]) {
-				                throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
-                                        }
-                                }
-			} else {
-			        if(@$details['hidden'] != true){
-				        $visibleReservedSettings[] = $details;
-			        }
-                        }
+				throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
+			}
+
+			if(@$details['hidden'] != true){
+				$visibleReservedSettings[] = $details;
+			}
 		}
 
 		// Merge arrays so that reserved settings always end up at the top of the list.
-		$config['system-settings'] = array_merge($visibleReservedSettings, $systemSettings);
+		$config['global-settings'] = array_merge($visibleReservedSettings, $globalSettings);
 
 		return $config;
 	}
@@ -1001,28 +942,28 @@ class ExternalModules
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
 	{
-		if(self::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
+		if(self::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
 			return true;
 		}
 
 		if(self::hasDesignRights()){
-			if(!self::isSystemSetting($moduleDirectoryPrefix, $key)){
+			if(!self::isGlobalSetting($moduleDirectoryPrefix, $key)){
 				return true;
 			}
 
-			$level = self::getSystemSetting($moduleDirectoryPrefix, $key . self::OVERRIDE_PERMISSION_LEVEL_SUFFIX);
+			$level = self::getGlobalSetting($moduleDirectoryPrefix, $key . self::OVERRIDE_PERMISSION_LEVEL_SUFFIX);
 			return $level == self::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS;
 		}
 
 		return false;
 	}
 
-	static function isSystemSetting($moduleDirectoryPrefix, $key)
+	static function isGlobalSetting($moduleDirectoryPrefix, $key)
 	{
-		$version = self::getSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
+		$version = self::getGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION);
 		$config = self::getConfig($moduleDirectoryPrefix, $version);
 
-		foreach($config['system-settings'] as $details){
+		foreach($config['global-settings'] as $details){
 			if($details['key'] == $key){
 				return true;
 			}
@@ -1046,7 +987,7 @@ class ExternalModules
 		return $rights[USERID]['design'] == 1;
 	}
 
-	static function hasSystemSettingsSavePermission()
+	static function hasGlobalSettingsSavePermission()
 	{
 		return SUPER_USER;
 	}
