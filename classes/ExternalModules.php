@@ -31,6 +31,8 @@ class ExternalModules
 	const KEY_VERSION = 'version';
 	const KEY_ENABLED = 'enabled';
 
+	const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
+
 	const DISABLE_EXTERNAL_MODULE_HOOKS = 'disable-external-module-hooks';
 
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
@@ -165,7 +167,10 @@ class ExternalModules
 
 		$modules = array();
 		while($row = db_fetch_assoc($result)){
-			$modules[$row['directory_prefix']] = $row['value'];
+			$prefix = $row['directory_prefix'];
+			if(!self::shouldExcludeModule($prefix)){
+				$modules[$prefix] = $row['value'];
+			}
 		}
 
 		return $modules;
@@ -677,6 +682,23 @@ class ExternalModules
 		return $enabledVersions;
 	}
 
+	private static function shouldExcludeModule($prefix)
+	{
+		$isTestPrefix = strpos($prefix, self::TEST_MODULE_PREFIX) === 0;
+		if($isTestPrefix && !self::isTesting($prefix)){
+			// This php process is not running unit tests.
+			// Ignore the test prefix so it doesn't interfere with this process.
+			return true;
+		}
+
+		return false;
+	}
+
+	private static function isTesting()
+	{
+		return PHP_SAPI == 'cli' && strpos($_SERVER['argv'][0], 'phpunit') !== FALSE;
+	}
+
 	private static function cacheAllEnableData()
 	{
 		$globallyEnabledVersions = array();
@@ -691,6 +713,10 @@ class ExternalModules
 				$prefix = $row['directory_prefix'];
 				$key = $row['key'];
 				$value = $row['value'];
+
+				if(self::shouldExcludeModule($prefix)){
+					continue;
+				}
 
 				if($key == self::KEY_VERSION){
 					$globallyEnabledVersions[$prefix] = $value;
