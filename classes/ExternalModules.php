@@ -37,6 +37,7 @@ class ExternalModules
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
 
 	public static $BASE_URL;
+	public static $BASE_PATH;
 	public static $MODULES_URL;
 	public static $MODULES_PATH;
 
@@ -65,6 +66,17 @@ class ExternalModules
 		)
 	);
 
+        static function getIconURL($icon) {
+                $sfx = ".png";
+                if (file_exists(self::$BASE_PATH. $icon . $sfx)) {
+                        return self::$BASE_URL . '/images/' . $licon . $sfx;
+                } else if (file_exists(APP_PATH_DOCROOT . "/Resources/images/" . $icon . $sfx))  {
+                        return APP_PATH_IMAGES . $icon . $sfx;
+                } else {
+                        return $icon . $sfx;
+                }
+        }
+
 	static function initialize()
 	{
 		if($_SERVER['HTTP_HOST'] == 'localhost'){
@@ -81,6 +93,7 @@ class ExternalModules
 		}
 
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
+		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_PATH = __DIR__ . "/../.." . $modulesDirectoryName;
 
 		register_shutdown_function(function(){

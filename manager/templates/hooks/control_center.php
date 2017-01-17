@@ -10,7 +10,7 @@ require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 		<?php
 		foreach(ExternalModules::getControlCenterLinks() as $name=>$link){
 			?>
-			span.append('<img src="<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png">');
+			span.append('<img src="<?= ExternalModules::getIconURL($link['icon']); ?>">');
 			span.append('&nbsp; ');
 			span.append('<a href="<?= $link['url'] ?>"><?= $name ?></a>');
 			span.append('<br>');

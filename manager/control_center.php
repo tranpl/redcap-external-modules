@@ -12,7 +12,7 @@ ExternalModules::addResource('js/project_lookup.js');
 ?>
 
 <h4 style="margin-top: 0;">
-	<img src="<?= APP_PATH_WEBROOT . 'Resources/images/puzzle_medium.png' ?>">
+	<img src='../images/puzzle_medium.png'>
 	Module Management
 </h4>
 

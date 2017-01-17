@@ -52,7 +52,7 @@ $project_id = $arguments[0];
                                         $url = $link['url']."pid=".$project_id;
                                 }
                                 ?>
-                                newLink.find('img').attr('src', "<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png");
+                                newLink.find('img').attr('src', "<?= ExternalModules::getIconURL($link['icon']) ?>");
 				newLink.find('a').attr('href', '<?= $url ?>')
 				newLink.find('a').html('<?= $name ?>')
 				menubox.append(newLink)

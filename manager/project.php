@@ -12,7 +12,7 @@ ExternalModules::addResource('css/style.css');
 ?>
 
 <h4 style="margin-top: 0;">
-        <img src="<?= APP_PATH_WEBROOT . 'Resources/images/puzzle_medium.png' ?>">
+        <img src="<?= '../images/puzzle_medium.png' ?>">
         Module Management for Your Project
 </h4>
 
