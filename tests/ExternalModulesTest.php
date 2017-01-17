@@ -108,7 +108,7 @@ class ExternalModulesTest extends BaseTest
 		$m->setSystemSetting(ExternalModules::KEY_VERSION, $version);
 
 		self::callPrivateMethod('cacheAllEnableData');
-		$this->assertEquals($version, self::callPrivateMethod('getSystemlyEnabledVersions')[TEST_MODULE_PREFIX]);
+		$this->assertEquals($version, self::callPrivateMethod('getSystemwideEnabledVersions')[TEST_MODULE_PREFIX]);
 
 		$m->removeSystemSetting(ExternalModules::KEY_VERSION);
 
@@ -142,6 +142,19 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::removeSystemSetting($prefix2, ExternalModules::KEY_ENABLED);
 	}
 
+	function testprojectSettings()
+        {
+		$m = self::getInstance();
+
+                $m->setProjectSetting(ExternalModules::KEY_ENABLED, false, TEST_SETTING_PID);
+                $val = $m->getProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID, ExternalModules::KEY_ENABLED);
+		$this->assertNull($val);
+
+                $m->setProjectSetting(ExternalModules::KEY_ENABLED, null, TEST_SETTING_PID);
+                $val = $m->getProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID, ExternalModules::KEY_ENABLED);
+		$this->assertNotNull($val);
+        }
+
 	function testgetEnabledModuleVersionsForProject_overrides()
 	{
 		$m = self::getInstance();
@@ -162,8 +175,8 @@ class ExternalModulesTest extends BaseTest
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 
-		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
-		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
+		$rv = $m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache(true);
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
 
 		$m->setSystemSetting(ExternalModules::KEY_ENABLED, false);
@@ -179,10 +192,10 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 	}
 
-	private function getEnabledModuleVersionsForProjectIgnoreCache()
+	private function getEnabledModuleVersionsForProjectIgnoreCache($b = false)
 	{
 		self::callPrivateMethod('cacheAllEnableData'); // Call this every time to clear/reset the cache.
-		return self::callPrivateMethod('getEnabledModuleVersionsForProject', TEST_SETTING_PID);
+		return self::callPrivateMethod('getEnabledModuleVersionsForProject', TEST_SETTING_PID, $b);
 	}
 
 	private function callPrivateMethod($methodName)

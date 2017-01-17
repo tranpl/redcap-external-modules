@@ -45,7 +45,7 @@ class ExternalModules
 	private static $instanceCache = array();
 	private static $idsByPrefix;
 
-	private static $systemlyEnabledVersions;
+	private static $systemwideEnabledVersions;
 	private static $projectEnabledDefaults;
 	private static $projectEnabledOverrides;
 	private static $enabledInstancesByPID = array();
@@ -103,23 +103,7 @@ class ExternalModules
 					A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
 					Disabling that module...
 				</h4>
-				<script>
-					var request = new XMLHttpRequest();
-					request.onreadystatechange = function() {
-						if (request.readyState == XMLHttpRequest.DONE ) {
-							var messageElement = document.getElementById('external-modules-message')
-							if(request.responseText == 'success'){
-								messageElement.innerHTML = 'The "<?=$activeModulePrefix?>" external module was automatically disabled in order to allow REDCap to function properly.  The REDCap administrator has been notified.  Please save a copy of the above error and fix it before re-enabling the module.';
-							}
-							else{
-								messageElement.innerHTML += '<br>An error occurred while disabling the "<?=$activeModulePrefix?>" module: ' + request.responseText;
-							}
-						}
-					};
-
-					request.open("POST", "<?=self::$BASE_URL?>/manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
-					request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-					request.send("module=<?=$activeModulePrefix?>");
+				<script src='js/ExternalModules.js'>
 				</script>
 				<?php
 			}
@@ -240,7 +224,9 @@ class ExternalModules
 		$oldValue = db_real_escape_string(self::getSetting($moduleDirectoryPrefix, $projectId, $key));
 		if($value == $oldValue){
 			// We don't need to do anything.
-			return "$value == $oldValue";
+                        var_dump($value);
+                        var_dump($oldValue);
+			return $value." == ".$oldValue;
 		}
 		else if($value == null){
 			$event = "DELETE";
@@ -288,36 +274,33 @@ class ExternalModules
 		if($affectedRows != 1){
 			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
 		}
+                return "affectedRows: $affectedRows";
 	}
 
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
-                $results = array();
-		$results[] = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
-		// $results[] = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID));
+		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
-                foreach ($results as $result) {
-		        while($row = db_fetch_assoc($result)){
-			        $key = $row['key'];
-			        $value = self::transformValueFromDB($row['value']);
+		while($row = db_fetch_assoc($result)){
+			$key = $row['key'];
+			$value = self::transformValueFromDB($row['value']);
 
-			        $setting =& $settings[$key];
-			        if(!isset($setting)){
-				        $setting = array();
-				        $settings[$key] =& $setting;
-			        }
+			$setting =& $settings[$key];
+			if(!isset($setting)){
+				$setting = array();
+				$settings[$key] =& $setting;
+			}
 
-			        if($row['project_id'] === null){
-				        $setting['system_value'] = $value;
+			if($row['project_id'] === null){
+				$setting['system_value'] = $value;
 
-				        if(!isset($setting['value'])){
-					        $setting['value'] = $value;
-				        }
-			        }
-			        else{
-				        $setting['value'] = $value;
-			        }
+				if(!isset($setting['value'])){
+					$setting['value'] = $value;
+				}
+			}
+			else{
+				$setting['value'] = $value;
 		        }
                 }
 
@@ -340,11 +323,12 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
+		$sql = "SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
-							WHERE " . implode(' AND ', $whereClauses));
+							WHERE " . implode(' AND ', $whereClauses);
+                return self::query($sql);
 	}
 
 	private static function getSetting($moduleDirectoryPrefix, $projectId, $key)
@@ -360,7 +344,7 @@ class ExternalModules
 			return null;
 		}
 		else{
-			throw new Exception("More than one External Module setting exists for project $projectId and key '$key'!  This should never happen!");
+			throw new Exception("More than one External Module setting exists for prefix $moduleDirectoryPrefix, project $projectId, and key '$key'!  This should never happen!");
 		}
 	}
 
@@ -450,12 +434,12 @@ class ExternalModules
 		$valueListSql = "";
 		$nullSql = "";
 
-        foreach($array as $item){
-            if(!empty($valueListSql)){
-				$valueListSql .= ', ';
-            }
-
-            $item = db_real_escape_string($item);
+                foreach($array as $item){
+                        if(!empty($valueListSql)){
+				        $valueListSql .= ', ';
+                        }
+        
+                        $item = db_real_escape_string($item);
 
 			if($item == 'NULL'){
 				$nullSql = "$columnName IS NULL";
@@ -475,8 +459,8 @@ class ExternalModules
 			$parts[] = $nullSql;
 		}
 
-        return "(" . implode(" OR ", $parts) . ")";
-    }
+                return "(" . implode(" OR ", $parts) . ")";
+        }
 
 	static function callHook($name, $arguments)
 	{
@@ -594,15 +578,15 @@ class ExternalModules
 	}
 
 	// Accepts a project id as the first parameter.
-	// If the project id is null, all systemly enabled module instances are returned.
+	// If the project id is null, all systemwide enabled module instances are returned.
 	// Otherwise, only instances enabled for the current project id are returned.
 	private static function getEnabledModuleInstances($pid)
 	{
 		$instances = @self::$enabledInstancesByPID[$pid];
 		if(!isset($instances)){
 			if($pid == null){
-				// Cache systemly enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
-				$prefixes = self::getSystemlyEnabledVersions();
+				// Cache systemwide enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
+				$prefixes = self::getSystemwideEnabledVersions();
 			}
 			else{
 				$prefixes = self::getEnabledModuleVersionsForProject($pid);
@@ -619,13 +603,13 @@ class ExternalModules
 		return $instances;
 	}
 
-	private static function getSystemlyEnabledVersions()
+	private static function getSystemwideEnabledVersions()
 	{
-		if(!isset(self::$systemlyEnabledVersions)){
+		if(!isset(self::$systemwideEnabledVersions)){
 			self::cacheAllEnableData();
 		}
 
-		return self::$systemlyEnabledVersions;
+		return self::$systemwideEnabledVersions;
 	}
 
 	private static function getProjectEnabledDefaults()
@@ -646,8 +630,9 @@ class ExternalModules
 		return self::$projectEnabledOverrides;
 	}
 
-	private static function getEnabledModuleVersionsForProject($pid)
+	private static function getEnabledModuleVersionsForProject($pid, $b)
 	{
+                // look for UNIT-TESTING-PREFIX here
 		$projectEnabledOverrides = self::getProjectEnabledOverrides();
 
 		$enabledPrefixes = self::getProjectEnabledDefaults();
@@ -662,14 +647,17 @@ class ExternalModules
 				}
 			}
 		}
+                if ($b) {
+                        throw new Exception("overrrides: ".json_encode($overrides)." enabledPrefixes: ".json_encode($enabledPrefixes));
+                }
 
-		$systemlyEnabledVersions = self::getSystemlyEnabledVersions();
+		$systemwideEnabledVersions = self::getSystemwideEnabledVersions();
 
 		$enabledVersions = array();
 		foreach(array_keys($enabledPrefixes) as $prefix){
-			$version = @$systemlyEnabledVersions[$prefix];
+			$version = @$systemwideEnabledVersions[$prefix];
 
-			// Check the version to make sure the module is not systemly disabled.
+			// Check the version to make sure the module is not systemwide disabled.
 			if(isset($version)){
 				$enabledVersions[$prefix] = $version;
 			}
@@ -700,7 +688,7 @@ class ExternalModules
 
 	private static function cacheAllEnableData()
 	{
-		$systemlyEnabledVersions = array();
+		$systemwideEnabledVersions = array();
 		$projectEnabledOverrides = array();
 		$projectEnabledDefaults = array();
 
@@ -714,7 +702,7 @@ class ExternalModules
 				$value = self::transformValueFromDB($row['value']);
 
 				if($key == self::KEY_VERSION){
-					$systemlyEnabledVersions[$prefix] = $value;
+					$systemwideEnabledVersions[$prefix] = $value;
 				}
 				else if($key == self::KEY_ENABLED){
 					if(isset($pid)){
@@ -731,7 +719,7 @@ class ExternalModules
 		}
 
 		// Overwrite any previously cached results
-		self::$systemlyEnabledVersions = $systemlyEnabledVersions;
+		self::$systemwideEnabledVersions = $systemwideEnabledVersions;
 		self::$projectEnabledDefaults = $projectEnabledDefaults;
 		self::$projectEnabledOverrides = $projectEnabledOverrides;
 		self::$enabledInstancesByPID = array();
@@ -773,7 +761,7 @@ class ExternalModules
 		$links = self::getLinks();
 
 		$links['Manage External Modules'] = array(
-			'icon' => 'brick',
+			'icon' => 'puzzle_small',
 			'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
 		);
 
@@ -787,7 +775,7 @@ class ExternalModules
 
 		if(self::hasDesignRights()){
 			$links['Manage External Modules'] = array(
-				'icon' => 'brick',
+				'icon' => 'puzzle_small',
 				'url' => ExternalModules::$BASE_URL  . 'manager/project.php?'
 			);
 		}
@@ -874,41 +862,22 @@ class ExternalModules
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
 		$config = json_decode(file_get_contents($configFilePath), true);
+                if (isset($config['global-settings'])) {
+                        if (!isset($config['system-settings'])) {
+                                $config['system-settings'] = $config['global-settings'];
+                        }
+                        unset($config['global-settings']);
+                }
 
 		if($config == NULL){
 			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 		}
 
-		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
+		foreach(['system-settings', 'project-settings'] as $key){
 			if(!isset($config[$key])){
 				$config[$key] = array();
 			}
 		}
-
-                $result = self::getSystemSettings();
-		while($dbRow = db_fetch_assoc($result)){
-                        if (!in_array($dbRow['key'], array("version"))) {
-                                $i = 0;
-                                $found = false;
-                                foreach ($config['system-settings'] as $configRow) {
-                                        if (($dbRow['key'] == $configRow['key']) && (isset($dbRow['value']))) {
-                                                $config['system-settings'][$i]['default'] = $dbRow['value'];
-                                                $found = true;
-                                                break;    // inner loop
-                                        }
-                                        $i++;
-                                }
-                                if ((!$found) && (isset($dbRow['value']))) {
-                                        $c = array (
-                                                     "key" => $dbRow['key'],
-                                                     "default" => $dbRow['value'],
-                                                   );
-                                        // put in front
-                                        array_unshift($config['system-settings'], $c);
-                                }
-                        }
-                }
-
 
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
 		if(!empty($pid)) {
@@ -964,30 +933,17 @@ class ExternalModules
 			$existingSettingKeys[$details['key']] = true;
 		}
 
-		$visibleReservedSettings = array();
-		foreach(self::$RESERVED_SETTINGS as $details){
-			$key = $details['key'];
-			if(isset($existingSettingKeys[$key])){
-                                for ($i=0; $i < count($systemSettings); $i++) {
-                                        if ($key == $systemSettings[$i]['key']) {
-                                                foreach ($details as $k => $v) {
-                                                        if (!isset($systemSettings[$i][$k])) {
-                                                                $systemSettings[$i][$k] = $v;
-                                                        }
-                                                }
-                                        }
-                                }
-                                for ($i=0; $i < count($projectSettings); $i++) {
-                                        if ($key == $projectSettings[$i]["key"]) {
-				                throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
-                                        }
-                                }
-			} else {
-			        if(@$details['hidden'] != true){
-				        $visibleReservedSettings[] = $details;
-			        }
+                $visibleReservedSettings = array();
+                foreach(self::$RESERVED_SETTINGS as $details){
+                        $key = $details['key'];
+                        if(isset($existingSettingKeys[$key])){
+                                throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
                         }
-		}
+
+                        if(@$details['hidden'] != true){
+                                $visibleReservedSettings[] = $details;
+                        }
+                }
 
 		// Merge arrays so that reserved settings always end up at the top of the list.
 		$config['system-settings'] = array_merge($visibleReservedSettings, $systemSettings);

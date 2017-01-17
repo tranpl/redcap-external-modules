@@ -9,9 +9,15 @@ if(!ExternalModules::hasDesignRights()){
 }
 
 ExternalModules::addResource('css/style.css');
+?>
 
+<h4 style="margin-top: 0;">
+        <img src="<?= APP_PATH_WEBROOT . 'Resources/images/puzzle_medium.png' ?>">
+        Module Management for Your Project
+</h4>
+
+<?php
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
-
 ?>
 
 <style>
@@ -49,42 +55,9 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 </div>
 
 <script>
-        $(function() {
-                var pid = <?=$_GET['pid']?>;
-
-                var reloadPage = function(){
-                        $('<div class="modal-backdrop fade in"></div>').appendTo(document.body);
-                        var loc = window.location;
-                        window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
-                }
-
-                $('.external-modules-disable-button').click(function (event) {
-                        var button = $(event.target);
-                        button.attr('disabled', true);
-
-                        var row = $(event.target).closest('tr');
-                        var prefix = row.data('module');
-
-                        var version = row.data('version');
-                        var version_str = '';
-                        if (version) {
-                                version_str = "&version="+version;
-                        }
-
-                        var data = {};
-                        data['<?=ExternalModules::KEY_ENABLED?>'] = false;
-                        $.post('ajax/save-settings.php?pid=' + pid + '&moduleDirectoryPrefix=' + prefix + version_str, data, function(data){
-                                if (data.status == 'success') {
-                                        reloadPage();
-                                }
-                                else {
-                                        var message = 'An error occurred while enabling the module: ' + data;
-                                        console.log('AJAX Request Error:', message);
-                                        alert(message);
-                                }
-                        });
-                });
-        });
+        var pid = <?=$_GET['pid']?>;
+</script>
+<script src='js/project.js'>
 </script>
 
 <?php
