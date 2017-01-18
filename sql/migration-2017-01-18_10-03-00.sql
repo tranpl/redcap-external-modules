@@ -1,0 +1,1 @@
+ALTER TABLE `redcap_external_module_settings` ADD COLUMN `type` VARCHAR(12) NOT NULL DEFAULT 'string' AFTER `key`;
