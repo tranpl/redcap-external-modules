@@ -236,17 +236,14 @@ class ExternalModules
 
 		$projectId = db_real_escape_string($projectId);
 		$key = db_real_escape_string($key);
-		$value = db_real_escape_string($value);
 
 		// Escape the old value as well, so == will correctly compare it to $value.
-		$oldValue = db_real_escape_string(self::getSetting($moduleDirectoryPrefix, $projectId, $key));
-		if($value == $oldValue){
+		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+		if($value === $oldValue){
 			// We don't need to do anything.
-                        var_dump($value);
-                        var_dump($oldValue);
-			return $value." == ".$oldValue;
+			return;
 		}
-		else if($value == null){
+		else if($value === null){
 			$event = "DELETE";
 			$sql = "DELETE FROM redcap_external_module_settings
 					WHERE
@@ -254,26 +251,33 @@ class ExternalModules
 						AND " . self::getSqlEqualClause('project_id', $projectId) . "
 						AND `key` = '$key'";
 		}
-		else if($oldValue == null) {
-			$event = "INSERT";
-			$sql = "INSERT INTO redcap_external_module_settings
-					VALUES
-					(
-						$externalModuleId,
-						$projectId,
-						'$key',
-						'$value'
-					)";
+		else if ((string)$value == (string)$oldValue){
+			// We don't need to do anything.
+			return;
 		}
 		else {
-			$event = "UPDATE";
-			$sql = "UPDATE redcap_external_module_settings
-					SET value = '$value'
-					WHERE
-						external_module_id = $externalModuleId
-						AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						AND `key` = '$key'";
-		}
+		        $value = db_real_escape_string($value);
+                        if($oldValue == null) {
+			        $event = "INSERT";
+			        $sql = "INSERT INTO redcap_external_module_settings
+					        VALUES
+					        (
+						        $externalModuleId,
+						        $projectId,
+						        '$key',
+						        '$value'
+					        )";
+		        }
+		        else {
+			        $event = "UPDATE";
+			        $sql = "UPDATE redcap_external_module_settings
+					        SET value = '$value'
+					        WHERE
+						        external_module_id = $externalModuleId
+						        AND " . self::getSqlEqualClause('project_id', $projectId) . "
+						        AND `key` = '$key'";
+		        }
+	         }
 
 		self::query($sql);
 		$affectedRows = db_affected_rows();
@@ -292,7 +296,7 @@ class ExternalModules
 		if($affectedRows != 1){
 			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
 		}
-                return "affectedRows: $affectedRows";
+                return;
 	}
 
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
@@ -648,7 +652,7 @@ class ExternalModules
 		return self::$projectEnabledOverrides;
 	}
 
-	private static function getEnabledModuleVersionsForProject($pid, $b)
+	private static function getEnabledModuleVersionsForProject($pid)
 	{
                 // look for UNIT-TESTING-PREFIX here
 		$projectEnabledOverrides = self::getProjectEnabledOverrides();

@@ -142,19 +142,6 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::removeSystemSetting($prefix2, ExternalModules::KEY_ENABLED);
 	}
 
-	function testprojectSettings()
-        {
-		$m = self::getInstance();
-
-                $m->setProjectSetting(ExternalModules::KEY_ENABLED, false, TEST_SETTING_PID);
-                $val = $m->getProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID, ExternalModules::KEY_ENABLED);
-		$this->assertNull($val);
-
-                $m->setProjectSetting(ExternalModules::KEY_ENABLED, null, TEST_SETTING_PID);
-                $val = $m->getProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID, ExternalModules::KEY_ENABLED);
-		$this->assertNotNull($val);
-        }
-
 	function testgetEnabledModuleVersionsForProject_overrides()
 	{
 		$m = self::getInstance();
@@ -176,7 +163,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 
 		$rv = $m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
-		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache(true);
+		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
 
 		$m->setSystemSetting(ExternalModules::KEY_ENABLED, false);
@@ -192,10 +179,10 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 	}
 
-	private function getEnabledModuleVersionsForProjectIgnoreCache($b = false)
+	private function getEnabledModuleVersionsForProjectIgnoreCache()
 	{
 		self::callPrivateMethod('cacheAllEnableData'); // Call this every time to clear/reset the cache.
-		return self::callPrivateMethod('getEnabledModuleVersionsForProject', TEST_SETTING_PID, $b);
+		return self::callPrivateMethod('getEnabledModuleVersionsForProject', TEST_SETTING_PID);
 	}
 
 	private function callPrivateMethod($methodName)
