@@ -232,53 +232,55 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
-		if($value === false){
-			// False gets translated to an empty string by db_real_escape_string().
-			// We much change this value to 0 for it to actually be saved.
-			$value = 0;
-		}
+                $value = self::transformValueToDB($value);
 
-		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
+                $externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
-		$projectId = db_real_escape_string($projectId);
-		$key = db_real_escape_string($key);
-		$value = db_real_escape_string($value);
+                $projectId = db_real_escape_string($projectId);
+                $key = db_real_escape_string($key);
 
-		// Escape the old value as well, so == will correctly compare it to $value.
-		$oldValue = db_real_escape_string(self::getSetting($moduleDirectoryPrefix, $projectId, $key));
-		if($value == $oldValue){
-			// We don't need to do anything.
-			return;
-		}
-		else if($value == null){
-			$event = "DELETE";
-			$sql = "DELETE FROM redcap_external_module_settings
-					WHERE
-						external_module_id = $externalModuleId
-						AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						AND `key` = '$key'";
-		}
-		else if($oldValue == null) {
-			$event = "INSERT";
-			$sql = "INSERT INTO redcap_external_module_settings
-					VALUES
-					(
-						$externalModuleId,
-						$projectId,
-						'$key',
-						'$value'
-					)";
-		}
-		else {
-			$event = "UPDATE";
-			$sql = "UPDATE redcap_external_module_settings
-					SET value = '$value'
-					WHERE
-						external_module_id = $externalModuleId
-						AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						AND `key` = '$key'";
-		}
-
+                // Escape the old value as well, so == will correctly compare it to $value.
+                $oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+                if($value === $oldValue){
+                        // We don't need to do anything.
+                        return;
+                }
+                else if($value === null){
+                        $event = "DELETE";
+                        $sql = "DELETE FROM redcap_external_module_settings
+                                        WHERE
+                                                external_module_id = $externalModuleId
+                                                AND " . self::getSqlEqualClause('project_id', $projectId) . "
+                                                AND `key` = '$key'";
+                }
+                else if ((string)$value == (string)$oldValue){
+                        // We don't need to do anything.
+                        return;
+                }
+                else {
+		        if($oldValue == null) {
+			        $event = "INSERT";
+			        $sql = "INSERT INTO redcap_external_module_settings
+					        VALUES
+					        (
+						        $externalModuleId,
+						        $projectId,
+						        '$key',
+						        '$value',
+                                                        '".db_real_escape_string(gettype($value))."'
+					        )";
+		        }
+		        else {
+			        $event = "UPDATE";
+			        $sql = "UPDATE redcap_external_module_settings
+					        SET value = '$value', type='".db_real_escape_string(gettype($value))."'
+					        WHERE
+						        external_module_id = $externalModuleId
+						        AND " . self::getSqlEqualClause('project_id', $projectId) . "
+						        AND `key` = '$key'";
+		        }
+        
+                }
 		self::query($sql);
 		$affectedRows = db_affected_rows();
 
@@ -344,7 +346,7 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
+		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value, s.type
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
@@ -358,7 +360,13 @@ class ExternalModules
 		$numRows = db_num_rows($result);
 		if($numRows == 1){
 			$row = db_fetch_assoc($result);
-			return $row['value'];
+                        if ($row['type']) {
+			        $val = $row['value'];
+                                settype($val, $row['type']);
+                                return $val;
+                        } else {
+			        return $row['value'];
+                        }
 		}
 		else if($numRows == 0){
 			return null;
@@ -698,6 +706,26 @@ class ExternalModules
 	{
 		return PHP_SAPI == 'cli' && strpos($_SERVER['argv'][0], 'phpunit') !== FALSE;
 	}
+
+        private static function transformValueToDB($value) {
+                if ($value === false) {
+                        return "|false";
+                } else if ($value === true) {
+                        return "|true";
+                } else {
+                        return $value;
+                }
+        }
+
+        private static function transformValueFromDB($value) {
+                if ($value == "|false") {
+                        return false;
+                } else if ($value == "|true") {
+                        return true;
+                } else {
+                        return $value;
+                }
+        }
 
 	private static function cacheAllEnableData()
 	{
