@@ -66,7 +66,7 @@ class ExternalModules
 		)
 	);
 
-	private function isLocalhost()
+	private static function isLocalhost()
 	{
 		return $_SERVER['HTTP_HOST'] == 'localhost';
 	}
