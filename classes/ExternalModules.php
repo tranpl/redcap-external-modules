@@ -1052,19 +1052,6 @@ class ExternalModules
 		}
 	}
 
-        # gets the instance from a JSON string supplied by the database
-        # $instance is 0-based
-        static function getInstance($json, $instance) {
-                if (gettype($json) != "array") {
-                        return $json;
-                }
-                else if ($instance >= count($json)) {
-                        return null;
-                } else {
-                        return $json[$instance];
-                }
-        }
-
         # sets the instance to a JSON string into the database
         # $instance is 0-based
         static function setInstance($prefix, $projectId, $key, $instance, $value) {
