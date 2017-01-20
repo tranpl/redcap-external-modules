@@ -68,6 +68,11 @@ class ExternalModules
 		)
 	);
 
+	private static function isLocalhost()
+	{
+		return $_SERVER['HTTP_HOST'] == 'localhost';
+	}
+
         static function getIconURL($icon) {
                 $sfx = ".png";
                 if (file_exists(self::$BASE_PATH. $icon . $sfx)) {
@@ -81,7 +86,7 @@ class ExternalModules
 
 	static function initialize()
 	{
-		if($_SERVER['HTTP_HOST'] == 'localhost'){
+		if(self::isLocalhost()){
 			// Assume this is a developer's machine and enable errors.
 			ini_set('display_errors', 1);
 			ini_set('display_startup_errors', 1);
@@ -98,31 +103,33 @@ class ExternalModules
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_PATH = __DIR__ . "/../.." . $modulesDirectoryName;
 
-		register_shutdown_function(function(){
-			$activeModulePrefix = self::getActiveModulePrefix();
-			if($activeModulePrefix != null){
-				$error = error_get_last();
-				$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
-				$message .= 'Error Message: ' . $error['message'] . "\n";
-				$message .= 'File: ' . $error['file'] . "\n";
-				$message .= 'Line: ' . $error['line'] . "\n";
+		if(!self::isLocalhost()){
+			register_shutdown_function(function(){
+				$activeModulePrefix = self::getActiveModulePrefix();
+				if($activeModulePrefix != null){
+					$error = error_get_last();
+					$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
+					$message .= 'Error Message: ' . $error['message'] . "\n";
+					$message .= 'File: ' . $error['file'] . "\n";
+					$message .= 'Line: ' . $error['line'] . "\n";
 
-				error_log($message);
-				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message);
+					error_log($message);
+					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message);
 
-				// We can't just call disable() from here because the database connection has been destroyed.
-				// Disable this module via AJAX instead.
-				?>
-				<br>
-				<h4 id="external-modules-message">
-					A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
-					Disabling that module...
-				</h4>
-				<script src='js/ExternalModules.js'>
-				</script>
-				<?php
-			}
-		});
+					// We can't just call disable() from here because the database connection has been destroyed.
+					// Disable this module via AJAX instead.
+					?>
+					<br>
+					<h4 id="external-modules-message">
+						A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
+						Disabling that module...
+					</h4>
+					<script src='js/ExternalModules.js'>
+					</script>
+					<?php
+				}
+			});
+		}
 	}
 
 	private static function setActiveModulePrefix($prefix)
@@ -900,7 +907,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-	static function getConfig($prefix, $version, $pid = "")
+	static function getConfig($prefix, $version, $pid=null)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
