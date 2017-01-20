@@ -210,4 +210,31 @@ class ExternalModulesTest extends BaseTest
 	{
 		return new \ReflectionClass('ExternalModules\ExternalModules');
 	}
+
+	function testinstance()
+	{
+		$value1 = rand();
+		$value2 = rand();
+		$value3 = rand();
+		$value4 = rand();
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 0, $value1);
+		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+		$this->assertEquals($value1, ExternalModules::getInstance($array[TEST_SETTING_KEY]['value'], 0));
+
+		ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $value1);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 1, $value2);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 2, $value3);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 3, $value4);
+		$this->assertEquals($value1, ExternalModules::getInstance($array[TEST_SETTING_KEY]['value'], 0));
+		$this->assertEquals($value2, ExternalModules::getInstance($array[TEST_SETTING_KEY]['value'], 1));
+		$this->assertEquals($value3, ExternalModules::getInstance($array[TEST_SETTING_KEY]['value'], 2));
+		$this->assertEquals($value4, ExternalModules::getInstance($array[TEST_SETTING_KEY]['value'], 3));
+
+		ExternalModules::setProjectSetting($value1);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 1, $value2);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 2, $value3);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 3, $value4);
+		$this->assertNotNull($value1, json_encode($array[TEST_SETTING_KEY]['value']));
+	}
+
 }

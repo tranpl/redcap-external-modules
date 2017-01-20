@@ -85,15 +85,24 @@ if($configsByPrefixJSON == null){
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes){
+                        if (typeof value == "undefined") {
+                                value = "";
+                        }
 			return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 		};
 
-		var getSettingColumns = function(setting, inputAttributes){
+		var getSettingColumns = function(setting, inputAttributes, i){
 			var html = "<td><label>" + setting.name + ":</label></td>";
 
 			var type = setting.type;
 			var key = setting.key
 			var value = setting.value
+                        if (typeof i !== "undefined") {
+                                value = value[i];
+                                if (i > 0) {
+                                        key = key + "____" + i;
+                                }
+                        }
 
 			var inputHtml;
 			if(type == 'dropdown'){
@@ -132,6 +141,17 @@ if($configsByPrefixJSON == null){
 
 			html += "<td>" + inputHtml + "</td>";
 
+                        if (setting.repeatable) {
+                                if ((typeof setting.value != "undefined") && (typeof i != "undefined") && (i + 1 < setting.value.length)) { 
+                                        // no button
+                                        html += "<td></td>";
+                                } else {
+                                        html += "<td><button class='external-modules-add-instance' >+</button> </td>";
+                                }
+                        } else {
+                                html += "<td></td>";
+                        }
+
 			return html;
 		};
 
@@ -161,7 +181,7 @@ if($configsByPrefixJSON == null){
 			return s
 		}
 
-		var getProjectSettingColumns = function(setting, global){
+		var getProjectSettingColumns = function(setting, global, i){
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
@@ -178,7 +198,7 @@ if($configsByPrefixJSON == null){
 				overrideCheckboxAttributes += ' checked';
 			}
 
-			var columns = getSettingColumns(setting, inputAttributes);
+			var columns = getSettingColumns(setting, inputAttributes, i);
 
 			if(global){
 				columns += '<td><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
@@ -229,12 +249,35 @@ if($configsByPrefixJSON == null){
 					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
 				}
 				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
-					rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+                                        if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
+                                                for (var i=0; i < setting.value.length; i++) {
+					                rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, i) + '</tr>';
+                                                }
+                                        } else {
+					        rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+                                        }
 				}
 			})
 
 			return rowsHtml;
 		};
+
+		$('#external-modules-configure-modal').on('click', '.external-modules-add-instance', function(){
+                        var oldName = $(this).closest('tr').find('input').attr('name');
+                        if (!oldName) {
+                                oldName = $(this).closest('tr').find('select').attr('name');
+                        }
+                        var newName = oldName + "____1";
+                        var ary;
+                        if (ary = oldName.match(/____(\d+)$/)) {
+                            newName = oldName.replace("____"+ary[1], "____"+(Number(ary[1])+1));
+                        }
+			var $newInstance = $(this).closest('tr').clone();
+                        $newInstance.insertAfter($(this).closest('tr'));
+                        $newInstance.find('[name="'+oldName+'"]').attr('name', newName);
+                        $newInstance.find('[name="'+newName+'"]').val('');
+                        $(this).hide();
+                });
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
 			var moduleDirectoryPrefix = $(this).closest('tr').data('module');
@@ -337,6 +380,10 @@ if($configsByPrefixJSON == null){
 					configureModal.show();
 					return;
 				}
+
+                                if (data.keys) {
+                                        alert(data.keys);
+                                }
 
 				// Reload the page reload after saving settings, in case a settings affects some page behavior (like which menu items are visible).
 				location.reload();

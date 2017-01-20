@@ -1,7 +1,7 @@
 <?php
 namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
-require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/header.php';
+require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
 
 ExternalModules::addResource('css/style.css');
 
