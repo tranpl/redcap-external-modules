@@ -232,6 +232,8 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
+                # if $value is an array, then encode as JSON
+                # else store $value as type specified in gettype(...)
                 $type = gettype($value);
                 if ($type == "array") {
                         $type = "json";
@@ -244,8 +246,10 @@ class ExternalModules
 		$key = db_real_escape_string($key);
 		$value = db_real_escape_string($value);
 
-		// Escape the old value as well, so == will correctly compare it to $value.
+                # oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
 		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+
+		# Escape the old value as well, so == will correctly compare it to $value.
 		if($value == db_real_escape_string($oldValue)){
 			// We don't need to do anything.
 			return;
@@ -1052,8 +1056,15 @@ class ExternalModules
 		}
 	}
 
+        # there is no getInstance because settings returns an array of repeated elements
+        # getInstance would merely consist of dereferencing the array; Ockham's razor
+
         # sets the instance to a JSON string into the database
-        # $instance is 0-based
+        # $instance is 0-based index for array
+        # if the old value is a number/string, etc., this function will transform it into a JSON
+        # fills is with null values for non-expressed positions in the JSON before instance
+        # JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
+        # the form of other JSON-encoded strings.
         static function setInstance($prefix, $projectId, $key, $instance, $value) {
                 if (is_int($instance)) {
                         $oldValue = self::getSetting($prefix, $projectId, $key);
@@ -1063,6 +1074,8 @@ class ExternalModules
                                         $json[] = $oldValue;
                                 }
                         }
+
+                        # fill in with prior values
                         for ($i=count($json); $i < $instance; $i++) {
                                 if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
                                         $json[$i] = $oldValue[$i];
@@ -1078,6 +1091,8 @@ class ExternalModules
                         } else {
                                 $json[$instance] = "";
                         }
+
+                        #single-element JSONs are simply data values
                         if (count($json) == 1) {
                                 self::setSetting($prefix, $projectId, $key, $json[0]);
                         } else {
