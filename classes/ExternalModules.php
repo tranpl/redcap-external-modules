@@ -244,17 +244,15 @@ class ExternalModules
 
 		$projectId = db_real_escape_string($projectId);
 		$key = db_real_escape_string($key);
-		$value = db_real_escape_string($value);
 
                 # oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
 		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
 		# Escape the old value as well, so == will correctly compare it to $value.
-		if($value == db_real_escape_string($oldValue)){
+		if($value === $oldValue){
 			// We don't need to do anything.
 			return;
-		}
-		else if($value == null){
+		} else if($value === null){
 			$event = "DELETE";
 			$sql = "DELETE FROM redcap_external_module_settings
 					WHERE
@@ -262,6 +260,7 @@ class ExternalModules
 						AND " . self::getSqlEqualClause('project_id', $projectId) . "
 						AND `key` = '$key'";
 		} else {
+                        $value = db_real_escape_string($value);
                         if($oldValue == null) {
 			        $event = "INSERT";
 			        $sql = "INSERT INTO redcap_external_module_settings
