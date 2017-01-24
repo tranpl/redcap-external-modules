@@ -177,6 +177,12 @@ class AbstractExternalModule
 		return ExternalModules::getProjectSetting($this->PREFIX, $pid, $key);
 	}
 
+	function getAllProjectSettings($pid = null)
+	{
+		$pid = self::requireProjectId($pid);
+		return ExternalModules::getSettings($this->PREFIX, $pid);
+	}
+
 	function removeProjectSetting($key, $pid = null)
 	{
 		$pid = self::requireProjectId($pid);
