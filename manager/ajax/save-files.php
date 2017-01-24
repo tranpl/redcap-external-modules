@@ -11,12 +11,7 @@ if(empty($pid) && !ExternalModules::hasGlobalSettingsSavePermission($moduleDirec
 }
 $config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
 
-$files = array();
 foreach($_POST as $key=>$value){
-	if($value == ''){
-		$value = null;
-	}
-
 	if(empty($pid)){
 		ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
 	}
@@ -34,7 +29,17 @@ foreach($_POST as $key=>$value){
                 }
                 foreach ($settings as $row) {
                         if (($key == $row['key']) && $row['type'] && ($row['type'] == "file")) {
-                                $files[$key] = $_FILES[$key];
+                                $files[$key] = $value;
+:wq
+
+
+
+
+
+
+
+
+
                         }
                 }
 

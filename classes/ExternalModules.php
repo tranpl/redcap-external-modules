@@ -247,67 +247,67 @@ class ExternalModules
                         $value = json_encode($value);
                 }
 
-		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
+                $externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
-		$projectId = db_real_escape_string($projectId);
-		$key = db_real_escape_string($key);
+                $projectId = db_real_escape_string($projectId);
+                $key = db_real_escape_string($key);
 
                 # oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
-		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+                $oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
-		# Escape the old value as well, so == will correctly compare it to $value.
-		if($value === $oldValue){
-			// We don't need to do anything.
-			return;
-		} else if($value === null){
-			$event = "DELETE";
-			$sql = "DELETE FROM redcap_external_module_settings
-					WHERE
-						external_module_id = $externalModuleId
-						AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						AND `key` = '$key'";
-		} else {
+                # Escape the old value as well, so == will correctly compare it to $value.
+                if($value === $oldValue){
+                        // We don't need to do anything.
+                        return;
+                } else if($value === null){
+                        $event = "DELETE";
+                        $sql = "DELETE FROM redcap_external_module_settings
+                                        WHERE
+                                                external_module_id = $externalModuleId
+                                                AND " . self::getSqlEqualClause('project_id', $projectId) . "
+                                                AND `key` = '$key'";
+                } else {
                         $value = db_real_escape_string($value);
                         if($oldValue == null) {
-			        $event = "INSERT";
-			        $sql = "INSERT INTO redcap_external_module_settings
-					        VALUES
-					        (
-						        $externalModuleId,
-						        $projectId,
-						        '$key',
-						        '$value',
+                                $event = "INSERT";
+                                $sql = "INSERT INTO redcap_external_module_settings
+                                                VALUES
+                                                (
+                                                        $externalModuleId,
+                                                        $projectId,
+                                                        '$key',
+                                                        '$value',
                                                         '$type'
-					        )";
-		        } else {
-			        $event = "UPDATE";
-			        $sql = "UPDATE redcap_external_module_settings
-					        SET value = '$value',
+                                                )";
+                        } else {
+                                $event = "UPDATE";
+                                $sql = "UPDATE redcap_external_module_settings
+                                                SET value = '$value',
                                                     type = '$type'
-					        WHERE
-						        external_module_id = $externalModuleId
-						        AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						        AND `key` = '$key'";
-		        }
+                                                WHERE
+                                                        external_module_id = $externalModuleId
+                                                        AND " . self::getSqlEqualClause('project_id', $projectId) . "
+                                                        AND `key` = '$key'";
+                        }
                 }
 
-		self::query($sql);
-		$affectedRows = db_affected_rows();
+                self::query($sql);
+                $affectedRows = db_affected_rows();
 
-		$description = ucfirst(strtolower($event)) . ' External Module setting';
+                $description = ucfirst(strtolower($event)) . ' External Module setting';
 
-		if(class_exists('Logging')){
-			// REDCap v6.18.3 or later
-			\Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-		}
-		else{
-			// REDCap prior to v6.18.3
-			log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-		}
+                if(class_exists('Logging')){
+                        // REDCap v6.18.3 or later
+                        \Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+                }
+                else{
+                        // REDCap prior to v6.18.3
+                        log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+                }
 
-		if($affectedRows != 1){
-			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
-		}
+                if($affectedRows != 1){
+                        throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
+                }
 	}
 
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
@@ -318,9 +318,6 @@ class ExternalModules
 		while($row = db_fetch_assoc($result)){
 			$key = $row['key'];
 			$value = $row['value'];
-                        if (($row['type'] == "json") && ($json = json_decode($row['value']))) {
-                                $value = $json;
-                        }
 
 			$setting =& $settings[$key];
 			if(!isset($setting)){
@@ -359,7 +356,7 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value, s.type
+		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
@@ -371,21 +368,9 @@ class ExternalModules
 		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
-		if($numRows == 1) {
+		if($numRows == 1){
 			$row = db_fetch_assoc($result);
-                        if ($row['type'] == "json") {
-			        if ($json = json_decode($row['value'], false)) {
-                                        return $json;
-                                } else {
-                                        return array();
-                                }
-                        } else if ($row['type']) {
-                                $value = $row['value'];
-                                settype($value, $row['type']);
-                                return $value;
-                        } else {
-			        return $row['value'];
-                        }
+			return $row['value'];
 		}
 		else if($numRows == 0){
 			return null;
@@ -1061,49 +1046,4 @@ class ExternalModules
 			rmdir($dir);
 		}
 	}
-
-        # there is no getInstance because settings returns an array of repeated elements
-        # getInstance would merely consist of dereferencing the array; Ockham's razor
-
-        # sets the instance to a JSON string into the database
-        # $instance is 0-based index for array
-        # if the old value is a number/string, etc., this function will transform it into a JSON
-        # fills is with null values for non-expressed positions in the JSON before instance
-        # JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
-        # the form of other JSON-encoded strings.
-        static function setInstance($prefix, $projectId, $key, $instance, $value) {
-                if (is_int($instance)) {
-                        $oldValue = self::getSetting($prefix, $projectId, $key);
-                        $json = array();
-                        if (gettype($oldValue) != "array") {
-                                if ($oldValue !== null) {
-                                        $json[] = $oldValue;
-                                }
-                        }
-
-                        # fill in with prior values
-                        for ($i=count($json); $i < $instance; $i++) {
-                                if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
-                                        $json[$i] = $oldValue[$i];
-                                } else {
-                                        # pad with null for prior values when $n is ahead; should never be used
-                                        $json[$i] = null;
-                                }
-                        }
-
-                        # do not set null values for current instance; always set to empty string 
-                        if ($value !== null) {
-                                $json[$instance] = $value;
-                        } else {
-                                $json[$instance] = "";
-                        }
-
-                        #single-element JSONs are simply data values
-                        if (count($json) == 1) {
-                                self::setSetting($prefix, $projectId, $key, $json[0]);
-                        } else {
-                                self::setSetting($prefix, $projectId, $key, $json);
-                        }
-                }
-        }
 }

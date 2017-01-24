@@ -57,8 +57,10 @@ if($configsByPrefixJSON == null){
 
 <script>
 	$(function(){
+		var pid = <?=json_encode($pid)?>;
 		var configsByPrefix = <?=$configsByPrefixJSON?>;
 		var pid = <?=json_encode($pid)?>;
+		var versionsByPrefix = <?=json_encode($versionsByPrefix)?>;
 		var configureModal = $('#external-modules-configure-modal');
 		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
@@ -84,25 +86,15 @@ if($configsByPrefixJSON == null){
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes){
-                        if (typeof value == "undefined") {
-                                value = "";
-                        }
 			return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 		};
 
-		var getSettingColumns = function(setting, inputAttributes, i){
+		var getSettingColumns = function(setting, inputAttributes){
 			var html = "<td><label>" + setting.name + ":</label></td>";
 
 			var type = setting.type;
 			var key = setting.key
 			var value = setting.value
-                        if (typeof i != "undefined") {
-                                // for looping for repeatable elements
-                                value = value[i];
-                                if (i > 0) {
-                                        key = key + "____" + i;
-                                }
-                        }
 
 			var inputHtml;
 			if(type == 'dropdown'){
@@ -141,38 +133,6 @@ if($configsByPrefixJSON == null){
 
 			html += "<td>" + inputHtml + "</td>";
 
-                        if (setting.repeatable) {
-                                // fill with + and - buttons and hide when appropriate
-                                // set original sign for first item when + is not displayed
-
-                                html += "<td class='external-modules-add-remove-column'>";
-                                var hasShowingButton = false;
-
-                                if ((typeof setting.value == "undefined") ||  (typeof i == "undefined") || (i + 1 >=  setting.value.length)) { 
-                                        html += "<button class='external-modules-add-instance' >+</button>";
-                                        hasShowingButton = true;
-                                } else {
-                                        html += "<button class='external-modules-add-instance' style='display: none;'>+</button>";
-                                }
-
-                                if ((typeof i != "undefined") && (i > 0)) {
-                                        html += "<button class='external-modules-remove-instance'>-</button>";
-                                        hasShowingButton = true;
-                                } else {
-                                        html += "<button class='external-modules-remove-instance' style='display: none;' >-</button>";
-                                }
-
-                                if (!hasShowingButton && (typeof i != "undefined") && (i === 0)) {
-                                        html += "<span class='external-modules-original-instance'>original</span>";
-                                } else {
-                                        html += "<span class='external-modules-original-instance' style='display: none;'>original</span>";
-                                }
-
-                                html += "</td>";
-                        } else {
-                                html += "<td></td>";
-                        }
-
 			return html;
 		};
 
@@ -202,7 +162,7 @@ if($configsByPrefixJSON == null){
 			return s
 		}
 
-		var getProjectSettingColumns = function(setting, global, i){
+		var getProjectSettingColumns = function(setting, global){
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
@@ -219,10 +179,10 @@ if($configsByPrefixJSON == null){
 				overrideCheckboxAttributes += ' checked';
 			}
 
-			var columns = getSettingColumns(setting, inputAttributes, i);
+			var columns = getSettingColumns(setting, inputAttributes);
 
 			if(global){
-				columns += '<td class="external-modules-override-column"><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
+				columns += '<td><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
 			}
 			else{
 				columns += '<td></td>';
@@ -250,7 +210,7 @@ if($configsByPrefixJSON == null){
 		}
 
 		var getSettingRows = function(global, configSettings, savedSettings){
-			var rowsHtml = '';
+			var rowsHtml = ''
 
 			configSettings.forEach(function(setting){
 				var setting = $.extend({}, setting);
@@ -270,90 +230,12 @@ if($configsByPrefixJSON == null){
 					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
 				}
 				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
-                                        if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
-                                                for (var i=0; i < setting.value.length; i++) {
-					                rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, i) + '</tr>';
-                                                }
-                                        } else {
-					        rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
-                                        }
+					rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
 				}
 			})
 
 			return rowsHtml;
 		};
-
-		$('#external-modules-configure-modal').on('click', '.external-modules-add-instance', function(){
-                        // RULE: first variable is base name (e.g., survey_name)
-                        // second and following variables are base name + ____X, where X is a 0-based name
-                        // so survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
-
-                        // find the name of the variable on this row, which is the old variable
-                        var oldName = $(this).closest('tr').find('input').attr('name');
-                        if (!oldName) {
-                                oldName = $(this).closest('tr').find('select').attr('name');
-                        }
-
-                        // make a new variable name for the new variable
-                        var idx = 1;
-                        var newName = oldName + "____"+idx;   // default: guess that this is the second variable
-                        var ary;
-                        if (ary = oldName.match(/____(\d+)$/)) {
-                                // transfer number (old + 1)
-                                idx = Number(ary[1]) + 1;
-                                newName = oldName.replace("____"+ary[1], "____"+idx);
-                        }
-			var $newInstance = $(this).closest('tr').clone();
-                        $newInstance.insertAfter($(this).closest('tr'));
-
-                        // rename new instance of input/select and set value to empty string
-                        $newInstance.find('[name="'+oldName+'"]').attr('name', newName);
-                        $newInstance.find('[name="'+newName+'"]').val('');
-
-                        // show only last +
-                        $(this).hide();
-                        // show original sign if previous was first item
-                        if (!oldName.match(/____/)) {
-                                        $("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance").show();
-                        }
-                        $newInstance.find(".external-modules-remove-instance").show();
-                });
-
-		$('#external-modules-configure-modal').on('click', '.external-modules-remove-instance', function(){
-                        // see RULE on external-modules-add-instance
-                        // we must maintain said RULE here
-                        // RULE 2: Cannot remove first item
-
-                        // get old name
-                        var oldName = $(this).closest('tr').find('input').attr('name');
-                        if (!oldName) {
-                                oldName = $(this).closest('tr').find('select').attr('name');
-                        }
-
-                        // this oldName will have a ____ in it; split and conquer
-                        var oldNameParts = oldName.split(/____/);
-                        var baseName = oldNameParts[0];
-
-                        var i = 1;
-                        var j = 1;
-                        while ($("[name='"+baseName+"____"+i+"']").length) {
-                                if (i == oldNameParts[1]) {
-                                        // remove tr
-                                        $("[name='"+baseName+"____"+i+"']").closest('tr').remove();
-                                } else {
-                                        // rename tr: i --> j
-                                        $("[name='"+baseName+"____"+i+"']").attr('name', baseName+"____"+j);
-                                        j++;
-                                }
-                                i++;
-                        }
-                        if (j > 1) {
-                                $("[name='"+baseName+"____"+(j-1)+"']").closest("tr").find(".external-modules-add-instance").show();
-                        } else {
-                                $("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance").show();
-                                $("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance").hide();
-                        }
-                });
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
 			var moduleDirectoryPrefix = $(this).closest('tr').data('module');
@@ -415,6 +297,18 @@ if($configsByPrefixJSON == null){
 
 			var data = {};
 
+			var pidString = pid;
+			if(pid == null){
+				pidString = '';
+			}
+
+                        var version = "";
+                        for (var prefix in versionsByPrefix) {
+                                 if (prefix == moduleDirectoryPrefix) {
+                                         version = versionsByPrefix[prefix];
+                                 } 
+                        }
+
 			configureModal.find('input, select').each(function(index, element){
 				var element = $(element);
 				var globalValue = element.closest('tr').find('.override-global-setting').data('global-value');
@@ -426,7 +320,21 @@ if($configsByPrefixJSON == null){
 				}
 
 				var value;
-				if(type == 'checkbox'){
+                                if (type == 'file') {
+                                         if (element.val() !== "") {
+                                                 $.ajax({
+                                                         type: "POST",
+                                                         url: "../ajax/save-file.php?pid=" + pidString + "&moduleDirectoryPrefix=" + moduleDirectoryPrefix + "&version="+version,
+                                                         enctype: 'multipart/form-data',
+                                                         async: true,
+                                                         data: {
+                                                                 file: element.val();
+                                                         },
+                                                         success: function () {
+                                                         }
+                                                 });
+                                        }
+				} else if (type == 'checkbox'){
 					if(element.prop('checked')){
 						value = '1';
 					}
@@ -434,7 +342,7 @@ if($configsByPrefixJSON == null){
 						value = '0';
 					}
 				}
-				else{
+				else {
 					value = element.val();
 				}
 
@@ -445,22 +353,14 @@ if($configsByPrefixJSON == null){
 				data[name] = value;
 			});
 
-			var pidString = pid;
-			if(pid == null){
-				pidString = '';
-			}
-
-			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data, function(data){
+			$.post('ajax/save-settings.php?pid=' + pidString + '&version=' + version + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data, function(data){
 				if(data.status != 'success'){
 					alert('An error occurred while saving settings: ' + data);
 					configureModal.show();
 					return;
 				}
 
-                                if (data.keys) {
-                                        alert(data.keys);
-                                }
-
+                                alert(JSON.stringify(data));
 				// Reload the page reload after saving settings, in case a settings affects some page behavior (like which menu items are visible).
 				location.reload();
 			});
