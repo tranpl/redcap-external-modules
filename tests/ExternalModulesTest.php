@@ -179,6 +179,30 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 	}
 
+	function testgetFileSettings() {
+		$m = self::getInstance();					
+
+		$edoc_id_global = rand();
+		$edoc_id_project = rand();
+
+                # global
+		$m->setGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY, $edoc_id_project);
+
+                # project
+		$m->setFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY, $edoc_id_global);
+
+		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+		$this->assertEquals($edoc_id_project, $array[FILE_SETTING_KEY]['value']);
+		$this->assertEquals($edoc_id_global, $array[FILE_SETTING_KEY]['global_value']);
+
+		$m->removeFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY);
+		$m->removeGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
+		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+
+		$this->assertNull($array[FILE_SETTING_KEY]['value']);
+		$this->assertNull($array[FILE_SETTING_KEY]['global_value']);
+	}
+
 	private function getEnabledModuleVersionsForProjectIgnoreCache()
 	{
 		self::callPrivateMethod('cacheAllEnableData'); // Call this every time to clear/reset the cache.

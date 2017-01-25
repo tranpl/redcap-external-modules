@@ -1,6 +1,6 @@
 <?php
-namespace ExternalModules;
 require_once '../../classes/ExternalModules.php';
+require_once APP_PATH_DOCROOT.'Classes/Files.php';
 
 $pid = @$_GET['pid'];
 $moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
@@ -10,7 +10,7 @@ if(empty($pid) && !ExternalModules::hasGlobalSettingsSavePermission($moduleDirec
 	die("You don't have permission to save global settings!");
 }
 
-$config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
+$config = ExternalModules\ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
 $files = array();
 foreach(['global-settings', 'project-settings'] as $settingsKey){
 	 foreach($config[$settingsKey] as $row) {
@@ -33,22 +33,19 @@ function isExternalModuleFile($key, $fileKeys) {
 	 return false;
 }
 
-foreach($_POST as $key=>$value){
-	 # files are stored in a separate $.ajax call
-	 if (!isExternalModuleFile($key, $files)) { 
-		 if($value == '') {
-			 $value = null;
-		 }
+foreach($_FILES as $key=>$value){
+	if (isExternalModuleFile($key, $files) && $value) { 
+		# use REDCap's uploadFile
+		$edoc = Files::uploadFile($_FILES[$key]);
 
-		 if(empty($pid)){
-			 ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
-		 } else {
-			 if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
-				 die("You don't have permission to save the following project setting: $key");
-			 }
-	 
-			 ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
-		 }
+		if ($edoc) {
+			if(!empty($pid) && !ExternalModules\ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
+				die("You don't have permission to save the following project setting: $key");
+			}
+			ExternalModules\ExternalModules::setFileSetting($moduleDirectoryPrefix, $pid, $key, $edoc);
+		} else {
+			die("You could not save a file properly.");
+		}
 	 }
 }
 

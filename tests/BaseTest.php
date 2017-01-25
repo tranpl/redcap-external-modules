@@ -9,6 +9,7 @@ const TEST_MODULE_PREFIX = ExternalModules::TEST_MODULE_PREFIX;
 const TEST_MODULE_VERSION = 'v1.0.0';
 const TEST_SETTING_KEY = 'unit-test-setting-key';
 const TEST_SETTING_PID = 1;
+const FILE_SETTING_KEY = 'unit-test-file-setting-key';
 
 abstract class BaseTest extends TestCase
 {

@@ -53,13 +53,22 @@ if($configsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
 	die();
 }
+$versionsByPrefixJSON = json_encode($versionsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
+if($versionsByPrefixJSON == null){
+	echo '<script>alert(' . json_encode('An error occurred while converting the versions to JSON: ' . json_last_error_msg()) . ');</script>';
+	die();
+}
 ?>
 
 <script>
 	$(function(){
 		var pid = <?=json_encode($pid)?>;
 		var configsByPrefix = <?=$configsByPrefixJSON?>;
-		var pid = <?=json_encode($pid)?>;
+		var versionsByPrefix = <?=$versionsByPrefixJSON?>;
+		var pidString = pid;
+		if(pid == null){
+			pidString = '';
+		}
 		var configureModal = $('#external-modules-configure-modal');
 		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
@@ -85,7 +94,17 @@ if($configsByPrefixJSON == null){
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes){
-			return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			if ((type == "file")  && (typeof value != "undefined") && (value !== "")) {
+				var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+                                html += '<span class="external-modules-edoc-file"></span>';
+                                html += '<button class="external-modules-delete-file">Delete File</button>';
+                                $.post('ajax/get-edoc-name.php?pid=' + pidString, { edoc : value }, function(data) {
+                                        $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
+                                });
+                                return html;
+			} else {
+				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			}
 		};
 
 		var getSettingColumns = function(setting, inputAttributes){
@@ -165,7 +184,7 @@ if($configsByPrefixJSON == null){
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
-			        setting.name = projectName;
+				 setting.name = projectName;
 			}
 
 			var inputAttributes = '';
@@ -246,7 +265,7 @@ if($configsByPrefixJSON == null){
 			tbody.html('');
 			configureModal.modal('show');
 
-			$.post('ajax/get-settings.php', {pid: pid, moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
+			$.post('ajax/get-settings.php', {pid: pidString, moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
 				if(data.status != 'success'){
 					return;
 				}
@@ -263,6 +282,23 @@ if($configsByPrefixJSON == null){
 				tbody.html(settingsHtml);
 
 				configureSettings(config['global-settings'], savedSettings);
+			});
+		});
+
+		configureModal.on('click', '.external-modules-delete-file', function() {
+			var moduleDirectoryPrefix = configureModal.data('module');
+
+			var row = $(this).closest("tr");
+			var input = row.find("input[type=hidden]");
+			$(this).hide();
+
+			$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) { 
+				if (data.status == "success") {
+					row.find(".external-modules-edoc-file").html(getInputElement("file", input.attr('name'), "", ""));
+					input.remove();
+				} else {		// failure
+					alert("The file was not able to be deleted. "+JSON.stringify(data));
+				}
 			});
 		});
 
@@ -290,9 +326,26 @@ if($configsByPrefixJSON == null){
 			}
 		});
 
+		configureModal.on('change', 'input[type=file]', function(){
+			if ($(this).val() != "") {
+				$(".save").html("Save and Upload");
+			}
+			var allEmpty = true;
+			$("input[type=file]").each(function() {
+				if ($(this).val() !== "") {
+					allEmpty = false;
+				}
+			});
+			if (allEmpty) {
+				$(".save").html("Save");
+			}
+		});
+
 		configureModal.on('click', 'button.save', function(){
 			configureModal.hide();
 			var moduleDirectoryPrefix = configureModal.data('module');
+
+			var version = versionsByPrefix[moduleDirectoryPrefix];
 
 			var data = {};
 
@@ -306,32 +359,50 @@ if($configsByPrefixJSON == null){
 					return;
 				}
 
-				var value;
-				if(type == 'checkbox'){
-					if(element.prop('checked')){
-						value = '1';
+				if (type == 'file') {
+					var formdata = new FormData();
+					jQuery.each(element[0].files, function(i, file) {
+						formdata.append(name, file);
+					});
+					if (element[0].files.length) {
+						$.ajax({
+							type: "POST",
+							url: 'ajax/save-file.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + '&moduleDirectoryVersion=' + version,
+							data: formdata,
+							cache: false,
+							contentType: false,
+							processData: false,
+							success: function(data) {
+								 // console.log("Success uploading "+name+": "+JSON.stringify(data));
+							},
+							error: function(e) {
+								 alert("Unable to upload "+name+": "+JSON.stringify(e));
+							}
+						});
+					}
+				} else {
+					var value;
+					if(type == 'checkbox'){
+						if(element.prop('checked')){
+							 value = '1';
+						}
+						else{
+							value = '0';
+						}
 					}
 					else{
-						value = '0';
+					 	value = element.val();
 					}
-				}
-				else{
-					value = element.val();
-				}
+	 
+					if(value == globalValue){
+						value = '';
+					}
 
-				if(value == globalValue){
-					value = '';
+					data[name] = value;
 				}
-
-				data[name] = value;
 			});
 
-			var pidString = pid;
-			if(pid == null){
-				pidString = '';
-			}
-
-			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data, function(data){
+			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(data){
 				if(data.status != 'success'){
 					alert('An error occurred while saving settings: ' + data);
 					configureModal.show();
