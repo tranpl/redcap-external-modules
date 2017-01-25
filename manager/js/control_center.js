@@ -35,7 +35,7 @@ $(function () {
 		var module = row.data('module');
 		$.post('ajax/disable-module.php', {module: module}, function (data) {
 			if (data == 'success') {
-                                button.attr('disabled', false);
+				    button.attr('disabled', false);
 				var table = row.closest('table');
 				row.remove();
     

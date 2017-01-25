@@ -12,18 +12,18 @@ $pid = $_GET['pid'];
 ?>
 
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
-        <div class="modal-dialog">
-                <div class="modal-content">
-                        <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                <h4 class="modal-title">Available Modules</h4>
-                        </div>
-                        <div class="modal-body">
-                                <form>
-                                </form>
-                        </div>
-                </div>
-        </div>
+	 <div class="modal-dialog">
+		  <div class="modal-content">
+			   <div class="modal-header">
+				    <button type="button" class="close" data-dismiss="modal">&times;</button>
+				    <h4 class="modal-title">Available Modules</h4>
+			   </div>
+			   <div class="modal-body">
+				    <form>
+				    </form>
+			   </div>
+		  </div>
+	 </div>
 </div>
 
 <br>
@@ -55,11 +55,11 @@ here. In turn, each project can override this set of defaults with their own val
 <?php } ?>
 
 <?php if (isset($_GET['pid'])) { ?>
-        <script>
-                var pid = <?=json_encode($$_GET['pid'])?>;
-        </script>
-        <script src='js/enabled-modules-1.js'>
-        </script>
+	 <script>
+		  var pid = <?=json_encode($$_GET['pid'])?>;
+	 </script>
+	 <script src='js/enabled-modules-1.js'>
+	 </script>
 <?php } ?>
 
 <table id='external-modules-enabled' class="table">
@@ -72,32 +72,32 @@ here. In turn, each project can override this set of defaults with their own val
 		echo 'None';
 	} else {
 		foreach ($versionsByPrefix as $prefix => $version) {
-                        if (isset($_GET['pid'])) {
-			        $config = ExternalModules::getConfig($prefix, $version, $_GET['pid']);
-                        } else {
-			        $config = ExternalModules::getConfig($prefix, $version);
-                        }
+			   if (isset($_GET['pid'])) {
+				 $config = ExternalModules::getConfig($prefix, $version, $_GET['pid']);
+			   } else {
+				 $config = ExternalModules::getConfig($prefix, $version);
+			   }
 			$configsByPrefix[$prefix] = $config;
-                        $enabled = false;
-                        if (isset($_GET['pid'])) {
-                                $enabled = ExternalModules::getSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
-                                if ($enabled == "false") {
-                                        $enabled = false;
-                                } else if ($enabled == "true") {
-                                        $enabled = true;
-                                }
-                        }
-                        if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
+			   $enabled = false;
+			   if (isset($_GET['pid'])) {
+				    $enabled = ExternalModules::getSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
+				    if ($enabled == "false") {
+					     $enabled = false;
+				    } else if ($enabled == "true") {
+					     $enabled = true;
+				    }
+			   }
+			   if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>
-			        <tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-				        <td><?= $config['name'] . ' - ' . $version ?></td>
-				        <td class="external-modules-action-buttons">
-					        <button class='external-modules-configure-button'>Configure</button>
+				 <tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
+					 <td><?= $config['name'] . ' - ' . $version ?></td>
+					 <td class="external-modules-action-buttons">
+						 <button class='external-modules-configure-button'>Configure</button>
 						<button class='external-modules-disable-button'>Disable</button>
-				        </td>
-			        </tr>
+					 </td>
+				 </tr>
 			<?php
-                        }
+			   }
 		}
 	}
 

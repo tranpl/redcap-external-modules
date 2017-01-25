@@ -12,8 +12,8 @@ ExternalModules::addResource('css/style.css');
 ?>
 
 <h4 style="margin-top: 0;">
-        <img src="<?= '../images/puzzle_medium.png' ?>">
-        Module Management for Your Project
+	 <img src="<?= '../images/puzzle_medium.png' ?>">
+	 Module Management for Your Project
 </h4>
 
 <?php
@@ -55,7 +55,7 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 </div>
 
 <script>
-        var pid = <?=$_GET['pid']?>;
+	 var pid = <?=$_GET['pid']?>;
 </script>
 <script src='js/project.js'>
 </script>

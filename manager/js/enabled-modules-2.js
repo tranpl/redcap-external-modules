@@ -20,19 +20,19 @@
 			}
 
 			var rv = '<select class="check-system-setting-change" name="'+name+'" id="'+name+'" ' + selectAttributes + '>'+optionsHtml+'</select>';
-                        return rv;
+			   return rv;
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes, suggestedSetting){
 			var rv = '<input ';
-                        if (type == 'radio') {
-                                rv += 'class="check-system-setting-change" type="' + type + '" name="' + name + '" id="' + name + '___' + getAttributeValueHtml(value) + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
-                        } else if (type == 'checkbox') {
-                                rv += 'class="check-system-setting-check" type="' + type + '" name="' + name + '" id="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
-                        } else {
-                                rv += 'class="check-system-setting-change" type="' + type + '" name="' + name + '" id="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
-                        }
-                        return rv;
+			   if (type == 'radio') {
+				    rv += 'class="check-system-setting-change" type="' + type + '" name="' + name + '" id="' + name + '___' + getAttributeValueHtml(value) + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			   } else if (type == 'checkbox') {
+				    rv += 'class="check-system-setting-check" type="' + type + '" name="' + name + '" id="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			   } else {
+				    rv += 'class="check-system-setting-change" type="' + type + '" name="' + name + '" id="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			   }
+			   return rv;
 		};
 
 		var getSettingColumns = function(setting, inputAttributes){
@@ -69,7 +69,7 @@
 
 					inputHtml += getInputElement(type, key, choice.value, inputAttributes + checked) + '<label>' + choice.name + '</label><br>';
 				}
-                                inputHtml += "</div>";
+				    inputHtml += "</div>";
 			}
 			else{
 				if(type == 'checkbox' && value == 'true'){
@@ -116,7 +116,7 @@
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
-			        setting.name = projectName;
+				 setting.name = projectName;
 			}
 
 			var inputAttributes = '';
@@ -135,19 +135,19 @@
 				columns += '<td><input type="checkbox" class="override-system-setting" ' + overrideCheckboxAttributes + '></td>';
 			}
 			else{
-                                if (pid) {
-				        columns += '<td style="text-align: center; width: 150px;"><!--'+JSON.stringify(setting)+'-->';
-                                        if (typeof setting.systemValue != "undefined") {
-                                                var style = "";
-                                                if ((typeof setting.value != "undefined") && (setting.systemValue == setting.value)) {
-                                                    style = "display: none;";
-                                                }
-                                                columns += '<button class="override-system-setting" style="'+style+'">Use System Setting</button>';
-                                        }
-                                        columns += '</td>';
-                                } else {
-				        columns += '<td></td>';
-                                }
+				    if (pid) {
+					 columns += '<td style="text-align: center; width: 150px;"><!--'+JSON.stringify(setting)+'-->';
+					     if (typeof setting.systemValue != "undefined") {
+						      var style = "";
+						      if ((typeof setting.value != "undefined") && (setting.systemValue == setting.value)) {
+							   style = "display: none;";
+						      }
+						      columns += '<button class="override-system-setting" style="'+style+'">Use System Setting</button>';
+					     }
+					     columns += '</td>';
+				    } else {
+					 columns += '<td></td>';
+				    }
 			}
 
 			return columns;
@@ -193,19 +193,19 @@
 				}
 				else if(shouldShowSettingOnProjectManagementPage(setting, system)){
 					rowsHtml += '<tr ';
-                                        if (typeof setting.systemValue != "undefined") {
-                                                rowsHtml += 'data-system-value="'+setting.systemValue+'" ';
-                                        }
-                                        rowsHtml += 'style="vertical-align: middle; height: 50px;">' + getProjectSettingColumns(setting, system, prefix) + '</tr>';
+					     if (typeof setting.systemValue != "undefined") {
+						      rowsHtml += 'data-system-value="'+setting.systemValue+'" ';
+					     }
+					     rowsHtml += 'style="vertical-align: middle; height: 50px;">' + getProjectSettingColumns(setting, system, prefix) + '</tr>';
 				}
 			});
 
 			return rowsHtml;
 		};
 
-                var enableForProject = function(pid, prefix) {
-                
-                };
+		  var enableForProject = function(pid, prefix) {
+		  
+		  };
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
 			var moduleDirectoryPrefix = $(this).closest('tr').data('module');
@@ -228,11 +228,11 @@
 				var settingsHtml = "";
 
 				if(pid) {
-				        settingsHtml += getSettingRows(false, config['system-settings'], savedSettings, moduleDirectoryPrefix);
+					 settingsHtml += getSettingRows(false, config['system-settings'], savedSettings, moduleDirectoryPrefix);
 					settingsHtml += getSettingRows(false, config['project-settings'], savedSettings, moduleDirectoryPrefix);
 				} else {
-				        settingsHtml += getSettingRows(true, config['system-settings'], savedSettings, moduleDirectoryPrefix);
-                                }
+					 settingsHtml += getSettingRows(true, config['system-settings'], savedSettings, moduleDirectoryPrefix);
+				    }
 
 				tbody.html(settingsHtml);
 
@@ -240,26 +240,26 @@
 			});
 		});
 
-                var checkSetting = function (ob) {
-                        var val = ob.val();
+		  var checkSetting = function (ob) {
+			   var val = ob.val();
 			var systemValue = ob.closest('tr').data("system-value");
-                        if (typeof systemValue != "undefined") {
-			        var buttons = ob.closest('tr').find('td:nth-child(3)').find('button');
-                                if (val != systemValue) {
-                                        buttons.show();
-                                } else {
-                                        buttons.hide();
-                                }
-                        }
-                };
+			   if (typeof systemValue != "undefined") {
+				 var buttons = ob.closest('tr').find('td:nth-child(3)').find('button');
+				    if (val != systemValue) {
+					     buttons.show();
+				    } else {
+					     buttons.hide();
+				    }
+			   }
+		  };
 
 		configureModal.on('click', '.check-system-setting-check', function(){
-                        checkSetting($(this));
-                });
+			   checkSetting($(this));
+		  });
 
 		configureModal.on('change', '.check-system-setting-change', function(){
-                        checkSetting($(this));
-                });
+			   checkSetting($(this));
+		  });
 
 		configureModal.on('click', '.override-system-setting', function(){
 			var overrideButton= $(this);
@@ -275,7 +275,7 @@
 			else{ // text or select
 				inputs.val(systemValue);
 			}
-                        overrideButton.hide();
+			   overrideButton.hide();
 		});
 
 		configureModal.on('click', 'button.save', function(){
@@ -327,8 +327,8 @@
 				}
 
 				// Reload the page reload after saving settings, in case a settings affects some page behavior (like which menu items are visible).
-                                var loc = window.location;
-                                window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
+				    var loc = window.location;
+				    window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
 			});
 		});
 	});

@@ -46,17 +46,17 @@ $project_id = $arguments[0];
 			foreach(ExternalModules::getProjectLinks($project_id) as $name=>$link){
 				?>
 				newLink = exampleLink.clone()
-                        <?php
-                                $url = $link['url']."&pid=".$project_id;
-                                if (preg_match("/\?$/", $link['url'])) {
-                                        $url = $link['url']."pid=".$project_id;
-                                }
-                                ?>
-                                newLink.find('img').attr('src', "<?= ExternalModules::getIconURL($link['icon']) ?>");
+			<?php
+				$url = $link['url']."&pid=".$project_id;
+				if (preg_match("/\?$/", $link['url'])) {
+					$url = $link['url']."pid=".$project_id;
+				}
+			?>
+				newLink.find('img').attr('src', "<?= ExternalModules::getIconURL($link['icon']) ?>");
 				newLink.find('a').attr('href', '<?= $url ?>')
 				newLink.find('a').html('<?= $name ?>')
 				menubox.append(newLink)
-				<?php
+			<?php
 			}
 			?>
 
