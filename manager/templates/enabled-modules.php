@@ -84,9 +84,9 @@ if($configsByPrefixJSON == null){
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes){
-                        if (typeof value == "undefined") {
-                                value = "";
-                        }
+			   if (typeof value == "undefined") {
+				    value = "";
+			   }
 			return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 		};
 
@@ -96,13 +96,13 @@ if($configsByPrefixJSON == null){
 			var type = setting.type;
 			var key = setting.key
 			var value = setting.value
-                        if (typeof i != "undefined") {
-                                // for looping for repeatable elements
-                                value = value[i];
-                                if (i > 0) {
-                                        key = key + "____" + i;
-                                }
-                        }
+			   if (typeof i != "undefined") {
+				    // for looping for repeatable elements
+				    value = value[i];
+				    if (i > 0) {
+					     key = key + "____" + i;
+				    }
+			   }
 
 			var inputHtml;
 			if(type == 'dropdown'){
@@ -141,37 +141,37 @@ if($configsByPrefixJSON == null){
 
 			html += "<td>" + inputHtml + "</td>";
 
-                        if (setting.repeatable) {
-                                // fill with + and - buttons and hide when appropriate
-                                // set original sign for first item when + is not displayed
+			   if (setting.repeatable) {
+				    // fill with + and - buttons and hide when appropriate
+				    // set original sign for first item when + is not displayed
 
-                                html += "<td class='external-modules-add-remove-column'>";
-                                var hasShowingButton = false;
+				    html += "<td class='external-modules-add-remove-column'>";
+				    var hasShowingButton = false;
 
-                                if ((typeof setting.value == "undefined") ||  (typeof i == "undefined") || (i + 1 >=  setting.value.length)) { 
-                                        html += "<button class='external-modules-add-instance' >+</button>";
-                                        hasShowingButton = true;
-                                } else {
-                                        html += "<button class='external-modules-add-instance' style='display: none;'>+</button>";
-                                }
+				    if ((typeof setting.value == "undefined") ||  (typeof i == "undefined") || (i + 1 >=  setting.value.length)) { 
+					     html += "<button class='external-modules-add-instance' >+</button>";
+					     hasShowingButton = true;
+				    } else {
+					     html += "<button class='external-modules-add-instance' style='display: none;'>+</button>";
+				    }
 
-                                if ((typeof i != "undefined") && (i > 0)) {
-                                        html += "<button class='external-modules-remove-instance'>-</button>";
-                                        hasShowingButton = true;
-                                } else {
-                                        html += "<button class='external-modules-remove-instance' style='display: none;' >-</button>";
-                                }
+				    if ((typeof i != "undefined") && (i > 0)) {
+					     html += "<button class='external-modules-remove-instance'>-</button>";
+					     hasShowingButton = true;
+				    } else {
+					     html += "<button class='external-modules-remove-instance' style='display: none;' >-</button>";
+				    }
 
-                                if (!hasShowingButton && (typeof i != "undefined") && (i === 0)) {
-                                        html += "<span class='external-modules-original-instance'>original</span>";
-                                } else {
-                                        html += "<span class='external-modules-original-instance' style='display: none;'>original</span>";
-                                }
+				    if (!hasShowingButton && (typeof i != "undefined") && (i === 0)) {
+					     html += "<span class='external-modules-original-instance'>original</span>";
+				    } else {
+					     html += "<span class='external-modules-original-instance' style='display: none;'>original</span>";
+				    }
 
-                                html += "</td>";
-                        } else {
-                                html += "<td></td>";
-                        }
+				    html += "</td>";
+			   } else {
+				    html += "<td></td>";
+			   }
 
 			return html;
 		};
@@ -206,7 +206,7 @@ if($configsByPrefixJSON == null){
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
-			        setting.name = projectName;
+				 setting.name = projectName;
 			}
 
 			var inputAttributes = '';
@@ -270,13 +270,13 @@ if($configsByPrefixJSON == null){
 					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
 				}
 				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
-                                        if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
-                                                for (var i=0; i < setting.value.length; i++) {
-					                rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, i) + '</tr>';
-                                                }
-                                        } else {
-					        rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
-                                        }
+					     if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
+						      for (var i=0; i < setting.value.length; i++) {
+							  rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, i) + '</tr>';
+						      }
+					     } else {
+						 rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+					     }
 				}
 			})
 
@@ -284,76 +284,76 @@ if($configsByPrefixJSON == null){
 		};
 
 		$('#external-modules-configure-modal').on('click', '.external-modules-add-instance', function(){
-                        // RULE: first variable is base name (e.g., survey_name)
-                        // second and following variables are base name + ____X, where X is a 0-based name
-                        // so survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
+			   // RULE: first variable is base name (e.g., survey_name)
+			   // second and following variables are base name + ____X, where X is a 0-based name
+			   // so survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
 
-                        // find the name of the variable on this row, which is the old variable
-                        var oldName = $(this).closest('tr').find('input').attr('name');
-                        if (!oldName) {
-                                oldName = $(this).closest('tr').find('select').attr('name');
-                        }
+			   // find the name of the variable on this row, which is the old variable
+			   var oldName = $(this).closest('tr').find('input').attr('name');
+			   if (!oldName) {
+				    oldName = $(this).closest('tr').find('select').attr('name');
+			   }
 
-                        // make a new variable name for the new variable
-                        var idx = 1;
-                        var newName = oldName + "____"+idx;   // default: guess that this is the second variable
-                        var ary;
-                        if (ary = oldName.match(/____(\d+)$/)) {
-                                // transfer number (old + 1)
-                                idx = Number(ary[1]) + 1;
-                                newName = oldName.replace("____"+ary[1], "____"+idx);
-                        }
+			   // make a new variable name for the new variable
+			   var idx = 1;
+			   var newName = oldName + "____"+idx;   // default: guess that this is the second variable
+			   var ary;
+			   if (ary = oldName.match(/____(\d+)$/)) {
+				    // transfer number (old + 1)
+				    idx = Number(ary[1]) + 1;
+				    newName = oldName.replace("____"+ary[1], "____"+idx);
+			   }
 			var $newInstance = $(this).closest('tr').clone();
-                        $newInstance.insertAfter($(this).closest('tr'));
+			   $newInstance.insertAfter($(this).closest('tr'));
 
-                        // rename new instance of input/select and set value to empty string
-                        $newInstance.find('[name="'+oldName+'"]').attr('name', newName);
-                        $newInstance.find('[name="'+newName+'"]').val('');
+			   // rename new instance of input/select and set value to empty string
+			   $newInstance.find('[name="'+oldName+'"]').attr('name', newName);
+			   $newInstance.find('[name="'+newName+'"]').val('');
 
-                        // show only last +
-                        $(this).hide();
-                        // show original sign if previous was first item
-                        if (!oldName.match(/____/)) {
-                                        $("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance").show();
-                        }
-                        $newInstance.find(".external-modules-remove-instance").show();
-                });
+			   // show only last +
+			   $(this).hide();
+			   // show original sign if previous was first item
+			   if (!oldName.match(/____/)) {
+					     $("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance").show();
+			   }
+			   $newInstance.find(".external-modules-remove-instance").show();
+		  });
 
 		$('#external-modules-configure-modal').on('click', '.external-modules-remove-instance', function(){
-                        // see RULE on external-modules-add-instance
-                        // we must maintain said RULE here
-                        // RULE 2: Cannot remove first item
+			   // see RULE on external-modules-add-instance
+			   // we must maintain said RULE here
+			   // RULE 2: Cannot remove first item
 
-                        // get old name
-                        var oldName = $(this).closest('tr').find('input').attr('name');
-                        if (!oldName) {
-                                oldName = $(this).closest('tr').find('select').attr('name');
-                        }
+			   // get old name
+			   var oldName = $(this).closest('tr').find('input').attr('name');
+			   if (!oldName) {
+				    oldName = $(this).closest('tr').find('select').attr('name');
+			   }
 
-                        // this oldName will have a ____ in it; split and conquer
-                        var oldNameParts = oldName.split(/____/);
-                        var baseName = oldNameParts[0];
+			   // this oldName will have a ____ in it; split and conquer
+			   var oldNameParts = oldName.split(/____/);
+			   var baseName = oldNameParts[0];
 
-                        var i = 1;
-                        var j = 1;
-                        while ($("[name='"+baseName+"____"+i+"']").length) {
-                                if (i == oldNameParts[1]) {
-                                        // remove tr
-                                        $("[name='"+baseName+"____"+i+"']").closest('tr').remove();
-                                } else {
-                                        // rename tr: i --> j
-                                        $("[name='"+baseName+"____"+i+"']").attr('name', baseName+"____"+j);
-                                        j++;
-                                }
-                                i++;
-                        }
-                        if (j > 1) {
-                                $("[name='"+baseName+"____"+(j-1)+"']").closest("tr").find(".external-modules-add-instance").show();
-                        } else {
-                                $("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance").show();
-                                $("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance").hide();
-                        }
-                });
+			   var i = 1;
+			   var j = 1;
+			   while ($("[name='"+baseName+"____"+i+"']").length) {
+				    if (i == oldNameParts[1]) {
+					     // remove tr
+					     $("[name='"+baseName+"____"+i+"']").closest('tr').remove();
+				    } else {
+					     // rename tr: i --> j
+					     $("[name='"+baseName+"____"+i+"']").attr('name', baseName+"____"+j);
+					     j++;
+				    }
+				    i++;
+			   }
+			   if (j > 1) {
+				    $("[name='"+baseName+"____"+(j-1)+"']").closest("tr").find(".external-modules-add-instance").show();
+			   } else {
+				    $("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance").show();
+				    $("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance").hide();
+			   }
+		  });
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
 			var moduleDirectoryPrefix = $(this).closest('tr').data('module');
@@ -457,9 +457,9 @@ if($configsByPrefixJSON == null){
 					return;
 				}
 
-                                if (data.keys) {
-                                        alert(data.keys);
-                                }
+				if (data.keys) {
+					alert(data.keys);
+				}
 
 				// Reload the page reload after saving settings, in case a settings affects some page behavior (like which menu items are visible).
 				location.reload();
