@@ -94,20 +94,44 @@ if($versionsByPrefixJSON == null){
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes){
-			if ((type == "file")  && (typeof value != "undefined") && (value !== "")) {
-				var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			if (type == "file") {
+				if (pid) {
+					return getProjectFileFieldElement(name, value, inputAttributes);
+				} else {
+					return setGlobalFileFieldElement(name, value, inputAttributes);
+				}
+			} else {
+				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			}
+		};
+
+		// abstracted because file fields need to be reset in multiple places
+		var setGlobalFileFieldElement = function(name, value, inputAttributes) {
+			return getFileFieldElement(name, value, inputAttributes, "");
+		}
+
+		// abstracted because file fields need to be reset in multiple places
+		var getProjectFileFieldElement = function(name, value, inputAttributes) {
+			return getFileFieldElement(name, value, inputAttributes, "pid=" + pidString);
+		}
+
+		// abstracted because file fields need to be reset in multiple places
+		var getFileFieldElement = function(name, value, inputAttributes, pidString) {
+			var type = "file";
+			if ((typeof value != "undefined") && (value !== "")) {
+				var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
                                 html += '<span class="external-modules-edoc-file"></span>';
-                                html += '<button class="external-modules-delete-file">Delete File</button>';
-                                $.post('ajax/get-edoc-name.php?pid=' + pidString, { edoc : value }, function(data) {
+                                html += '<button class="external-modules-delete-file" '+inputAttributes+'>Delete File</button>';
+                                $.post('ajax/get-edoc-name.php?' + pidString, { edoc : value }, function(data) {
                                         $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
                                 });
                                 return html;
 			} else {
 				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 			}
-		};
+		}
 
-		var getSettingColumns = function(setting, inputAttributes){
+		var getSettingColumns = function(setting, inputAttributes, global){
 			var html = "<td><label>" + setting.name + ":</label></td>";
 
 			var type = setting.type;
@@ -140,10 +164,13 @@ if($versionsByPrefixJSON == null){
 
 					inputHtml += getInputElement(type, key, choice.value, inputAttributes + checked) + '<label>' + choice.name + '</label><br>';
 				}
-			}
-			else{
+			} else {
 				if(type == 'checkbox' && value == 1){
 					inputAttributes += ' checked';
+				}
+				var alreadyOverridden = setting.value != setting.globalValue;
+				if ((type == 'file') && (!setting['allow-project-overrides'] && global && alreadyOverridden)) {
+					inputAttributes += "disabled";
 				}
 
 				inputHtml = getInputElement(type, key, value, inputAttributes);
@@ -155,7 +182,7 @@ if($versionsByPrefixJSON == null){
 		};
 
 		var getGlobalSettingColumns = function(setting){
-			var columns = getSettingColumns(setting, '');
+			var columns = getSettingColumns(setting, '', true);
 
 			if(setting['allow-project-overrides']){
 				var overrideChoices = [
@@ -177,7 +204,11 @@ if($versionsByPrefixJSON == null){
 				s = s.replace(/'/g, '&apos;');
 			}
 
-			return s
+			if (typeof s == "undefined") {
+				s = "";
+			}
+
+			return s;
 		}
 
 		var getProjectSettingColumns = function(setting, global){
@@ -197,7 +228,7 @@ if($versionsByPrefixJSON == null){
 				overrideCheckboxAttributes += ' checked';
 			}
 
-			var columns = getSettingColumns(setting, inputAttributes);
+			var columns = getSettingColumns(setting, inputAttributes, global);
 
 			if(global){
 				columns += '<td><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
@@ -243,6 +274,7 @@ if($versionsByPrefixJSON == null){
 				if(overrideLevel){
 					setting.overrideLevelValue = overrideLevel.value
 				}
+
 
 				if(!pid){
 					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
@@ -290,11 +322,16 @@ if($versionsByPrefixJSON == null){
 
 			var row = $(this).closest("tr");
 			var input = row.find("input[type=hidden]");
+			var disabled = input.prop("disabled");
 			$(this).hide();
 
 			$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) { 
 				if (data.status == "success") {
-					row.find(".external-modules-edoc-file").html(getInputElement("file", input.attr('name'), "", ""));
+					var inputAttributes = "";
+					if (disabled) {
+						inputAttributes = "disabled";
+					}
+					row.find(".external-modules-edoc-file").html(getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
 					input.remove();
 				} else {		// failure
 					alert("The file was not able to be deleted. "+JSON.stringify(data));
@@ -309,6 +346,8 @@ if($versionsByPrefixJSON == null){
 
 			if(overrideCheckbox.prop('checked')){
 				inputs.prop('disabled', false);
+				inputs.closest("tr").find(".external-modules-delete-file").prop("disabled", false);
+				resetSaveButton();
 			}
 			else{
 				var type = inputs[0].type;
@@ -318,6 +357,10 @@ if($versionsByPrefixJSON == null){
 				else if(type == 'checkbox'){
 					inputs.prop('checked', globalValue);
 				}
+				else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
+					inputs.closest("td").html(setGlobalFileFieldElement(inputs.attr('name'), globalValue, "disabled"));
+					resetSaveButton();
+ 				}
 				else{ // text or select
 					inputs.val(globalValue);
 				}
@@ -326,7 +369,7 @@ if($versionsByPrefixJSON == null){
 			}
 		});
 
-		configureModal.on('change', 'input[type=file]', function(){
+		var resetSaveButton = function() {
 			if ($(this).val() != "") {
 				$(".save").html("Save and Upload");
 			}
@@ -339,15 +382,65 @@ if($versionsByPrefixJSON == null){
 			if (allEmpty) {
 				$(".save").html("Save");
 			}
-		});
+		}
+
+		configureModal.on('change', 'input[type=file]', resetSaveButton);
+
+		// helper method for saving
+		var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
+			var lengthOfFiles = 0;
+			var formData = new FormData();
+			for (var name in files) {
+				lengthOfFiles++;
+				formData.append(name, files[name]);   // filename agnostic
+			}
+			if (lengthOfFiles > 0) {
+				$.ajax({
+					url: url,
+					data: formData,
+					processData: false,
+					contentType: false,
+					type: 'POST',
+					success: function(returnData) {
+						if (returnData.status != 'success') {
+							alert("One or more of the files could not be saved. "+JSON.stringify(data));
+						}
+
+						// proceed anyways to save data
+						callbackWithNoArgs();
+					},
+					error: function(e) {
+						alert("One or more of the files could not be saved. "+JSON.stringify(e));
+						callbackWithNoArgs();
+					}
+				});
+			} else {
+				callbackWithNoArgs();
+			}
+		}
+
+		// helper method for saving
+		var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
+			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(returnData){
+				if(returnData.status != 'success'){
+					alert('An error occurred while saving settings: ' + returnData);
+					configureModal.show();
+					return;
+				}
+
+				// Reload the page reload after saving settings,
+				// in case a settings affects some page behavior (like which menu items are visible).
+				location.reload();
+			});
+		}
 
 		configureModal.on('click', 'button.save', function(){
 			configureModal.hide();
 			var moduleDirectoryPrefix = configureModal.data('module');
-
 			var version = versionsByPrefix[moduleDirectoryPrefix];
 
 			var data = {};
+                        var files = {};
 
 			configureModal.find('input, select').each(function(index, element){
 				var element = $(element);
@@ -360,26 +453,12 @@ if($versionsByPrefixJSON == null){
 				}
 
 				if (type == 'file') {
-					var formdata = new FormData();
+					// only store one file per variable - the first file
 					jQuery.each(element[0].files, function(i, file) {
-						formdata.append(name, file);
+						if (typeof files[name] == "undefined") {
+							files[name] = file;
+						}
 					});
-					if (element[0].files.length) {
-						$.ajax({
-							type: "POST",
-							url: 'ajax/save-file.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + '&moduleDirectoryVersion=' + version,
-							data: formdata,
-							cache: false,
-							contentType: false,
-							processData: false,
-							success: function(data) {
-								 // console.log("Success uploading "+name+": "+JSON.stringify(data));
-							},
-							error: function(e) {
-								 alert("Unable to upload "+name+": "+JSON.stringify(e));
-							}
-						});
-					}
 				} else {
 					var value;
 					if(type == 'checkbox'){
@@ -402,15 +481,11 @@ if($versionsByPrefixJSON == null){
 				}
 			});
 
-			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(data){
-				if(data.status != 'success'){
-					alert('An error occurred while saving settings: ' + data);
-					configureModal.show();
-					return;
-				}
-
-				// Reload the page reload after saving settings, in case a settings affects some page behavior (like which menu items are visible).
-				location.reload();
+			var url = 'ajax/save-file.php?pid=' + pidString +
+						     '&moduleDirectoryPrefix=' + moduleDirectoryPrefix +
+						     '&moduleDirectoryVersion=' + version;
+                        saveFilesIfTheyExist(url, files, function() {
+				saveSettings(pidString, moduleDirectoryPrefix, version, data);
 			});
 		});
 	});

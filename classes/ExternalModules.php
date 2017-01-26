@@ -279,6 +279,11 @@ class ExternalModules
                   # oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
                 $oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
+		$pidString = $projectId;
+		if (!$projectId) {
+			$pidString = "NULL";
+		}
+
                 # Escape the old value as well, so == will correctly compare it to $value.
                 if((string) $value === (string) $oldValue){
                         // We don't need to do anything.
@@ -288,28 +293,31 @@ class ExternalModules
                         $sql = "DELETE FROM redcap_external_module_settings
                                         WHERE
                                                 external_module_id = $externalModuleId
-                                                AND " . self::getSqlEqualClause('project_id', $projectId) . "
+                                                AND " . self::getSqlEqualClause('project_id', $pidString) . "
                                                 AND `key` = '$key'";
                 } else {
-                           $value = db_real_escape_string($value);
-                           if($oldValue == null) {
+			if ($type == "boolean") {
+				$value = ($value) ? 'true' : 'false';
+			}
+			$value = db_real_escape_string($value);
+			if($oldValue == null) {
                                  $event = "INSERT";
                                  $sql = "INSERT INTO redcap_external_module_settings
                                                         (
-                                                                `external_module_id`,
-                                                                `project_id`,
-                                                                `key`,
-                                                                `type`,
-                                                                `value`
-                                                        )
-                                                 VALUES
-                                                 (
-                                                         $externalModuleId,
-                                                         $projectId,
-                                                         '$key',
-                                                         '$type',
-                                                         '$value'
-                                                 )";
+								`external_module_id`,
+								`project_id`,
+								`key`,
+								`type`,
+								`value`
+							)
+						VALUES
+						(
+							$externalModuleId,
+							$pidString,
+							'$key',
+							'$type',
+							'$value'
+						)";
                          } else {
                                  $event = "UPDATE";
                                  $sql = "UPDATE redcap_external_module_settings

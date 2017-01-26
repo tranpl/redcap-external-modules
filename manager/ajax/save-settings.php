@@ -13,43 +13,45 @@ if(empty($pid) && !ExternalModules::hasGlobalSettingsSavePermission($moduleDirec
 $config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
 $files = array();
 foreach(['global-settings', 'project-settings'] as $settingsKey){
-	 foreach($config[$settingsKey] as $row) {
-		  if ($row['type'] && ($row['type'] == "file")) {
-			   $files[] = $row['key'];
-		  }
-	 }
+	foreach($config[$settingsKey] as $row) {
+		 if ($row['type'] && ($row['type'] == "file")) {
+			  $files[] = $row['key'];
+		 }
+	}
 }
 
 # returns boolean
 function isExternalModuleFile($key, $fileKeys) {
-	 if (in_array($key, $fileKeys)) {
-		  return true;
-	 }
-	 foreach ($fileKeys as $fileKey) {
-		  if (preg_match('/^'.$fileKey.'____\d+$/', $key)) {
-			   return true;
-		  }
-	 }
-	 return false;
+	if (in_array($key, $fileKeys)) {
+		 return true;
+	}
+	foreach ($fileKeys as $fileKey) {
+		 if (preg_match('/^'.$fileKey.'____\d+$/', $key)) {
+			  return true;
+		 }
+	}
+	return false;
 }
 
 foreach($_POST as $key=>$value){
-	 # files are stored in a separate $.ajax call
-	 if (!isExternalModuleFile($key, $files)) { 
-		 if($value == '') {
-			 $value = null;
-		 }
+	# files are stored in a separate $.ajax call
+	# numeric value signifies a file present
+	# empty strings signify non-existent files (globalValues or empty)
+	if (!isExternalModuleFile($key, $files) || !is_numeric($value)) { 
+		if($value == '') {
+			$value = null;
+		}
 
-		 if(empty($pid)){
-			 ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
-		 } else {
-			 if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
-				 die("You don't have permission to save the following project setting: $key");
-			 }
-	 
-			 ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
-		 }
-	 }
+		if(empty($pid)){
+			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+		} else {
+			if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
+				die("You don't have permission to save the following project setting: $key");
+			}
+	
+			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
+		}
+	}
 }
 
 header('Content-type: application/json');
