@@ -136,12 +136,12 @@ class ExternalModules
 
 	private static function setActiveModulePrefix($prefix)
 	{
-		 self::$activeModulePrefix = $prefix;
+		self::$activeModulePrefix = $prefix;
 	}
 
 	private static function getActiveModulePrefix()
 	{
-		 return self::$activeModulePrefix;
+		return self::$activeModulePrefix;
 	}
 
 	private static function sendAdminEmail($subject, $message)
@@ -176,7 +176,15 @@ class ExternalModules
 		while($row = db_fetch_assoc($result)){
 			$prefix = $row['directory_prefix'];
 			if(!self::shouldExcludeModule($prefix)){
-				$modules[$prefix] = $row['value'];
+				$value = $row['value'];
+				if ($row['type'] == "boolean") {
+					if ($value == "true") {
+						$value = true;
+					} else if ($value == "false") {
+						$value = false;
+					}
+				} 
+				$modules[$prefix] = $value;
 			}
 		}
 
@@ -237,13 +245,13 @@ class ExternalModules
 		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
 	}
 
-        # value is edoc ID
+	# value is edoc ID
 	static function setGlobalFileSetting($moduleDirectoryPrefix, $key, $value)
 	{
 		self::setFileSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
 	}
 
-        # value is edoc ID
+	# value is edoc ID
 	static function setFileSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
 		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value, "file");
@@ -261,49 +269,51 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
 	{
-                  # if $value is an array, then encode as JSON
-                  # else store $value as type specified in gettype(...)
-                  if ($type === "") {
-                 	 $type = gettype($value);
-                  }
-                  if ($type == "array") {
-                           $type = "json";
-                           $value = json_encode($value);
-                  }
+		# if $value is an array, then encode as JSON
+		# else store $value as type specified in gettype(...)
+		if ($type === "") {
+		 	$type = gettype($value);
+		}
+		if ($type == "array") {
+			$type = "json";
+			$value = json_encode($value);
+		}
 
-                $externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
+		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
-                $projectId = db_real_escape_string($projectId);
-                $key = db_real_escape_string($key);
+		$projectId = db_real_escape_string($projectId);
+		$key = db_real_escape_string($key);
 
-                  # oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
-                $oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+		# oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
+		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
 		$pidString = $projectId;
 		if (!$projectId) {
 			$pidString = "NULL";
 		}
 
-                # Escape the old value as well, so == will correctly compare it to $value.
-                if((string) $value === (string) $oldValue){
-                        // We don't need to do anything.
-                        return;
-                } else if($value === null){
-                        $event = "DELETE";
-                        $sql = "DELETE FROM redcap_external_module_settings
-                                        WHERE
-                                                external_module_id = $externalModuleId
-                                                AND " . self::getSqlEqualClause('project_id', $pidString) . "
-                                                AND `key` = '$key'";
-                } else {
-			if ($type == "boolean") {
-				$value = ($value) ? 'true' : 'false';
-			}
+		if ($type == "boolean") {
+			$value = ($value) ? 'true' : 'false';
+		}
+		if (gettype($oldValue) == "boolean") {
+			$oldValue = ($oldValue) ? 'true' : 'false';
+		}
+		if((string) $value === (string) $oldValue){
+			// We don't need to do anything.
+			return;
+		} else if($value === null){
+			$event = "DELETE";
+			$sql = "DELETE FROM redcap_external_module_settings
+					WHERE
+						external_module_id = $externalModuleId
+						AND " . self::getSqlEqualClause('project_id', $pidString) . "
+						AND `key` = '$key'";
+		} else {
 			$value = db_real_escape_string($value);
 			if($oldValue == null) {
-                                 $event = "INSERT";
-                                 $sql = "INSERT INTO redcap_external_module_settings
-                                                        (
+				 $event = "INSERT";
+				 $sql = "INSERT INTO redcap_external_module_settings
+							(
 								`external_module_id`,
 								`project_id`,
 								`key`,
@@ -318,36 +328,36 @@ class ExternalModules
 							'$type',
 							'$value'
 						)";
-                         } else {
-                                 $event = "UPDATE";
-                                 $sql = "UPDATE redcap_external_module_settings
-                                                 SET value = '$value',
-                                                           type = '$type'
-                                                 WHERE
-                                                         external_module_id = $externalModuleId
-                                                         AND " . self::getSqlEqualClause('project_id', $projectId) . "
-                                                         AND `key` = '$key'";
-                         }
-                  }
+			 } else {
+				 $event = "UPDATE";
+				 $sql = "UPDATE redcap_external_module_settings
+						 SET value = '$value',
+							   type = '$type'
+						 WHERE
+							 external_module_id = $externalModuleId
+							 AND " . self::getSqlEqualClause('project_id', $projectId) . "
+							 AND `key` = '$key'";
+			 }
+		  }
 
-                self::query($sql);
+		self::query($sql);
 
-                $affectedRows = db_affected_rows();
+		$affectedRows = db_affected_rows();
 
-                $description = ucfirst(strtolower($event)) . ' External Module setting';
+		$description = ucfirst(strtolower($event)) . ' External Module setting';
 
-                if(class_exists('Logging')){
-                        // REDCap v6.18.3 or later
-                        \Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-                }
-                else{
-                        // REDCap prior to v6.18.3
-                        log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-                }
+		if(class_exists('Logging')){
+			// REDCap v6.18.3 or later
+			\Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+		}
+		else{
+			// REDCap prior to v6.18.3
+			log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+		}
 
-                if($affectedRows != 1){
-                        throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
-                }
+		if($affectedRows != 1){
+			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
+		}
 	}
 
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
@@ -358,6 +368,14 @@ class ExternalModules
 		while($row = db_fetch_assoc($result)){
 			$key = $row['key'];
 			$value = $row['value'];
+
+			if ($row['type'] == "boolean") {
+				if ($value == "true") {
+					$value = true;
+				} else if ($value == "false") {
+					$value = false;
+				}
+			}
 
 			$setting =& $settings[$key];
 			if(!isset($setting)){
@@ -396,7 +414,7 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
+		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value, s.type
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
@@ -410,7 +428,15 @@ class ExternalModules
 		$numRows = db_num_rows($result);
 		if($numRows == 1){
 			$row = db_fetch_assoc($result);
-			return $row['value'];
+			$value = $row['value'];
+			if ($row['type'] == "boolean") {
+				if ($value == "true") {
+					$value = true;
+				} else if ($value == "false") {
+					$value = false;
+				}
+			}
+			return $value;
 		}
 		else if($numRows == 0){
 			return null;
@@ -506,12 +532,12 @@ class ExternalModules
 		$valueListSql = "";
 		$nullSql = "";
 
-	 foreach($array as $item){
-	     if(!empty($valueListSql)){
+	foreach($array as $item){
+	    if(!empty($valueListSql)){
 				$valueListSql .= ', ';
-	     }
+	    }
 
-	     $item = db_real_escape_string($item);
+	    $item = db_real_escape_string($item);
 
 			if($item == 'NULL'){
 				$nullSql = "$columnName IS NULL";
@@ -531,7 +557,7 @@ class ExternalModules
 			$parts[] = $nullSql;
 		}
 
-	 return "(" . implode(" OR ", $parts) . ")";
+	return "(" . implode(" OR ", $parts) . ")";
     }
 
 	static function callHook($name, $arguments)
@@ -710,7 +736,7 @@ class ExternalModules
 		$overrides = @$projectEnabledOverrides[$pid];
 		if(isset($overrides)){
 			foreach($overrides as $prefix => $value){
-				if($value == 1){
+				if($value){
 					$enabledPrefixes[$prefix] = true;
 				}
 				else{
@@ -765,6 +791,13 @@ class ExternalModules
 				$prefix = $row['directory_prefix'];
 				$key = $row['key'];
 				$value = $row['value'];
+				if ($row['type'] == "boolean") {
+					if ($value == "true") {
+						$value = true;
+					} else if ($value == "false") {
+						$value = false;
+					}
+				}
 
 				if(self::shouldExcludeModule($prefix)){
 					continue;
@@ -777,7 +810,7 @@ class ExternalModules
 					if(isset($pid)){
 						$projectEnabledOverrides[$pid][$prefix] = $value;
 					}
-					else if($value == 1) {
+					else if($value) {
 						$projectEnabledDefaults[$prefix] = true;
 					}
 				}

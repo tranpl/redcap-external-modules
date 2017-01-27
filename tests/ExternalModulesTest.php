@@ -154,6 +154,7 @@ class ExternalModulesTest extends BaseTest
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
 
+
 		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true, TEST_SETTING_PID);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
@@ -182,21 +183,21 @@ class ExternalModulesTest extends BaseTest
 	function testgetFileSettings() {
 		$m = self::getInstance();					
 
-		$edoc_id_global = rand();
-		$edoc_id_project = rand();
+		$edocIdGlobal = rand();
+		$edocIdProject = rand();
 
                 # global
-		$m->setGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY, $edoc_id_project);
+		ExternalModules::setGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY, $edocIdGlobal);
 
                 # project
-		$m->setFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY, $edoc_id_global);
+		ExternalModules::setFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY, $edocIdProject);
 
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
-		$this->assertEquals($edoc_id_project, $array[FILE_SETTING_KEY]['value']);
-		$this->assertEquals($edoc_id_global, $array[FILE_SETTING_KEY]['global_value']);
+		$this->assertEquals($edocIdProject, $array[FILE_SETTING_KEY]['value']);
+		$this->assertEquals($edocIdGlobal, $array[FILE_SETTING_KEY]['global_value']);
 
-		$m->removeFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY);
-		$m->removeGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
+		ExternalModules::removeFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY);
+		ExternalModules::removeGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 
 		$this->assertNull($array[FILE_SETTING_KEY]['value']);
