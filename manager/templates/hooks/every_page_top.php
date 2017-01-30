@@ -46,10 +46,15 @@ $links = ExternalModules::getLinks()
 			var newLink
 			<?php
 			foreach($links as $name=>$link){
+				$recordId = "";
+				if(strpos($link,"[insert_id]") !== -1) {
+					$recordId = $_REQUEST['id'];
+					$link = str_replace("[insert_id]","",$link);
+				}
 				?>
 				newLink = exampleLink.clone()
 				newLink.find('img').attr('src', '<?= APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] ?>.png')
-				newLink.find('a').attr('href', '<?= $link['url'] ?>&pid=<?= $project_id ?>')
+				newLink.find('a').attr('href', '<?= $link['url'] ?>&pid=<?php echo $project_id;  echo ($recordId == "" ? "" : "&record=".$recordId); ?>')
 				newLink.find('a').html('<?= $name ?>')
 				menubox.append(newLink)
 				<?php
