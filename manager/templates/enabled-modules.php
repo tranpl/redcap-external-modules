@@ -134,7 +134,11 @@ if($versionsByPrefixJSON == null){
 		}
 
 		var getSettingColumns = function(setting, inputAttributes, instance){
-			var html = "<td><label>" + setting.name + ":</label></td>";
+			var instanceLabel = "";
+			if (typeof instance != "undefined") {
+				instanceLabel = (instance+1)+". ";
+			}
+			var html = "<td><span class='external-modules-instance-label'>"+instanceLabel+"</span><label>" + setting.name + ":</label></td>";
 
 			var type = setting.type;
 			var key = setting.key
@@ -187,7 +191,8 @@ if($versionsByPrefixJSON == null){
 
 			html += "<td>" + inputHtml + "</td>";
 
-			if (setting.repeatable) {
+			// no repeatable files allowed
+			if (setting.repeatable && (type != "file")) {
 				// fill with + and - buttons and hide when appropriate
 				// set original sign for first item when + is not displayed
 
@@ -228,7 +233,7 @@ if($versionsByPrefixJSON == null){
 			if(setting['allow-project-overrides']){
 				var overrideChoices = [
 					{ value: '', name: 'Superusers Only' },
-					{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Design and Setup Users' },
+					{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Admins' },
 				];
 				columns += '<td>' + getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue) + '</td>';
 			}
@@ -361,11 +366,15 @@ if($versionsByPrefixJSON == null){
 			$newInstance.find('[name="'+oldName+'"]').attr('name', newName);
 			$newInstance.find('[name="'+newName+'"]').val('');
 
+			// rename label
+			$newInstance.closest("tr").find('span.external-modules-instance-label').html((idx+1)+". ");
+			$(this).closest("tr").find('span.external-modules-instance-label').html((idx)+". ");
+
 			// show only last +
 			$(this).hide();
 			// show original sign if previous was first item
 			if (!oldName.match(/____/)) {
-					$("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance").show();
+				$("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance").show();
 			}
 			$newInstance.find(".external-modules-remove-instance").show();
 		});
@@ -392,6 +401,8 @@ if($versionsByPrefixJSON == null){
 					// remove tr
 					$("[name='"+baseName+"____"+i+"']").closest('tr').remove();
 				} else {
+					// rename label
+					$("[name='"+baseName+"____"+i+"']").closest("tr").find('span.external-modules-instance-label').html((j+1)+". ");
 					// rename tr: i --> j
 					$("[name='"+baseName+"____"+i+"']").attr('name', baseName+"____"+j);
 					j++;
@@ -514,7 +525,7 @@ if($versionsByPrefixJSON == null){
 				formData.append(name, files[name]);   // filename agnostic
 			}
 			if (lengthOfFiles > 0) {
-				# AJAX rather than $.post
+				// AJAX rather than $.post
 				$.ajax({
 					url: url,
 					data: formData,

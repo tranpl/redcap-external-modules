@@ -143,5 +143,5 @@ ExternalModules::addResource('js/project_lookup.js');
 </script>
 
 <?php
-
-require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/footer.php';
+require_once APP_PATH_DOCROOT . 'ControlCenter/footer.php';
+?>

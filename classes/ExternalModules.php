@@ -539,21 +539,12 @@ class ExternalModules
 		$valueListSql = "";
 		$nullSql = "";
 
-<<<<<<< HEAD
-	foreach($array as $item){
-	if(!empty($valueListSql)){
-				$valueListSql .= ', ';
-	}
+		foreach($array as $item){
+		if(!empty($valueListSql)){
+			$valueListSql .= ', ';
+		}
 
-	$item = db_real_escape_string($item);
-=======
-	foreach($array as $item){
-	if(!empty($valueListSql)){
-				$valueListSql .= ', ';
-	}
-
-	$item = db_real_escape_string($item);
->>>>>>> repeatable
+		$item = db_real_escape_string($item);
 
 			if($item == 'NULL'){
 				$nullSql = "$columnName IS NULL";
@@ -573,11 +564,7 @@ class ExternalModules
 			$parts[] = $nullSql;
 		}
 
-<<<<<<< HEAD
-	return "(" . implode(" OR ", $parts) . ")";
-=======
-	return "(" . implode(" OR ", $parts) . ")";
->>>>>>> repeatable
+		return "(" . implode(" OR ", $parts) . ")";
     }
 
 	static function callHook($name, $arguments)
