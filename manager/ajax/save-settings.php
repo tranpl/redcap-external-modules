@@ -10,6 +10,7 @@ if(empty($pid) && !ExternalModules::hasGlobalSettingsSavePermission($moduleDirec
 	die("You don't have permission to save global settings!");
 }
 
+# for screening out files below
 $config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
 $files = array();
 foreach(['global-settings', 'project-settings'] as $settingsKey){
