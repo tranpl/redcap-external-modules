@@ -98,7 +98,7 @@ if($versionsByPrefixJSON == null){
 				if (pid) {
 					return getProjectFileFieldElement(name, value, inputAttributes);
 				} else {
-					return setGlobalFileFieldElement(name, value, inputAttributes);
+					return getGlobalFileFieldElement(name, value, inputAttributes);
 				}
 			} else {
 				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
@@ -106,7 +106,7 @@ if($versionsByPrefixJSON == null){
 		};
 
 		// abstracted because file fields need to be reset in multiple places
-		var setGlobalFileFieldElement = function(name, value, inputAttributes) {
+		var getGlobalFileFieldElement = function(name, value, inputAttributes) {
 			return getFileFieldElement(name, value, inputAttributes, "");
 		}
 
@@ -358,7 +358,7 @@ if($versionsByPrefixJSON == null){
 					inputs.prop('checked', globalValue);
 				}
 				else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
-					inputs.closest("td").html(setGlobalFileFieldElement(inputs.attr('name'), globalValue, "disabled"));
+					inputs.closest("td").html(getGlobalFileFieldElement(inputs.attr('name'), globalValue, "disabled"));
 					resetSaveButton();
  				}
 				else{ // text or select
