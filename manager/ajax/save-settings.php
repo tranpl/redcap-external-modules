@@ -58,6 +58,8 @@ foreach($_POST as $key=>$value){
 		}
 		if (preg_match("/____/", $key)) {
 			$instances[$key] = $value;
+		} else if (empty($pid)) {
+			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
 		} else {
 			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
 		}
