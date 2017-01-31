@@ -70,7 +70,7 @@ ExternalModules::addResource('js/project_lookup.js');
 				<table class="table table-no-top-row-border">
 					<thead>
 						<tr>
-							<th colspan="2">Global Settings</th>
+							<th colspan="3">Global Settings</th>
 							<th>Project Override<br>Permission Level</th>
 						</tr>
 					</thead>

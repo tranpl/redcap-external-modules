@@ -272,7 +272,7 @@ class ExternalModules
 		# if $value is an array, then encode as JSON
 		# else store $value as type specified in gettype(...)
 		if ($type === "") {
-		 	$type = gettype($value);
+			$type = gettype($value);
 		}
 		if ($type == "array") {
 			$type = "json";
@@ -311,8 +311,8 @@ class ExternalModules
 		} else {
 			$value = db_real_escape_string($value);
 			if($oldValue == null) {
-				 $event = "INSERT";
-				 $sql = "INSERT INTO redcap_external_module_settings
+				$event = "INSERT";
+				$sql = "INSERT INTO redcap_external_module_settings
 							(
 								`external_module_id`,
 								`project_id`,
@@ -328,17 +328,17 @@ class ExternalModules
 							'$type',
 							'$value'
 						)";
-			 } else {
-				 $event = "UPDATE";
-				 $sql = "UPDATE redcap_external_module_settings
-						 SET value = '$value',
-							   type = '$type'
-						 WHERE
-							 external_module_id = $externalModuleId
-							 AND " . self::getSqlEqualClause('project_id', $projectId) . "
-							 AND `key` = '$key'";
-			 }
-		  }
+			} else {
+				$event = "UPDATE";
+				$sql = "UPDATE redcap_external_module_settings
+						SET value = '$value',
+							type = '$type'
+						WHERE
+							external_module_id = $externalModuleId
+							AND " . self::getSqlEqualClause('project_id', $projectId) . "
+							AND `key` = '$key'";
+			}
+		}
 
 		self::query($sql);
 
@@ -368,6 +368,9 @@ class ExternalModules
 		while($row = db_fetch_assoc($result)){
 			$key = $row['key'];
 			$value = $row['value'];
+			if (($row['type'] == "json") && ($json = json_decode($row['value']))) {
+				$value = $json;
+			}
 
 			if ($row['type'] == "boolean") {
 				if ($value == "true") {
@@ -426,17 +429,21 @@ class ExternalModules
 		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
-		if($numRows == 1){
+		if($numRows == 1) {
 			$row = db_fetch_assoc($result);
-			$value = $row['value'];
-			if ($row['type'] == "boolean") {
-				if ($value == "true") {
-					$value = true;
-				} else if ($value == "false") {
-					$value = false;
+			if ($row['type'] == "json") {
+				if ($json = json_decode($row['value'], false)) {
+					return $json;
+				} else {
+					return array();
 				}
+			} else if ($row['type']) {
+				$value = $row['value'];
+				settype($value, $row['type']);
+				return $value;
+			} else {
+				return $row['value'];
 			}
-			return $value;
 		}
 		else if($numRows == 0){
 			return null;
@@ -532,12 +539,21 @@ class ExternalModules
 		$valueListSql = "";
 		$nullSql = "";
 
+<<<<<<< HEAD
 	foreach($array as $item){
-	    if(!empty($valueListSql)){
+	if(!empty($valueListSql)){
 				$valueListSql .= ', ';
-	    }
+	}
 
-	    $item = db_real_escape_string($item);
+	$item = db_real_escape_string($item);
+=======
+	foreach($array as $item){
+	if(!empty($valueListSql)){
+				$valueListSql .= ', ';
+	}
+
+	$item = db_real_escape_string($item);
+>>>>>>> repeatable
 
 			if($item == 'NULL'){
 				$nullSql = "$columnName IS NULL";
@@ -557,7 +573,11 @@ class ExternalModules
 			$parts[] = $nullSql;
 		}
 
+<<<<<<< HEAD
 	return "(" . implode(" OR ", $parts) . ")";
+=======
+	return "(" . implode(" OR ", $parts) . ")";
+>>>>>>> repeatable
     }
 
 	static function callHook($name, $arguments)
@@ -1117,6 +1137,51 @@ class ExternalModules
 				}
 			}
 			rmdir($dir);
+		}
+	}
+
+	# there is no getInstance because settings returns an array of repeated elements
+	# getInstance would merely consist of dereferencing the array; Ockham's razor
+
+	# sets the instance to a JSON string into the database
+	# $instance is 0-based index for array
+	# if the old value is a number/string, etc., this function will transform it into a JSON
+	# fills is with null values for non-expressed positions in the JSON before instance
+	# JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
+	# the form of other JSON-encoded strings.
+	static function setInstance($prefix, $projectId, $key, $instance, $value) {
+		if (is_int($instance)) {
+			$oldValue = self::getSetting($prefix, $projectId, $key);
+			$json = array();
+			if (gettype($oldValue) != "array") {
+				if ($oldValue !== null) {
+					$json[] = $oldValue;
+				}
+			}
+
+			# fill in with prior values
+			for ($i=count($json); $i < $instance; $i++) {
+				if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
+					$json[$i] = $oldValue[$i];
+				} else {
+					# pad with null for prior values when $n is ahead; should never be used
+					$json[$i] = null;
+				}
+			}
+
+			# do not set null values for current instance; always set to empty string 
+			if ($value !== null) {
+				$json[$instance] = $value;
+			} else {
+				$json[$instance] = "";
+			}
+
+			#single-element JSONs are simply data values
+			if (count($json) == 1) {
+				self::setSetting($prefix, $projectId, $key, $json[0]);
+			} else {
+				self::setSetting($prefix, $projectId, $key, $json);
+			}
 		}
 	}
 }
