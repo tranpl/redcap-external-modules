@@ -143,7 +143,15 @@ if($configsByPrefixJSON == null){
 					{ value: '', name: 'Superusers Only' },
 					{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Design and Setup Users' },
 				];
-				columns += '<td>' + getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue) + '</td>';
+
+				var selectAttributes = '';
+				if(setting.key == '<?=ExternalModules::KEY_ENABLED?>'){
+					// For now, we've decided that only super users can enable modules on projects.
+					// To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
+					selectAttributes = 'disabled'
+				}
+
+				columns += '<td>' + getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue, selectAttributes) + '</td>';
 			}
 			else{
 				columns += '<td></td>';
