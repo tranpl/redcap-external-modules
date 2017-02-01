@@ -171,7 +171,7 @@ if($versionsByPrefixJSON == null){
 					var choice = setting.choices[i];
 
 					var checked = ''
-					if(choice.value == value){
+					if(choice.value == value) {
 						checked += ' checked';
 					}
 
@@ -181,6 +181,7 @@ if($versionsByPrefixJSON == null){
 				if(type == 'checkbox' && value == 1){
 					inputAttributes += ' checked';
 				}
+				// TODO Is this only triggered when a project is overriding the global value, but now allow-project-overrides is disabled?
 				var alreadyOverridden = setting.value != setting.globalValue;
 				if ((type == 'file') && (!setting['allow-project-overrides'] && alreadyOverridden)) {
 					inputAttributes += "disabled";
@@ -195,30 +196,26 @@ if($versionsByPrefixJSON == null){
 			if (setting.repeatable && (type != "file")) {
 				// fill with + and - buttons and hide when appropriate
 				// set original sign for first item when + is not displayed
+				var addButtonStyle = "";
+				var removeButtonStyle = "";
+				var originalTagStyle = "";
 
-				html += "<td class='external-modules-add-remove-column'>";
-				var hasShowingButton = false;
-
-				if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) { 
-					html += "<button class='external-modules-add-instance' >+</button>";
-					hasShowingButton = true;
-				} else {
-					html += "<button class='external-modules-add-instance' style='display: none;'>+</button>";
+				if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
+					addButtonStyle = " style='display:none'";
 				}
 
 				if ((typeof instance != "undefined") && (instance > 0)) {
-					html += "<button class='external-modules-remove-instance'>-</button>";
-					hasShowingButton = true;
-				} else {
-					html += "<button class='external-modules-remove-instance' style='display: none;' >-</button>";
+					removeButtonStyle = " style='display:none'";
 				}
 
-				if (!hasShowingButton && (typeof instance != "undefined") && (instance === 0)) {
-					html += "<span class='external-modules-original-instance'>original</span>";
-				} else {
-					html += "<span class='external-modules-original-instance' style='display: none;'>original</span>";
+				if (!hasAddButton && !hasRemoveButton && (typeof instance != "undefined") && (instance === 0)) {
+					originalTagStyle = " style='display:none'";
 				}
 
+				html += "<td class='external-modules-add-remove-column'>";
+				html += "<button class='external-modules-add-instance'" + addButtonStyle + ">+</button>";
+				html += "<button class='external-modules-remove-instance'" + removeButtonStyle + ">-</button>";
+				html += "<span class='external-modules-original-instance'" + originalTagStyle + ">original</span>";
 				html += "</td>";
 			} else {
 				html += "<td></td>";

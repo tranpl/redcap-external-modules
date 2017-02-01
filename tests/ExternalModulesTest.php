@@ -29,7 +29,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNotEquals($defaultValue, $this->getGlobalSetting());
 	}
 
-	function testgetProjectSettingsAsArray_globalOnly()
+	function testGetProjectSettingsAsArray_globalOnly()
 	{
 		$value = rand();
 		$this->setGlobalSetting($value);
@@ -38,7 +38,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($value, $array[TEST_SETTING_KEY]['global_value']);
 	}
 
-	function testgetProjectSettingsAsArray_projectOnly()
+	function testGetProjectSettingsAsArray_projectOnly()
 	{
 		$value = rand();
 		$this->setProjectSetting($value);
@@ -47,7 +47,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals(null, $array[TEST_SETTING_KEY]['global_value']);
 	}
 
-	function testgetProjectSettingsAsArray_both()
+	function testGetProjectSettingsAsArray_both()
 	{
 		$globalValue = rand();
 		$projectValue = rand();
