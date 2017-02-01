@@ -848,35 +848,9 @@ class ExternalModules
 		}
 	}
 
-	static function getControlCenterLinks(){
-		$links = self::getLinks();
+	static function getLinks(){
+		$pid = self::getPID();
 
-		$links['Manage External Modules'] = array(
-			'icon' => 'brick',
-			'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
-		);
-
-		ksort($links);
-
-		return $links;
-	}
-
-	static function getProjectLinks($pid){
-		$links = self::getLinks($pid);
-
-		if(self::hasDesignRights()){
-			$links['Manage External Modules'] = array(
-				'icon' => 'brick',
-				'url' => ExternalModules::$BASE_URL  . 'manager/project.php?'
-			);
-		}
-
-		ksort($links);
-
-		return $links;
-	}
-
-	private function getLinks($pid = null){
 		if(isset($pid)){
 			$type = 'project';
 		}
@@ -897,9 +871,30 @@ class ExternalModules
 			}
 		}
 
+		$addManageLink = function($url) use (&$links){
+			$links['Manage External Modules'] = array(
+				'icon' => 'brick',
+				'url' => ExternalModules::$BASE_URL  . $url
+			);
+		};
+
+		if(isset($pid)){
+			if(SUPER_USER || !empty($modules) && self::hasDesignRights()){
+				$addManageLink('manager/project.php?');
+			}
+		}
+		else{
+			$addManageLink('manager/control_center.php');
+		}
+
 		ksort($links);
 
 		return $links;
+	}
+
+	private static function getPID()
+	{
+		return @$_GET['pid'];
 	}
 
 	private static function getUrl($prefix, $page)
