@@ -208,7 +208,7 @@ if($versionsByPrefixJSON == null){
 					removeButtonStyle = " style='display:none'";
 				}
 
-				if (!hasAddButton && !hasRemoveButton && (typeof instance != "undefined") && (instance === 0)) {
+				if (addButtonStyle == "" && removeButtonStyle == "" && (typeof instance != "undefined") && (instance === 0)) {
 					originalTagStyle = " style='display:none'";
 				}
 
