@@ -19,6 +19,10 @@ if(!defined('APP_PATH_WEBROOT')){
 	require_once __DIR__ . "/../../redcap_connect.php";
 }
 
+if (class_exists('ExternalModules\ExternalModules')) {
+	return;
+}
+
 use \Exception;
 
 class ExternalModules
@@ -26,6 +30,8 @@ class ExternalModules
 	const GLOBAL_SETTING_PROJECT_ID = 'NULL';
 	const KEY_VERSION = 'version';
 	const KEY_ENABLED = 'enabled';
+
+	const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
 
 	const DISABLE_EXTERNAL_MODULE_HOOKS = 'disable-external-module-hooks';
 
@@ -60,9 +66,14 @@ class ExternalModules
 		)
 	);
 
+	private static function isLocalhost()
+	{
+		return $_SERVER['HTTP_HOST'] == 'localhost';
+	}
+
 	static function initialize()
 	{
-		if($_SERVER['HTTP_HOST'] == 'localhost'){
+		if(self::isLocalhost()){
 			// Assume this is a developer's machine and enable errors.
 			ini_set('display_errors', 1);
 			ini_set('display_startup_errors', 1);
@@ -78,57 +89,59 @@ class ExternalModules
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
 		self::$MODULES_PATH = __DIR__ . "/../.." . $modulesDirectoryName;
 
-		register_shutdown_function(function(){
-			$activeModulePrefix = self::getActiveModulePrefix();
-			if($activeModulePrefix != null){
-				$error = error_get_last();
-				$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
-				$message .= 'Error Message: ' . $error['message'] . "\n";
-				$message .= 'File: ' . $error['file'] . "\n";
-				$message .= 'Line: ' . $error['line'] . "\n";
+		if(!self::isLocalhost()){
+			register_shutdown_function(function(){
+				$activeModulePrefix = self::getActiveModulePrefix();
+				if($activeModulePrefix != null){
+					$error = error_get_last();
+					$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
+					$message .= 'Error Message: ' . $error['message'] . "\n";
+					$message .= 'File: ' . $error['file'] . "\n";
+					$message .= 'Line: ' . $error['line'] . "\n";
 
-				error_log($message);
-				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message);
+					error_log($message);
+					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message);
 
-				// We can't just call disable() from here because the database connection has been destroyed.
-				// Disable this module via AJAX instead.
-				?>
-				<br>
-				<h4 id="external-modules-message">
-					A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
-					Disabling that module...
-				</h4>
-				<script>
-					var request = new XMLHttpRequest();
-					request.onreadystatechange = function() {
-						if (request.readyState == XMLHttpRequest.DONE ) {
-							var messageElement = document.getElementById('external-modules-message')
-							if(request.responseText == 'success'){
-								messageElement.innerHTML = 'The "<?=$activeModulePrefix?>" external module was automatically disabled in order to allow REDCap to function properly.  The REDCap administrator has been notified.  Please save a copy of the above error and fix it before re-enabling the module.';
+					// We can't just call disable() from here because the database connection has been destroyed.
+					// Disable this module via AJAX instead.
+					?>
+					<br>
+					<h4 id="external-modules-message">
+						A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
+						Disabling that module...
+					</h4>
+					<script>
+						var request = new XMLHttpRequest();
+						request.onreadystatechange = function() {
+							if (request.readyState == XMLHttpRequest.DONE ) {
+								var messageElement = document.getElementById('external-modules-message')
+								if(request.responseText == 'success'){
+									messageElement.innerHTML = 'The "<?=$activeModulePrefix?>" external module was automatically disabled in order to allow REDCap to function properly.  The REDCap administrator has been notified.  Please save a copy of the above error and fix it before re-enabling the module.';
+								}
+								else{
+									messageElement.innerHTML += '<br>An error occurred while disabling the "<?=$activeModulePrefix?>" module: ' + request.responseText;
+								}
 							}
-							else{
-								messageElement.innerHTML += '<br>An error occurred while disabling the "<?=$activeModulePrefix?>" module: ' + request.responseText;
-							}
-						}
-					};
+						};
 
-					request.open("POST", "<?=self::$BASE_URL?>/manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
-					request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-					request.send("module=<?=$activeModulePrefix?>");
-				</script>
-				<?php
-			}
-		});
+						request.open("POST", "<?=self::$BASE_URL?>/manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
+						request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+						request.send("module=<?=$activeModulePrefix?>");
+					</script>
+					<?php
+				}
+			});
+		}
 	}
 
 	private static function setActiveModulePrefix($prefix)
 	{
-		 self::$activeModulePrefix = $prefix;
+		self::$activeModulePrefix = $prefix;
 	}
 
 	private static function getActiveModulePrefix()
 	{
-		 return self::$activeModulePrefix;
+		return self::$activeModulePrefix;
 	}
 
 	private static function sendAdminEmail($subject, $message)
@@ -160,8 +173,12 @@ class ExternalModules
 		$result = self::getGlobalSettings(null, array(self::KEY_VERSION));
 
 		$modules = array();
-		while($row = db_fetch_assoc($result)){
-			$modules[$row['directory_prefix']] = $row['value'];
+		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
+			$prefix = $row['directory_prefix'];
+			if(!self::shouldExcludeModule($prefix)){
+				$value = $row['value'];
+				$modules[$prefix] = $value;
+			}
 		}
 
 		return $modules;
@@ -221,56 +238,103 @@ class ExternalModules
 		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
 	}
 
-	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
+	# value is edoc ID
+	static function setGlobalFileSetting($moduleDirectoryPrefix, $key, $value)
 	{
-		if($value === false){
-			// False gets translated to an empty string by db_real_escape_string().
-			// We much change this value to 0 for it to actually be saved.
-			$value = 0;
+		self::setFileSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
+	}
+
+	# value is edoc ID
+	static function setFileSetting($moduleDirectoryPrefix, $projectId, $key, $value)
+	{
+		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value, "file");
+	}
+
+	static function removeGlobalFileSetting($moduleDirectoryPrefix, $key)
+	{
+		self::removeFileSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
+	}
+
+	static function removeFileSetting($moduleDirectoryPrefix, $projectId, $key)
+	{
+		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
+	}
+
+	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
+	{
+		# if $value is an array, then encode as JSON
+		# else store $value as type specified in gettype(...)
+		if ($type === "") {
+			$type = gettype($value);
+		}
+		if ($type == "array") {
+			$type = "json";
+			$value = json_encode($value);
 		}
 
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
 		$projectId = db_real_escape_string($projectId);
 		$key = db_real_escape_string($key);
-		$value = db_real_escape_string($value);
 
-		// Escape the old value as well, so == will correctly compare it to $value.
-		$oldValue = db_real_escape_string(self::getSetting($moduleDirectoryPrefix, $projectId, $key));
-		if($value == $oldValue){
+		# oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
+		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+
+		$pidString = $projectId;
+		if (!$projectId) {
+			$pidString = "NULL";
+		}
+
+		if ($type == "boolean") {
+			$value = ($value) ? 'true' : 'false';
+		}
+		if (gettype($oldValue) == "boolean") {
+			$oldValue = ($oldValue) ? 'true' : 'false';
+		}
+		if((string) $value === (string) $oldValue){
 			// We don't need to do anything.
 			return;
-		}
-		else if($value == null){
+		} else if($value === null){
 			$event = "DELETE";
 			$sql = "DELETE FROM redcap_external_module_settings
 					WHERE
 						external_module_id = $externalModuleId
-						AND " . self::getSqlEqualClause('project_id', $projectId) . "
+						AND " . self::getSqlEqualClause('project_id', $pidString) . "
 						AND `key` = '$key'";
-		}
-		else if($oldValue == null) {
-			$event = "INSERT";
-			$sql = "INSERT INTO redcap_external_module_settings
-					VALUES
-					(
-						$externalModuleId,
-						$projectId,
-						'$key',
-						'$value'
-					)";
-		}
-		else {
-			$event = "UPDATE";
-			$sql = "UPDATE redcap_external_module_settings
-					SET value = '$value'
-					WHERE
-						external_module_id = $externalModuleId
-						AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						AND `key` = '$key'";
+		} else {
+			$value = db_real_escape_string($value);
+			if($oldValue == null) {
+				$event = "INSERT";
+				$sql = "INSERT INTO redcap_external_module_settings
+							(
+								`external_module_id`,
+								`project_id`,
+								`key`,
+								`type`,
+								`value`
+							)
+						VALUES
+						(
+							$externalModuleId,
+							$pidString,
+							'$key',
+							'$type',
+							'$value'
+						)";
+			} else {
+				$event = "UPDATE";
+				$sql = "UPDATE redcap_external_module_settings
+						SET value = '$value',
+							type = '$type'
+						WHERE
+							external_module_id = $externalModuleId
+							AND " . self::getSqlEqualClause('project_id', $projectId) . "
+							AND `key` = '$key'";
+			}
 		}
 
 		self::query($sql);
+
 		$affectedRows = db_affected_rows();
 
 		$description = ucfirst(strtolower($event)) . ' External Module setting';
@@ -294,7 +358,7 @@ class ExternalModules
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
-		while($row = db_fetch_assoc($result)){
+		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 			$key = $row['key'];
 			$value = $row['value'];
 
@@ -335,11 +399,29 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
+		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value, s.type
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
 							WHERE " . implode(' AND ', $whereClauses));
+	}
+
+	static function validateSettingsRow($row)
+	{
+		if (($row['type'] == "json")) {
+			if($json = json_decode($row['value'])) {
+				$row['value'] = $json;
+			}
+		}
+		else if ($row['type'] == "boolean") {
+			if ($row['value'] == "true") {
+				$row['value'] = true;
+			} else if ($row['value'] == "false") {
+				$row['value'] = false;
+			}
+		}
+
+		return $row;
 	}
 
 	private static function getSetting($moduleDirectoryPrefix, $projectId, $key)
@@ -347,8 +429,9 @@ class ExternalModules
 		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
-		if($numRows == 1){
-			$row = db_fetch_assoc($result);
+		if($numRows == 1) {
+			$row = self::validateSettingsRow(db_fetch_assoc($result));
+
 			return $row['value'];
 		}
 		else if($numRows == 0){
@@ -445,12 +528,12 @@ class ExternalModules
 		$valueListSql = "";
 		$nullSql = "";
 
-        foreach($array as $item){
-            if(!empty($valueListSql)){
-				$valueListSql .= ', ';
-            }
+		foreach($array as $item){
+		if(!empty($valueListSql)){
+			$valueListSql .= ', ';
+		}
 
-            $item = db_real_escape_string($item);
+		$item = db_real_escape_string($item);
 
 			if($item == 'NULL'){
 				$nullSql = "$columnName IS NULL";
@@ -470,7 +553,7 @@ class ExternalModules
 			$parts[] = $nullSql;
 		}
 
-        return "(" . implode(" OR ", $parts) . ")";
+		return "(" . implode(" OR ", $parts) . ")";
     }
 
 	static function callHook($name, $arguments)
@@ -649,7 +732,7 @@ class ExternalModules
 		$overrides = @$projectEnabledOverrides[$pid];
 		if(isset($overrides)){
 			foreach($overrides as $prefix => $value){
-				if($value == 1){
+				if($value){
 					$enabledPrefixes[$prefix] = true;
 				}
 				else{
@@ -673,6 +756,23 @@ class ExternalModules
 		return $enabledVersions;
 	}
 
+	private static function shouldExcludeModule($prefix)
+	{
+		$isTestPrefix = strpos($prefix, self::TEST_MODULE_PREFIX) === 0;
+		if($isTestPrefix && !self::isTesting($prefix)){
+			// This php process is not running unit tests.
+			// Ignore the test prefix so it doesn't interfere with this process.
+			return true;
+		}
+
+		return false;
+	}
+
+	private static function isTesting()
+	{
+		return PHP_SAPI == 'cli' && strpos($_SERVER['argv'][0], 'phpunit') !== FALSE;
+	}
+
 	private static function cacheAllEnableData()
 	{
 		$globallyEnabledVersions = array();
@@ -682,11 +782,15 @@ class ExternalModules
 		// Only attempt to detect enabled modules if the external module tables exist.
 		if(self::areTablesPresent()){
 			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
-			while($row = db_fetch_assoc($result)){
+			while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 				$pid = $row['project_id'];
 				$prefix = $row['directory_prefix'];
 				$key = $row['key'];
 				$value = $row['value'];
+
+				if(self::shouldExcludeModule($prefix)){
+					continue;
+				}
 
 				if($key == self::KEY_VERSION){
 					$globallyEnabledVersions[$prefix] = $value;
@@ -695,7 +799,7 @@ class ExternalModules
 					if(isset($pid)){
 						$projectEnabledOverrides[$pid][$prefix] = $value;
 					}
-					else if($value == 1) {
+					else if($value) {
 						$projectEnabledDefaults[$prefix] = true;
 					}
 				}
@@ -720,15 +824,24 @@ class ExternalModules
 
 	static function addResource($path)
 	{
-		$path = "manager/$path";
-		$fullLocalPath = __DIR__ . "/../$path";
-		$extension = pathinfo($fullLocalPath, PATHINFO_EXTENSION);
+		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
-		// Add the filemtime to the url for cache busting.
-		$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+		if(substr($path,0,8) == "https://") {
+			$url = $path;
+		}
+		else {
+			$path = "manager/$path";
+			$fullLocalPath = __DIR__ . "/../$path";
+
+			// Add the filemtime to the url for cache busting.
+			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+		}
 
 		if ($extension == 'css') {
 			echo "<link rel='stylesheet' type='text/css' href='" . $url . "'>";
+		}
+		else if ($extension == 'js') {
+			echo "<script src='" . $url . "'></script>";
 		}
 		else {
 			throw new Exception('Unsupported resource added: ' . $path);
@@ -830,7 +943,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-	static function getConfig($prefix, $version)
+	static function getConfig($prefix, $version, $pid = null)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
@@ -840,9 +953,46 @@ class ExternalModules
 			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 		}
 
-		foreach(['global-settings', 'project-settings'] as $key){
+		foreach(['permissions', 'global-settings', 'project-settings'] as $key){
 			if(!isset($config[$key])){
 				$config[$key] = array();
+			}
+		}
+
+		## Pull form and field list for choice list of project-settings field-list and form-list settings
+		if(!empty($pid)) {
+			foreach($config['project-settings'] as $configKey => $configRow) {
+				if($configRow['type'] == 'field-list') {
+					$choices = [];
+
+					$sql = "SELECT field_name,element_label
+							FROM redcap_metadata
+							WHERE project_id = '".db_real_escape_string($pid)."'
+							ORDER BY field_order";
+					$result = self::query($sql);
+
+					while($row = db_fetch_assoc($result)){
+						$choices[] = ['value' => $row['field_name'],'name' => $row['field_name'] . " - " . substr($row['element_label'],0,20)];
+					}
+
+					$config['project-settings'][$configKey]['choices'] = $choices;
+				}
+				else if($configRow['type'] == 'form-list') {
+					$choices = [];
+
+
+					$sql = "SELECT DISTINCT form_name
+							FROM redcap_metadata
+							WHERE project_id = '".db_real_escape_string($pid)."'
+							ORDER BY field_order";
+					$result = self::query($sql);
+
+					while($row = db_fetch_assoc($result)){
+						$choices[] = ['value' => $row['form_name'],'name' => $row['form_name']];
+					}
+
+					$config['project-settings'][$configKey]['choices'] = $choices;
+				}
 			}
 		}
 
@@ -953,5 +1103,49 @@ class ExternalModules
 			rmdir($dir);
 		}
 	}
-}
 
+	# there is no getInstance because settings returns an array of repeated elements
+	# getInstance would merely consist of dereferencing the array; Ockham's razor
+
+	# sets the instance to a JSON string into the database
+	# $instance is 0-based index for array
+	# if the old value is a number/string, etc., this function will transform it into a JSON
+	# fills is with null values for non-expressed positions in the JSON before instance
+	# JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
+	# the form of other JSON-encoded strings.
+	static function setInstance($prefix, $projectId, $key, $instance, $value) {
+		if (is_int($instance)) {
+			$oldValue = self::getSetting($prefix, $projectId, $key);
+			$json = array();
+			if (gettype($oldValue) != "array") {
+				if ($oldValue !== null) {
+					$json[] = $oldValue;
+				}
+			}
+
+			# fill in with prior values
+			for ($i=count($json); $i < $instance; $i++) {
+				if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
+					$json[$i] = $oldValue[$i];
+				} else {
+					# pad with null for prior values when $n is ahead; should never be used
+					$json[$i] = null;
+				}
+			}
+
+			# do not set null values for current instance; always set to empty string 
+			if ($value !== null) {
+				$json[$instance] = $value;
+			} else {
+				$json[$instance] = "";
+			}
+
+			#single-element JSONs are simply data values
+			if (count($json) == 1) {
+				self::setSetting($prefix, $projectId, $key, $json[0]);
+			} else {
+				self::setSetting($prefix, $projectId, $key, $json);
+			}
+		}
+	}
+}

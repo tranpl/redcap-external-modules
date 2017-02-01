@@ -4,25 +4,89 @@ require_once '../../classes/ExternalModules.php';
 
 $pid = @$_GET['pid'];
 $moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
+$version = $_GET['moduleDirectoryVersion'];
 
 if(empty($pid) && !ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
 	die("You don't have permission to save global settings!");
 }
 
-foreach($_POST as $key=>$value){
-	if($value == ''){
-		$value = null;
+# for screening out files below
+$config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
+$files = array();
+foreach(['global-settings', 'project-settings'] as $settingsKey){
+	foreach($config[$settingsKey] as $row) {
+		if ($row['type'] && ($row['type'] == "file")) {
+			$files[] = $row['key'];
+		}
 	}
+}
 
-	if(empty($pid)){
-		ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+$instances = array();   # for repeatable elements, you must save them after the original is saved
+			# if not, the value is overwritten by a string/int/etc. - not a JSON
+
+# returns boolean
+function isExternalModuleFile($key, $fileKeys) {
+	if (in_array($key, $fileKeys)) {
+		return true;
 	}
-	else{
-		if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)){
-			die("You don't have permission to save the following project setting: $key");
+	foreach ($fileKeys as $fileKey) {
+		if (preg_match('/^'.$fileKey.'____\d+$/', $key)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+# store everything BUT files and multiple instances (after the first one)
+foreach($_POST as $key=>$value){
+	# files are stored in a separate $.ajax call
+	# numeric value signifies a file present
+	# empty strings signify non-existent files (globalValues or empty)
+	if (!isExternalModuleFile($key, $files) || !is_numeric($value)) { 
+		if($value == '') {
+			$value = null;
 		}
 
-		ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
+		if(empty($pid)){
+			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+		} else {
+			if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
+				die("You don't have permission to save the following project setting: $key");
+			}
+	
+			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
+		}
+		if (preg_match("/____/", $key)) {
+			$instances[$key] = $value;
+		} else if (empty($pid)) {
+			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+		} else {
+			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
+		}
+	}
+}
+
+# instances must come after the initial settings have been saved
+foreach($instances as $key => $value) {
+	# allow the last match to be blank and not put into the database
+	$last = true;
+	$a = preg_split("/____/", $key);
+	$shortKey = $a[0];
+	$n = $a[1];
+
+	# check if the current element is the last in the repeatable element
+	foreach ($_POST as $key2 => $value2) {
+		$a2 = preg_split("/____/", $key2);
+		if (($a2[0] == $shortKey) && ($a2[1] > $n)) {
+			$last = false;
+			break;
+		}
+	}
+
+	# do not put in database if last and value is blank
+	if (!$last || $value != "") { 
+		$a = preg_split("/____/", $key);
+		$data = ExternalModules::setInstance($moduleDirectoryPrefix, $pid, $shortKey, (int) $n, $value);
 	}
 }
 

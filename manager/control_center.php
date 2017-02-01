@@ -1,9 +1,14 @@
 <?php
 namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
-require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/header.php';
+require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
 
 ExternalModules::addResource('css/style.css');
+
+ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
+ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
+ExternalModules::addResource('js/globals.js');
+ExternalModules::addResource('js/project_lookup.js');
 
 ?>
 
@@ -66,7 +71,7 @@ ExternalModules::addResource('css/style.css');
 				<table class="table table-no-top-row-border">
 					<thead>
 						<tr>
-							<th colspan="2">Global Settings</th>
+							<th colspan="3">Global Settings</th>
 							<th>Project Override<br>Permission Level</th>
 						</tr>
 					</thead>
@@ -139,5 +144,5 @@ ExternalModules::addResource('css/style.css');
 </script>
 
 <?php
-
-require_once '../..' . APP_PATH_WEBROOT . 'ControlCenter/footer.php';
+require_once APP_PATH_DOCROOT . 'ControlCenter/footer.php';
+?>

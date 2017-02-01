@@ -1,6 +1,10 @@
 <?php
 namespace ExternalModules;
 
+if (class_exists('ExternalModules\AbstractExternalModule')) {
+	return;
+}
+
 use Exception;
 
 class AbstractExternalModule

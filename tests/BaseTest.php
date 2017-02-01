@@ -5,9 +5,10 @@ require_once dirname(__FILE__) . '/../classes/ExternalModules.php';
 use PHPUnit\Framework\TestCase;
 use \Exception;
 
-const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
+const TEST_MODULE_PREFIX = ExternalModules::TEST_MODULE_PREFIX;
 const TEST_MODULE_VERSION = 'v1.0.0';
 const TEST_SETTING_KEY = 'unit-test-setting-key';
+const FILE_SETTING_KEY = 'unit-test-file-setting-key';
 const TEST_SETTING_PID = 1;
 
 abstract class BaseTest extends TestCase
@@ -66,26 +67,7 @@ abstract class BaseTest extends TestCase
 
 	protected function getInstance($config = [])
 	{
-		return new class($config) extends AbstractExternalModule {
-			function __construct($config)
-			{
-				$this->CONFIG = $config;
-				parent::__construct();
-
-				$this->PREFIX = TEST_MODULE_PREFIX;
-				$this->VERSION = TEST_MODULE_VERSION;
-			}
-
-			function __call($name, $arguments)
-			{
-				// We end up in here when we try to call a private method.
-				// use reflection to call the method anyway (allowing unit testing of private methods).
-				$method = new \ReflectionMethod(get_class(), $name);
-				$method->setAccessible(true);
-
-				return $method->invokeArgs ($this, $arguments);
-			}
-		};
+		return new BaseTestExternalModule($config);
 	}
 
 	protected function assertThrowsException($callable, $exceptionExcerpt){
@@ -105,5 +87,26 @@ abstract class BaseTest extends TestCase
 		}
 
 		$this->assertTrue($exceptionThrown);
+	}
+}
+
+class BaseTestExternalModule extends AbstractExternalModule {
+	function __construct($config)
+	{
+		$this->CONFIG = $config;
+		parent::__construct();
+
+		$this->PREFIX = TEST_MODULE_PREFIX;
+		$this->VERSION = TEST_MODULE_VERSION;
+	}
+
+	function __call($name, $arguments)
+	{
+		// We end up in here when we try to call a private method.
+		// use reflection to call the method anyway (allowing unit testing of private methods).
+		$method = new \ReflectionMethod(get_class(), $name);
+		$method->setAccessible(true);
+
+		return $method->invokeArgs ($this, $arguments);
 	}
 }

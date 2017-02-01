@@ -1,4 +1,4 @@
-#external-modules-enabled{
+#externa-modunes-enabled{
 	max-width: 700px;
 }
 
@@ -55,4 +55,25 @@
 #external-modules-configure-modal select:disabled {
 	/* match text input disabled backgrounds */
 	background-color: rgb(235, 235, 228);
+}
+
+#external-modules-configure-modal select {
+	max-width: 275px;
+}
+
+.external-modules-add-remove-column {
+	 width: 40px;
+	 text-align: center;
+}
+
+.external-modules-override-column {
+	 text-align: center;
+}
+
+.external-modules-add-instance, .external-modules-remove-instance {
+	 width: 30px;
+}
+
+.external-modules-original-instance {
+	 font-size: 10px;
 }

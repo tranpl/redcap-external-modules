@@ -9,6 +9,8 @@ if(!ExternalModules::hasDesignRights()){
 }
 
 ExternalModules::addResource('css/style.css');
+ExternalModules::addResource('js/globals.js');
+ExternalModules::addResource('js/project_lookup.js');
 
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 
@@ -32,7 +34,7 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 				<table class="table table-no-top-row-border">
 					<thead>
 						<tr>
-							<th colspan="2">Project Settings</th>
+							<th colspan="3">Project Settings</th>
 							<th>Override Global Setting</th>
 						</tr>
 					</thead>

@@ -23,7 +23,7 @@ $pid = $_GET['pid'];
 		echo 'None';
 	} else {
 		foreach ($versionsByPrefix as $prefix => $version) {
-			$config = ExternalModules::getConfig($prefix, $version);
+			$config = ExternalModules::getConfig($prefix, $version,$pid);
 			$configsByPrefix[$prefix] = $config;
 			?>
 			<tr data-module='<?= $prefix ?>'>
@@ -42,10 +42,32 @@ $pid = $_GET['pid'];
 	?>
 </table>
 
+<?php
+// JSON_PARTIAL_OUTPUT_ON_ERROR was added here to fix an odd conflict between field-list and form-list types
+// and some Hebrew characters on the "Israel: Healthcare Personnel (Hebrew)" project that could not be json_encoded.
+// This workaround allows configs to be encoded anyway, even though the unencodable characters will be excluded
+// (causing form-list and field-list to not work for any fields with unencodeable characters).
+// I spent a couple of hours trying to find a solution, but was unable.  This workaround will have to do for now.
+$configsByPrefixJSON = json_encode($configsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
+if($configsByPrefixJSON == null){
+	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
+	die();
+}
+$versionsByPrefixJSON = json_encode($versionsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
+if($versionsByPrefixJSON == null){
+	echo '<script>alert(' . json_encode('An error occurred while converting the versions to JSON: ' . json_last_error_msg()) . ');</script>';
+	die();
+}
+?>
+
 <script>
 	$(function(){
-		var pid = <?=json_encode($pid)?>;
-		var configsByPrefix = <?=json_encode($configsByPrefix)?>;
+		var configsByPrefix = <?=$configsByPrefixJSON?>;
+		var versionsByPrefix = <?=$versionsByPrefixJSON?>;
+		var pidString = pid;
+		if(pid == null){
+			pidString = '';
+		}
 		var configureModal = $('#external-modules-configure-modal');
 		var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
@@ -71,19 +93,77 @@ $pid = $_GET['pid'];
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes){
-			return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			if (typeof value == "undefined") {
+				value = "";
+			}
+			if (type == "file") {
+				if (pid) {
+					return getProjectFileFieldElement(name, value, inputAttributes);
+				} else {
+					return getGlobalFileFieldElement(name, value, inputAttributes);
+				}
+			} else {
+				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			}
 		};
 
-		var getSettingColumns = function(setting, inputAttributes){
-			var html = "<td><label>" + setting.name + ":</label></td>";
+		// abstracted because file fields need to be reset in multiple places
+		var getGlobalFileFieldElement = function(name, value, inputAttributes) {
+			return getFileFieldElement(name, value, inputAttributes, "");
+		}
+
+		// abstracted because file fields need to be reset in multiple places
+		var getProjectFileFieldElement = function(name, value, inputAttributes) {
+			return getFileFieldElement(name, value, inputAttributes, "pid=" + pidString);
+		}
+
+		// abstracted because file fields need to be reset in multiple places
+		var getFileFieldElement = function(name, value, inputAttributes, pidString) {
+			var type = "file";
+			if ((typeof value != "undefined") && (value !== "")) {
+				var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
+                                html += '<span class="external-modules-edoc-file"></span>';
+                                html += '<button class="external-modules-delete-file" '+inputAttributes+'>Delete File</button>';
+                                $.post('ajax/get-edoc-name.php?' + pidString, { edoc : value }, function(data) {
+                                        $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
+                                });
+                                return html;
+			} else {
+				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			}
+		}
+
+		var getSettingColumns = function(setting, inputAttributes, instance){
+			var instanceLabel = "";
+			if (typeof instance != "undefined") {
+				instanceLabel = (instance+1)+". ";
+			}
+			var html = "<td><span class='external-modules-instance-label'>"+instanceLabel+"</span><label>" + setting.name + ":</label></td>";
 
 			var type = setting.type;
 			var key = setting.key
 			var value = setting.value
+			if (typeof instance != "undefined") {
+				// for looping for repeatable elements
+				value = value[instance];
+				if (instance > 0) {
+					key = key + "____" + instance;
+				}
+			}
 
 			var inputHtml;
 			if(type == 'dropdown'){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'field-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'form-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'project-id'){
+				inputAttributes += ' class="project_id_textbox" id="test-id"';
+				inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, inputAttributes) + "</div>";
 			}
 			else if(type == 'radio'){
 				inputHtml = "";
@@ -91,22 +171,55 @@ $pid = $_GET['pid'];
 					var choice = setting.choices[i];
 
 					var checked = ''
-					if(choice.value == value){
+					if(choice.value == value) {
 						checked += ' checked';
 					}
 
 					inputHtml += getInputElement(type, key, choice.value, inputAttributes + checked) + '<label>' + choice.name + '</label><br>';
 				}
-			}
-			else{
+			} else {
 				if(type == 'checkbox' && value == 1){
 					inputAttributes += ' checked';
+				}
+				// TODO Is this only triggered when a project is overriding the global value, but now allow-project-overrides is disabled?
+				var alreadyOverridden = setting.value != setting.globalValue;
+				if ((type == 'file') && (!setting['allow-project-overrides'] && alreadyOverridden)) {
+					inputAttributes += "disabled";
 				}
 
 				inputHtml = getInputElement(type, key, value, inputAttributes);
 			}
 
 			html += "<td>" + inputHtml + "</td>";
+
+			// no repeatable files allowed
+			if (setting.repeatable && (type != "file")) {
+				// fill with + and - buttons and hide when appropriate
+				// set original sign for first item when + is not displayed
+				var addButtonStyle = "";
+				var removeButtonStyle = "";
+				var originalTagStyle = "";
+
+				if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
+					addButtonStyle = " style='display:none'";
+				}
+
+				if ((typeof instance != "undefined") && (instance > 0)) {
+					removeButtonStyle = " style='display:none'";
+				}
+
+				if (addButtonStyle == "" && removeButtonStyle == "" && (typeof instance != "undefined") && (instance === 0)) {
+					originalTagStyle = " style='display:none'";
+				}
+
+				html += "<td class='external-modules-add-remove-column'>";
+				html += "<button class='external-modules-add-instance'" + addButtonStyle + ">+</button>";
+				html += "<button class='external-modules-remove-instance'" + removeButtonStyle + ">-</button>";
+				html += "<span class='external-modules-original-instance'" + originalTagStyle + ">original</span>";
+				html += "</td>";
+			} else {
+				html += "<td></td>";
+			}
 
 			return html;
 		};
@@ -117,7 +230,7 @@ $pid = $_GET['pid'];
 			if(setting['allow-project-overrides']){
 				var overrideChoices = [
 					{ value: '', name: 'Superusers Only' },
-					{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Design and Setup Users' },
+					{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Admins' },
 				];
 
 				var selectAttributes = '';
@@ -137,21 +250,23 @@ $pid = $_GET['pid'];
 		};
 
 		var getAttributeValueHtml = function(s){
-			if(s == null){
-				return ''
+			if(typeof s == 'string'){
+				s = s.replace(/"/g, '&quot;');
+				s = s.replace(/'/g, '&apos;');
 			}
 
-			s = s.replace(/"/g, '&quot;');
-			s = s.replace(/'/g, '&apos;');
+			if (typeof s == "undefined") {
+				s = "";
+			}
 
-			return s
+			return s;
 		}
 
-		var getProjectSettingColumns = function(setting, global){
+		var getProjectSettingColumns = function(setting, global, instance){
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
-			        setting.name = projectName;
+				setting.name = projectName;
 			}
 
 			var inputAttributes = '';
@@ -164,10 +279,10 @@ $pid = $_GET['pid'];
 				overrideCheckboxAttributes += ' checked';
 			}
 
-			var columns = getSettingColumns(setting, inputAttributes);
+			var columns = getSettingColumns(setting, inputAttributes, instance);
 
 			if(global){
-				columns += '<td><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
+				columns += '<td class="external-modules-override-column"><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
 			}
 			else{
 				columns += '<td></td>';
@@ -195,7 +310,7 @@ $pid = $_GET['pid'];
 		}
 
 		var getSettingRows = function(global, configSettings, savedSettings){
-			var rowsHtml = ''
+			var rowsHtml = '';
 
 			configSettings.forEach(function(setting){
 				var setting = $.extend({}, setting);
@@ -211,16 +326,101 @@ $pid = $_GET['pid'];
 					setting.overrideLevelValue = overrideLevel.value
 				}
 
+
 				if(!pid){
 					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
 				}
 				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
-					rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+					if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
+						for (var instance=0; instance < setting.value.length; instance++) {
+							rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, instance) + '</tr>';
+						}
+					} else {
+						rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+					}
 				}
 			})
 
 			return rowsHtml;
 		};
+
+		$('#external-modules-configure-modal').on('click', '.external-modules-add-instance', function(){
+			// RULE: first variable is base name (e.g., survey_name)
+			// second and following variables are base name + ____X, where X is a 0-based name
+			// so survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
+
+			// find the name of the variable on this row, which is the old variable
+			var oldName = $(this).closest('tr').find('input').attr('name');
+			if (!oldName) {
+				oldName = $(this).closest('tr').find('select').attr('name');
+			}
+
+			// make a new variable name for the new variable
+			var idx = 1;
+			var newName = oldName + "____"+idx;   // default: guess that this is the second variable
+			var ary;
+			if (ary = oldName.match(/____(\d+)$/)) {
+				// transfer number (old + 1)
+				idx = Number(ary[1]) + 1;
+				newName = oldName.replace("____"+ary[1], "____"+idx);
+			}
+			var $newInstance = $(this).closest('tr').clone();
+			$newInstance.insertAfter($(this).closest('tr'));
+
+			// rename new instance of input/select and set value to empty string
+			$newInstance.find('[name="'+oldName+'"]').attr('name', newName);
+			$newInstance.find('[name="'+newName+'"]').val('');
+
+			// rename label
+			$newInstance.closest("tr").find('span.external-modules-instance-label').html((idx+1)+". ");
+			$(this).closest("tr").find('span.external-modules-instance-label').html((idx)+". ");
+
+			// show only last +
+			$(this).hide();
+			// show original sign if previous was first item
+			if (!oldName.match(/____/)) {
+				$("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance").show();
+			}
+			$newInstance.find(".external-modules-remove-instance").show();
+		});
+
+		$('#external-modules-configure-modal').on('click', '.external-modules-remove-instance', function(){
+			// see RULE on external-modules-add-instance
+			// we must maintain said RULE here
+			// RULE 2: Cannot remove first item
+
+			// get old name
+			var oldName = $(this).closest('tr').find('input').attr('name');
+			if (!oldName) {
+				oldName = $(this).closest('tr').find('select').attr('name');
+			}
+
+			// this oldName will have a ____ in it; split and conquer
+			var oldNameParts = oldName.split(/____/);
+			var baseName = oldNameParts[0];
+
+			var i = 1;
+			var j = 1;
+			while ($("[name='"+baseName+"____"+i+"']").length) {
+				if (i == oldNameParts[1]) {
+					// remove tr
+					$("[name='"+baseName+"____"+i+"']").closest('tr').remove();
+				} else {
+					// rename label
+					$("[name='"+baseName+"____"+i+"']").closest("tr").find('span.external-modules-instance-label').html((j+1)+". ");
+					// rename tr: i --> j
+					$("[name='"+baseName+"____"+i+"']").attr('name', baseName+"____"+j);
+					j++;
+				}
+				i++;
+			}
+			if (j > 1) {
+				$("[name='"+baseName+"____"+(j-1)+"']").closest("tr").find(".external-modules-add-instance").show();
+			} else {
+				$("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance").show();
+				$("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance").hide();
+			}
+		});
 
 		$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
 			var moduleDirectoryPrefix = $(this).closest('tr').data('module');
@@ -232,7 +432,7 @@ $pid = $_GET['pid'];
 			tbody.html('');
 			configureModal.modal('show');
 
-			$.post('ajax/get-settings.php', {pid: pid, moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
+			$.post('ajax/get-settings.php', {pid: pidString, moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
 				if(data.status != 'success'){
 					return;
 				}
@@ -247,6 +447,30 @@ $pid = $_GET['pid'];
 				}
 
 				tbody.html(settingsHtml);
+
+				ExternalModules.configureSettings(config['global-settings'], savedSettings);
+			});
+		});
+
+		configureModal.on('click', '.external-modules-delete-file', function() {
+			var moduleDirectoryPrefix = configureModal.data('module');
+
+			var row = $(this).closest("tr");
+			var input = row.find("input[type=hidden]");
+			var disabled = input.prop("disabled");
+			$(this).hide();
+
+			$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) { 
+				if (data.status == "success") {
+					var inputAttributes = "";
+					if (disabled) {
+						inputAttributes = "disabled";
+					}
+					row.find(".external-modules-edoc-file").html(getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
+					input.remove();
+				} else {		// failure
+					alert("The file was not able to be deleted. "+JSON.stringify(data));
+				}
 			});
 		});
 
@@ -257,6 +481,8 @@ $pid = $_GET['pid'];
 
 			if(overrideCheckbox.prop('checked')){
 				inputs.prop('disabled', false);
+				inputs.closest("tr").find(".external-modules-delete-file").prop("disabled", false);
+				resetSaveButton();
 			}
 			else{
 				var type = inputs[0].type;
@@ -266,6 +492,10 @@ $pid = $_GET['pid'];
 				else if(type == 'checkbox'){
 					inputs.prop('checked', globalValue);
 				}
+				else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
+					inputs.closest("td").html(getGlobalFileFieldElement(inputs.attr('name'), globalValue, "disabled"));
+					resetSaveButton();
+ 				}
 				else{ // text or select
 					inputs.val(globalValue);
 				}
@@ -274,11 +504,80 @@ $pid = $_GET['pid'];
 			}
 		});
 
+		var resetSaveButton = function() {
+			if ($(this).val() != "") {
+				$(".save").html("Save and Upload");
+			}
+			var allEmpty = true;
+			$("input[type=file]").each(function() {
+				if ($(this).val() !== "") {
+					allEmpty = false;
+				}
+			});
+			if (allEmpty) {
+				$(".save").html("Save");
+			}
+		}
+
+		configureModal.on('change', 'input[type=file]', resetSaveButton);
+
+		// helper method for saving
+		var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
+			var lengthOfFiles = 0;
+			var formData = new FormData();
+			for (var name in files) {
+				lengthOfFiles++;
+				formData.append(name, files[name]);   // filename agnostic
+			}
+			if (lengthOfFiles > 0) {
+				// AJAX rather than $.post
+				$.ajax({
+					url: url,
+					data: formData,
+					processData: false,
+					contentType: false,
+					async: false,
+					type: 'POST',
+					success: function(returnData) {
+						if (returnData.status != 'success') {
+							alert("One or more of the files could not be saved. "+JSON.stringify(data));
+						}
+
+						// proceed anyways to save data
+						callbackWithNoArgs();
+					},
+					error: function(e) {
+						alert("One or more of the files could not be saved. "+JSON.stringify(e));
+						callbackWithNoArgs();
+					}
+				});
+			} else {
+				callbackWithNoArgs();
+			}
+		}
+
+		// helper method for saving
+		var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
+			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(returnData){
+				if(returnData.status != 'success'){
+					alert('An error occurred while saving settings: ' + returnData);
+					configureModal.show();
+					return;
+				}
+
+				// Reload the page reload after saving settings,
+				// in case a settings affects some page behavior (like which menu items are visible).
+				location.reload();
+			});
+		}
+
 		configureModal.on('click', 'button.save', function(){
 			configureModal.hide();
 			var moduleDirectoryPrefix = configureModal.data('module');
+			var version = versionsByPrefix[moduleDirectoryPrefix];
 
 			var data = {};
+                        var files = {};
 
 			configureModal.find('input, select').each(function(index, element){
 				var element = $(element);
@@ -290,40 +589,40 @@ $pid = $_GET['pid'];
 					return;
 				}
 
-				var value;
-				if(type == 'checkbox'){
-					if(element.prop('checked')){
-						value = '1';
+				if (type == 'file') {
+					// only store one file per variable - the first file
+					jQuery.each(element[0].files, function(i, file) {
+						if (typeof files[name] == "undefined") {
+							files[name] = file;
+						}
+					});
+				} else {
+					var value;
+					if(type == 'checkbox'){
+						if(element.prop('checked')){
+							 value = '1';
+						}
+						else{
+							value = '0';
+						}
 					}
 					else{
-						value = '0';
+					 	value = element.val();
 					}
-				}
-				else{
-					value = element.val();
-				}
+	 
+					if(value == globalValue){
+						value = '';
+					}
 
-				if(value == globalValue){
-					value = '';
+					data[name] = value;
 				}
-
-				data[name] = value;
 			});
 
-			var pidString = pid;
-			if(pid == null){
-				pidString = '';
-			}
-
-			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data, function(data){
-				if(data.status != 'success'){
-					alert('An error occurred while saving settings: ' + data);
-					configureModal.show();
-					return;
-				}
-
-				// Reload the page reload after saving settings, in case a settings affects some page behavior (like which menu items are visible).
-				location.reload();
+			var url = 'ajax/save-file.php?pid=' + pidString +
+						     '&moduleDirectoryPrefix=' + moduleDirectoryPrefix +
+						     '&moduleDirectoryVersion=' + version;
+                        saveFilesIfTheyExist(url, files, function() {
+				saveSettings(pidString, moduleDirectoryPrefix, version, data);
 			});
 		});
 	});
