@@ -173,17 +173,10 @@ class ExternalModules
 		$result = self::getGlobalSettings(null, array(self::KEY_VERSION));
 
 		$modules = array();
-		while($row = db_fetch_assoc($result)){
+		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 			$prefix = $row['directory_prefix'];
 			if(!self::shouldExcludeModule($prefix)){
 				$value = $row['value'];
-				if ($row['type'] == "boolean") {
-					if ($value == "true") {
-						$value = true;
-					} else if ($value == "false") {
-						$value = false;
-					}
-				} 
 				$modules[$prefix] = $value;
 			}
 		}
@@ -365,20 +358,9 @@ class ExternalModules
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
-		while($row = db_fetch_assoc($result)){
+		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 			$key = $row['key'];
 			$value = $row['value'];
-			if (($row['type'] == "json") && ($json = json_decode($row['value']))) {
-				$value = $json;
-			}
-
-			if ($row['type'] == "boolean") {
-				if ($value == "true") {
-					$value = true;
-				} else if ($value == "false") {
-					$value = false;
-				}
-			}
 
 			$setting =& $settings[$key];
 			if(!isset($setting)){
@@ -424,26 +406,33 @@ class ExternalModules
 							WHERE " . implode(' AND ', $whereClauses));
 	}
 
+	static function validateSettingsRow($row)
+	{
+		if (($row['type'] == "json")) {
+			if($json = json_decode($row['value'])) {
+				$row['value'] = $json;
+			}
+		}
+		else if ($row['type'] == "boolean") {
+			if ($row['value'] == "true") {
+				$row['value'] = true;
+			} else if ($row['value'] == "false") {
+				$row['value'] = false;
+			}
+		}
+
+		return $row;
+	}
+
 	private static function getSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
 		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
 		if($numRows == 1) {
-			$row = db_fetch_assoc($result);
-			if ($row['type'] == "json") {
-				if ($json = json_decode($row['value'], false)) {
-					return $json;
-				} else {
-					return array();
-				}
-			} else if ($row['type']) {
-				$value = $row['value'];
-				settype($value, $row['type']);
-				return $value;
-			} else {
-				return $row['value'];
-			}
+			$row = self::validateSettingsRow(db_fetch_assoc($result));
+
+			return $row['value'];
 		}
 		else if($numRows == 0){
 			return null;
@@ -793,18 +782,11 @@ class ExternalModules
 		// Only attempt to detect enabled modules if the external module tables exist.
 		if(self::areTablesPresent()){
 			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
-			while($row = db_fetch_assoc($result)){
+			while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 				$pid = $row['project_id'];
 				$prefix = $row['directory_prefix'];
 				$key = $row['key'];
 				$value = $row['value'];
-				if ($row['type'] == "boolean") {
-					if ($value == "true") {
-						$value = true;
-					} else if ($value == "false") {
-						$value = false;
-					}
-				}
 
 				if(self::shouldExcludeModule($prefix)){
 					continue;
