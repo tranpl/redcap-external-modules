@@ -448,7 +448,7 @@ if($versionsByPrefixJSON == null){
 
 				tbody.html(settingsHtml);
 
-				configureSettings(config['global-settings'], savedSettings);
+				ExternalModules.configureSettings(config['global-settings'], savedSettings);
 			});
 		});
 

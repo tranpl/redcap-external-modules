@@ -9,6 +9,8 @@ if(!ExternalModules::hasDesignRights()){
 }
 
 ExternalModules::addResource('css/style.css');
+ExternalModules::addResource('js/globals.js');
+ExternalModules::addResource('js/project_lookup.js');
 
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 
