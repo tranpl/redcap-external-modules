@@ -262,6 +262,15 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
 	{
+		if($projectId == self::GLOBAL_SETTING_PROJECT_ID){
+			if(!ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
+				throw new Exception("You don't have permission to save global settings!");
+			}
+		}
+		else if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
+			throw new Exception("You don't have permission to save the following project setting: $key");
+		}
+
 		# if $value is an array, then encode as JSON
 		# else store $value as type specified in gettype(...)
 		if ($type === "") {
