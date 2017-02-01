@@ -262,6 +262,15 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
 	{
+		if($projectId == self::GLOBAL_SETTING_PROJECT_ID){
+			if(!ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
+				throw new Exception("You don't have permission to save global settings!");
+			}
+		}
+		else if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
+			throw new Exception("You don't have permission to save the following project setting: $key");
+		}
+
 		# if $value is an array, then encode as JSON
 		# else store $value as type specified in gettype(...)
 		if ($type === "") {
@@ -408,18 +417,35 @@ class ExternalModules
 
 	static function validateSettingsRow($row)
 	{
-		if (($row['type'] == "json")) {
-			if($json = json_decode($row['value'])) {
-				$row['value'] = $json;
+		if ($row == null) {
+			return null;
+		}
+
+		$type = $row['type'];
+		$value = $row['value'];
+
+		if ($type == "json") {
+			if ($json = json_decode($value)) {
+				$value = $json;
 			}
 		}
-		else if ($row['type'] == "boolean") {
-			if ($row['value'] == "true") {
-				$row['value'] = true;
-			} else if ($row['value'] == "false") {
-				$row['value'] = false;
+		else if ($type == 'file') {
+			// do nothing
+		}
+		else if ($type == "boolean") {
+			if ($value == "true") {
+				$value = true;
+			} else if ($value == "false") {
+				$value = false;
 			}
 		}
+		else {
+			if (!settype($value, $type)) {
+				die('Unable to set the type of "' . $value . '" to "' . $type . '"!  This should never happen, as it means unexpected/inconsistent values exist in the database.');
+			}
+		}
+
+		$row['value'] = $value;
 
 		return $row;
 	}
