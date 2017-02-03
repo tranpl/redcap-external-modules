@@ -112,10 +112,10 @@ class ExternalModulesTest extends BaseTest
 
 		$m->removeGlobalSetting(ExternalModules::KEY_VERSION);
 
-		// the other values set by cacheAllEnableData() are tested via testgetEnabledModuleVersionsForProject()
+		// the other values set by cacheAllEnableData() are tested via testGetEnabledModuleVersionsForProject()
 	}
 
-	function testgetEnabledModuleVersionsForProject_multiplePrefixesAndVersions()
+	function testGetEnabledModuleVersionsForProject_multiplePrefixesAndVersions()
 	{
 		$prefix1 = TEST_MODULE_PREFIX . '-1';
 		$prefix2 = TEST_MODULE_PREFIX . '-2';
@@ -142,7 +142,7 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::removeGlobalSetting($prefix2, ExternalModules::KEY_ENABLED);
 	}
 
-	function testgetEnabledModuleVersionsForProject_overrides()
+	function testGetEnabledModuleVersionsForProject_overrides()
 	{
 		$m = self::getInstance();
 
@@ -180,7 +180,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 	}
 
-	function testgetFileSettings() {
+	function testGetFileSettings() {
 		$m = self::getInstance();					
 
 		$edocIdGlobal = rand();
@@ -236,7 +236,7 @@ class ExternalModulesTest extends BaseTest
 		return new \ReflectionClass('ExternalModules\ExternalModules');
 	}
 
-	function testinstance()
+	function testInstance()
 	{
 		$value1 = rand();
 		$value2 = rand();
