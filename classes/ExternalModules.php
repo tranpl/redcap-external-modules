@@ -237,73 +237,95 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
-                $value = self::transformValueToDB($value);
+                # if $value is an array, then encode as JSON
+                # else store $value as type specified in gettype(...)
+                if ($type === "") {
+                        $type = gettype($value);
+                }
+                if ($type == "array") {
+                        $type = "json";
+                        $value = json_encode($value);
+                }
 
-		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
+                $externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
-		$projectId = db_real_escape_string($projectId);
-		$key = db_real_escape_string($key);
+                $projectId = db_real_escape_string($projectId);
+                $key = db_real_escape_string($key);
 
-		// Escape the old value as well, so == will correctly compare it to $value.
-		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
-		if($value === $oldValue){
-			// We don't need to do anything.
-			return;
-		}
-		else if($value === null){
-			$event = "DELETE";
-			$sql = "DELETE FROM redcap_external_module_settings
-					WHERE
-						external_module_id = $externalModuleId
-						AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						AND `key` = '$key'";
-		}
-		else if ((string)$value == (string)$oldValue){
-			// We don't need to do anything.
-			return;
-		}
-		else {
-		        $value = db_real_escape_string($value);
+                # oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
+                $oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+
+                $pidString = $projectId;
+                if (!$projectId) {
+                        $pidString = "NULL";
+                }
+
+                if ($type == "boolean") {
+                        $value = ($value) ? 'true' : 'false';
+                }
+                if (gettype($oldValue) == "boolean") {
+                        $oldValue = ($oldValue) ? 'true' : 'false';
+                }
+                if((string) $value === (string) $oldValue){
+                        // We don't need to do anything.
+                        return;
+                } else if($value === null){
+                        $event = "DELETE";
+                        $sql = "DELETE FROM redcap_external_module_settings
+                                        WHERE
+                                                external_module_id = $externalModuleId
+                                                AND " . self::getSqlEqualClause('project_id', $pidString) . "
+                                                AND `key` = '$key'";
+                } else {
+                        $value = db_real_escape_string($value);
                         if($oldValue == null) {
-			        $event = "INSERT";
-			        $sql = "INSERT INTO redcap_external_module_settings
-					        VALUES
-					        (
-						        $externalModuleId,
-						        $projectId,
-						        '$key',
-						        '$value'
-					        )";
-		        }
-		        else {
-			        $event = "UPDATE";
-			        $sql = "UPDATE redcap_external_module_settings
-					        SET value = '$value'
-					        WHERE
-						        external_module_id = $externalModuleId
-						        AND " . self::getSqlEqualClause('project_id', $projectId) . "
-						        AND `key` = '$key'";
-		        }
-	         }
+                                $event = "INSERT";
+                                $sql = "INSERT INTO redcap_external_module_settings
+                                                        (
+                                                                `external_module_id`,
+                                                                `project_id`,
+                                                                `key`,
+                                                                `type`,
+                                                                `value`
+                                                        )
+                                                VALUES
+                                                (
+                                                        $externalModuleId,
+                                                        $pidString,
+                                                        '$key',
+                                                        '$type',
+                                                        '$value'
+                                                )";
+                        } else {
+                                $event = "UPDATE";
+                                $sql = "UPDATE redcap_external_module_settings
+                                                SET value = '$value',
+                                                        type = '$type'
+                                                WHERE
+                                                        external_module_id = $externalModuleId
+                                                        AND " . self::getSqlEqualClause('project_id', $projectId) . "
+                                                        AND `key` = '$key'";
+                        }
+                }
 
-		self::query($sql);
-		$affectedRows = db_affected_rows();
+                self::query($sql);
 
-		$description = ucfirst(strtolower($event)) . ' External Module setting';
+                $affectedRows = db_affected_rows();
 
-		if(class_exists('Logging')){
-			// REDCap v6.18.3 or later
-			\Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-		}
-		else{
-			// REDCap prior to v6.18.3
-			log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-		}
+                $description = ucfirst(strtolower($event)) . ' External Module setting';
 
-		if($affectedRows != 1){
-			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
-		}
-                return;
+                if(class_exists('Logging')){
+                        // REDCap v6.18.3 or later
+                        \Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+                }
+                else{
+                        // REDCap prior to v6.18.3
+                        log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+                }
+
+                if($affectedRows != 1){
+                        throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
+                }
 	}
 
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
@@ -821,7 +843,7 @@ class ExternalModules
 	}
 
 	static function getProjectLinks($pid){
-		$links = self::getLinks($pid);
+		$links = self::getProjectOrSystemLinks($pid);
 
 		if(self::hasDesignRights()){
 			$links['Manage External Modules'] = array(
@@ -835,7 +857,7 @@ class ExternalModules
 		return $links;
 	}
 
-	private function getLinks($pid = null){
+	private function getProjectOrSystemLinks($pid = null){
 		if(isset($pid)){
 			$type = 'project';
 		}
