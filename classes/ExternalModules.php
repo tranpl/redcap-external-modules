@@ -807,9 +807,10 @@ class ExternalModules
 		}
 	}
 
-	static function getControlCenterLinks(){
-		$links = self::getLinks();
+	static function getLinks(){
+		$pid = self::getPID();
 
+<<<<<<< HEAD
 		$links['Manage External Modules'] = array(
 			'icon' => 'puzzle_small',
 			'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
@@ -836,6 +837,8 @@ class ExternalModules
 	}
 
 	private function getLinks($pid = null){
+=======
+>>>>>>> master
 		if(isset($pid)){
 			$type = 'project';
 		}
@@ -856,9 +859,30 @@ class ExternalModules
 			}
 		}
 
+		$addManageLink = function($url) use (&$links){
+			$links['Manage External Modules'] = array(
+				'icon' => 'brick',
+				'url' => ExternalModules::$BASE_URL  . $url
+			);
+		};
+
+		if(isset($pid)){
+			if(SUPER_USER || !empty($modules) && self::hasDesignRights()){
+				$addManageLink('manager/project.php?');
+			}
+		}
+		else{
+			$addManageLink('manager/control_center.php');
+		}
+
 		ksort($links);
 
 		return $links;
+	}
+
+	private static function getPID()
+	{
+		return @$_GET['pid'];
 	}
 
 	private static function getUrl($prefix, $page)
@@ -907,7 +931,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-	static function getConfig($prefix, $version, $pid=null)
+	static function getConfig($prefix, $version, $pid = null)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";

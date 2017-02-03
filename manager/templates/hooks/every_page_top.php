@@ -4,11 +4,13 @@ require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 
 $project_id = $arguments[0];
 
+$links = ExternalModules::getLinks()
+
 ?>
 
 <script>
 	$(function () {
-		if ($('#project-menu-logo').length > 0) {
+		if ($('#project-menu-logo').length > 0 && <?=json_encode(!empty($links))?>) {
 			var newPanel = $('#app_panel').clone()
 			newPanel.attr('id', 'external_modules_panel')
 			newPanel.find('.x-panel-header div:first-child').html("External Modules")
@@ -43,7 +45,7 @@ $project_id = $arguments[0];
 
 			var newLink
 			<?php
-			foreach(ExternalModules::getProjectLinks($project_id) as $name=>$link){
+			foreach($links as $name=>$link){
 				?>
 				newLink = exampleLink.clone()
 			<?php
