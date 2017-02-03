@@ -196,20 +196,20 @@ if($versionsByPrefixJSON == null){
 			if (setting.repeatable && (type != "file")) {
 				// fill with + and - buttons and hide when appropriate
 				// set original sign for first item when + is not displayed
-				var addButtonStyle = "";
-				var removeButtonStyle = "";
-				var originalTagStyle = "";
+				var addButtonStyle = " style='display: none;'";
+				var removeButtonStyle = " style='display: none;'";
+				var originalTagStyle = " style='display: none;'";
 
 				if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
-					addButtonStyle = " style='display:none'";
+					addButtonStyle = "";
 				}
 
 				if ((typeof instance != "undefined") && (instance > 0)) {
-					removeButtonStyle = " style='display:none'";
+					removeButtonStyle = "";
 				}
 
-				if (addButtonStyle == "" && removeButtonStyle == "" && (typeof instance != "undefined") && (instance === 0)) {
-					originalTagStyle = " style='display:none'";
+				if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
+					originalTagStyle = "";
 				}
 
 				html += "<td class='external-modules-add-remove-column'>";
