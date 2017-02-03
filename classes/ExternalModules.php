@@ -810,7 +810,6 @@ class ExternalModules
 	static function getLinks(){
 		$pid = self::getPID();
 
-<<<<<<< HEAD
 		$links['Manage External Modules'] = array(
 			'icon' => 'puzzle_small',
 			'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
@@ -837,8 +836,6 @@ class ExternalModules
 	}
 
 	private function getLinks($pid = null){
-=======
->>>>>>> master
 		if(isset($pid)){
 			$type = 'project';
 		}
