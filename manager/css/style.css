@@ -77,3 +77,11 @@
 .external-modules-original-instance {
 	 font-size: 10px;
 }
+
+.external-modules-title {
+	font-weight: bold;
+}
+
+.external-modules-description {
+	font-size: 11px;
+}

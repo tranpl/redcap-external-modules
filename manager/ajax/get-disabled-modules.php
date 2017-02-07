@@ -26,7 +26,7 @@ require_once '../../classes/ExternalModules.php';
 
 			?>
 			<tr data-module='<?= $moduleDirectoryPrefix ?>'>
-				<td><?= $config['name'] ?></td>
+				<td><div class='external-modules-title'><?= $config['name'] ?></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : '';?></div></td>
 				<td>
 					<select name="version">
 						<?php
