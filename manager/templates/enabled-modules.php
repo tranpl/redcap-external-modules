@@ -31,7 +31,7 @@ $pid = $_GET['pid'];
 				<td class="external-modules-action-buttons">
 					<button class='external-modules-configure-button'>Configure</button>
 					<?php if (!isset($pid)) { ?>
-						<button class='external-modules-disable-button'>Disable</button>
+						<br><button class='external-modules-disable-button'>Disable</button>
 					<?php } ?>
 				</td>
 			</tr>
