@@ -91,6 +91,9 @@ abstract class BaseTest extends TestCase
 }
 
 class BaseTestExternalModule extends AbstractExternalModule {
+
+	private $CONFIG;
+
 	function __construct($config)
 	{
 		$this->CONFIG = $config;
@@ -98,6 +101,11 @@ class BaseTestExternalModule extends AbstractExternalModule {
 
 		$this->PREFIX = TEST_MODULE_PREFIX;
 		$this->VERSION = TEST_MODULE_VERSION;
+	}
+
+	function getConfig()
+	{
+		return $this->CONFIG;
 	}
 
 	function __call($name, $arguments)

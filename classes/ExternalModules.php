@@ -52,6 +52,8 @@ class ExternalModules
 	private static $projectEnabledOverrides;
 	private static $enabledInstancesByPID = array();
 
+	private static $configs = array();
+
 	private static $RESERVED_SETTINGS = array(
 		array(
 			'key' => self::KEY_VERSION,
@@ -972,57 +974,64 @@ class ExternalModules
 	static function getConfig($prefix, $version, $pid = null)
 	{
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
-		$config = json_decode(file_get_contents($configFilePath), true);
+		$config = @self::$configs[$moduleDirectoryName];
+		if($config == null){
+			$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
+			$config = json_decode(file_get_contents($configFilePath), true);
 
-		if($config == NULL){
-			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
-		}
-
-		foreach(['permissions', 'global-settings', 'project-settings'] as $key){
-			if(!isset($config[$key])){
-				$config[$key] = array();
+			if($config == null){
+				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 			}
-		}
 
-		## Pull form and field list for choice list of project-settings field-list and form-list settings
-		if(!empty($pid)) {
-			foreach($config['project-settings'] as $configKey => $configRow) {
-				if($configRow['type'] == 'field-list') {
-					$choices = [];
+			foreach(['permissions', 'global-settings', 'project-settings'] as $key){
+				if(!isset($config[$key])){
+					$config[$key] = array();
+				}
+			}
 
-					$sql = "SELECT field_name,element_label
+			## Pull form and field list for choice list of project-settings field-list and form-list settings
+			if(!empty($pid)) {
+				foreach($config['project-settings'] as $configKey => $configRow) {
+					if($configRow['type'] == 'field-list') {
+						$choices = [];
+
+						$sql = "SELECT field_name,element_label
 							FROM redcap_metadata
 							WHERE project_id = '".db_real_escape_string($pid)."'
 							ORDER BY field_order";
-					$result = self::query($sql);
+						$result = self::query($sql);
 
-					while($row = db_fetch_assoc($result)){
-						$choices[] = ['value' => $row['field_name'],'name' => $row['field_name'] . " - " . substr($row['element_label'],0,20)];
+						while($row = db_fetch_assoc($result)){
+							$choices[] = ['value' => $row['field_name'],'name' => $row['field_name'] . " - " . substr($row['element_label'],0,20)];
+						}
+
+						$config['project-settings'][$configKey]['choices'] = $choices;
 					}
-
-					$config['project-settings'][$configKey]['choices'] = $choices;
-				}
-				else if($configRow['type'] == 'form-list') {
-					$choices = [];
+					else if($configRow['type'] == 'form-list') {
+						$choices = [];
 
 
-					$sql = "SELECT DISTINCT form_name
+						$sql = "SELECT DISTINCT form_name
 							FROM redcap_metadata
 							WHERE project_id = '".db_real_escape_string($pid)."'
 							ORDER BY field_order";
-					$result = self::query($sql);
+						$result = self::query($sql);
 
-					while($row = db_fetch_assoc($result)){
-						$choices[] = ['value' => $row['form_name'],'name' => $row['form_name']];
+						while($row = db_fetch_assoc($result)){
+							$choices[] = ['value' => $row['form_name'],'name' => $row['form_name']];
+						}
+
+						$config['project-settings'][$configKey]['choices'] = $choices;
 					}
-
-					$config['project-settings'][$configKey]['choices'] = $choices;
 				}
 			}
+
+			$config = self::addReservedSettings($config);
+
+			$configs[$moduleDirectoryName] = $config;
 		}
 
-		return self::addReservedSettings($config);
+		return $config;
 	}
 
 	private static function addReservedSettings($config)
