@@ -260,15 +260,34 @@ class ExternalModules
 		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
 	}
 
+	public static function isProjectSettingDefined($prefix, $key)
+	{
+		$config = self::getConfig($prefix);
+		foreach($config['project-settings'] as $setting){
+			if($setting['key'] == $key){
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
 	{
 		if($projectId == self::GLOBAL_SETTING_PROJECT_ID){
-			if(!ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
+			if(!self::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
 				throw new Exception("You don't have permission to save global settings!");
 			}
 		}
-		else if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
-			throw new Exception("You don't have permission to save the following project setting: $key");
+		else if(!self::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
+			if(self::isProjectSettingDefined($moduleDirectoryPrefix, $key)){
+				throw new Exception("You don't have permission to save the following project setting: $key");
+			}
+			else{
+				// The setting is not defined in the config.  Allow any user to save it
+				// (effectively leaving permissions up to the module creator).
+				// This is required for user based configuration (like reporting for ED Data).
+			}
 		}
 
 		# if $value is an array, then encode as JSON
@@ -969,8 +988,12 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
-	static function getConfig($prefix, $version, $pid = null)
+	static function getConfig($prefix, $version = null, $pid = null)
 	{
+		if($version == null){
+			$version = self::getEnabledVersion($prefix);
+		}
+
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
 		$config = json_decode(file_get_contents($configFilePath), true);
@@ -1023,6 +1046,12 @@ class ExternalModules
 		}
 
 		return self::addReservedSettings($config);
+	}
+
+	public static function getEnabledVersion($prefix)
+	{
+		$versionsByPrefix = self::getGloballyEnabledVersions();
+		return @$versionsByPrefix[$prefix];
 	}
 
 	private static function addReservedSettings($config)
