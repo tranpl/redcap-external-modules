@@ -4,7 +4,7 @@ require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 
 $project_id = $arguments[0];
 
-$links = ExternalModules::getLinks()
+$links = ExternalModules::getLinks();
 
 ?>
 

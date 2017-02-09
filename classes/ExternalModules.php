@@ -64,19 +64,23 @@ class ExternalModules
 			'project-name' => 'Enable on this project',
 			'type' => 'checkbox',
 			'allow-project-overrides' => true,
+			'hidden' => false,
                         'default' => 'false',
 		)
 	);
 
 	private static function isLocalhost()
 	{
-		return $_SERVER['HTTP_HOST'] == 'localhost';
+		if (isset($_SERVER['HTTP_HOST'])) {
+			return $_SERVER['HTTP_HOST'] == 'localhost';
+		}
+		return false;
 	}
 
         static function getIconURL($icon) {
                 $sfx = ".png";
-                if (file_exists(self::$BASE_PATH. $icon . $sfx)) {
-                        return self::$BASE_URL . '/images/' . $licon . $sfx;
+                if (file_exists(self::$BASE_PATH. '/images/' . $icon . $sfx)) {
+                        return self::$BASE_URL . '/images/' . $icon . $sfx;
                 } else if (file_exists(APP_PATH_DOCROOT . "/Resources/images/" . $icon . $sfx))  {
                         return APP_PATH_IMAGES . $icon . $sfx;
                 } else {
@@ -583,7 +587,7 @@ class ExternalModules
 			return;
 		}
 
-		if(!defined(PAGE)){
+		if(!defined('PAGE')){
 			$page = ltrim($_SERVER['REQUEST_URI'], '/');
 			define('PAGE', $page);
 		}
@@ -652,7 +656,10 @@ class ExternalModules
 		self::setActiveModulePrefix($prefix);
 
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$instance = @self::$instanceCache[$moduleDirectoryName];
+		$instance = null;
+		if (isset(self::$instanceCache[$moduleDirectoryName])) {
+			$instance = @self::$instanceCache[$moduleDirectoryName];
+		}
 		if(!isset($instance)){
 			$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
 			$className = self::getMainClassName($prefix);
@@ -697,7 +704,10 @@ class ExternalModules
 	// Otherwise, only instances enabled for the current project id are returned.
 	private static function getEnabledModuleInstances($pid)
 	{
-		$instances = @self::$enabledInstancesByPID[$pid];
+		$instances = null;
+		if ($pid) {
+			$instances = @self::$enabledInstancesByPID[$pid];
+		}
 		if(!isset($instances)){
 			if($pid == null){
 				// Cache systemwide enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
