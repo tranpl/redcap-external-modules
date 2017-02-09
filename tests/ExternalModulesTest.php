@@ -112,10 +112,10 @@ class ExternalModulesTest extends BaseTest
 
 		$m->removeSystemSetting(ExternalModules::KEY_VERSION);
 
-		// the other values set by cacheAllEnableData() are tested via testgetEnabledModuleVersionsForProject()
+		// the other values set by cacheAllEnableData() are tested via testGetEnabledModuleVersionsForProject()
 	}
 
-	function testgetEnabledModuleVersionsForProject_multiplePrefixesAndVersions()
+	function testGetEnabledModuleVersionsForProject_multiplePrefixesAndVersions()
 	{
 		$prefix1 = TEST_MODULE_PREFIX . '-1';
 		$prefix2 = TEST_MODULE_PREFIX . '-2';
@@ -142,7 +142,7 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::removeSystemSetting($prefix2, ExternalModules::KEY_ENABLED);
 	}
 
-	function testgetEnabledModuleVersionsForProject_overrides()
+	function testGetEnabledModuleVersionsForProject_overrides()
 	{
 		$m = self::getInstance();
 
@@ -179,6 +179,33 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 	}
 
+<<<<<<< HEAD
+=======
+	function testGetFileSettings() {
+		$m = self::getInstance();					
+
+		$edocIdGlobal = rand();
+		$edocIdProject = rand();
+
+                # global
+		ExternalModules::setGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY, $edocIdGlobal);
+
+                # project
+		ExternalModules::setFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY, $edocIdProject);
+
+		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+		$this->assertEquals($edocIdProject, $array[FILE_SETTING_KEY]['value']);
+		$this->assertEquals($edocIdGlobal, $array[FILE_SETTING_KEY]['global_value']);
+
+		ExternalModules::removeFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY);
+		ExternalModules::removeGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
+		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+
+		$this->assertNull($array[FILE_SETTING_KEY]['value']);
+		$this->assertNull($array[FILE_SETTING_KEY]['global_value']);
+	}
+
+>>>>>>> master
 	private function getEnabledModuleVersionsForProjectIgnoreCache()
 	{
 		self::callPrivateMethod('cacheAllEnableData'); // Call this every time to clear/reset the cache.
@@ -210,4 +237,42 @@ class ExternalModulesTest extends BaseTest
 	{
 		return new \ReflectionClass('ExternalModules\ExternalModules');
 	}
+<<<<<<< HEAD
+=======
+
+	function testInstance()
+	{
+		$value1 = rand();
+		$value2 = rand();
+		$value3 = rand();
+		$value4 = rand();
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 0, $value1);
+		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+		$this->assertNotNull(json_encode($array));
+		$this->assertEquals($value1, $array[TEST_SETTING_KEY]['value']);
+
+		ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $value1);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 1, $value2);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 2, $value3);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 3, $value4);
+		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+		$this->assertNotNull(json_encode($array));
+		$this->assertEquals($value1, $array[TEST_SETTING_KEY]['value'][0]);
+		$this->assertEquals($value2, $array[TEST_SETTING_KEY]['value'][1]);
+		$this->assertEquals($value3, $array[TEST_SETTING_KEY]['value'][2]);
+		$this->assertEquals($value4, $array[TEST_SETTING_KEY]['value'][3]);
+
+		ExternalModules::setProjectSetting($value1);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 1, $value2);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 2, $value3);
+		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 3, $value4);
+		$array = ExternalModules::getProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID,  TEST_SETTING_KEY);
+		$this->assertNotNull(json_encode($array));
+		$this->assertEquals($value1, $array[0]);
+		$this->assertEquals($value2, $array[1]);
+		$this->assertEquals($value3, $array[2]);
+		$this->assertEquals($value4, $array[3]);
+	}
+
+>>>>>>> master
 }

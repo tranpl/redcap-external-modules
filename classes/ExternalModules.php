@@ -235,97 +235,126 @@ class ExternalModules
 		return self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
 	}
 
-	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value)
+	private static function setGlobalFileSetting($moduleDirectoryPrefix, $key, $value)
 	{
-                # if $value is an array, then encode as JSON
-                # else store $value as type specified in gettype(...)
-                if ($type === "") {
-                        $type = gettype($value);
-                }
-                if ($type == "array") {
-                        $type = "json";
-                        $value = json_encode($value);
-                }
+		self::setFileSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
+	}
 
-                $externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
+	private static function setFileSetting($moduleDirectoryPrefix, $projectId, $key, $value)
+	{
+		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value, "file");
+	}
 
-                $projectId = db_real_escape_string($projectId);
-                $key = db_real_escape_string($key);
+	static function removeGlobalFileSetting($moduleDirectoryPrefix, $key)
+	{
+		self::removeFileSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
+	}
 
-                # oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
-                $oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+	static function removeFileSetting($moduleDirectoryPrefix, $projectId, $key)
+	{
+		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
+	}
 
-                $pidString = $projectId;
-                if (!$projectId) {
-                        $pidString = "NULL";
-                }
+	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
+	{
+		if($projectId == self::GLOBAL_SETTING_PROJECT_ID){
+			if(!ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
+				throw new Exception("You don't have permission to save global settings!");
+			}
+		}
+		else if(!ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
+			throw new Exception("You don't have permission to save the following project setting: $key");
+		}
 
-                if ($type == "boolean") {
-                        $value = ($value) ? 'true' : 'false';
-                }
-                if (gettype($oldValue) == "boolean") {
-                        $oldValue = ($oldValue) ? 'true' : 'false';
-                }
-                if((string) $value === (string) $oldValue){
-                        // We don't need to do anything.
-                        return;
-                } else if($value === null){
-                        $event = "DELETE";
-                        $sql = "DELETE FROM redcap_external_module_settings
-                                        WHERE
-                                                external_module_id = $externalModuleId
-                                                AND " . self::getSqlEqualClause('project_id', $pidString) . "
-                                                AND `key` = '$key'";
-                } else {
-                        $value = db_real_escape_string($value);
-                        if($oldValue == null) {
-                                $event = "INSERT";
-                                $sql = "INSERT INTO redcap_external_module_settings
-                                                        (
-                                                                `external_module_id`,
-                                                                `project_id`,
-                                                                `key`,
-                                                                `type`,
-                                                                `value`
-                                                        )
-                                                VALUES
-                                                (
-                                                        $externalModuleId,
-                                                        $pidString,
-                                                        '$key',
-                                                        '$type',
-                                                        '$value'
-                                                )";
-                        } else {
-                                $event = "UPDATE";
-                                $sql = "UPDATE redcap_external_module_settings
-                                                SET value = '$value',
-                                                        type = '$type'
-                                                WHERE
-                                                        external_module_id = $externalModuleId
-                                                        AND " . self::getSqlEqualClause('project_id', $projectId) . "
-                                                        AND `key` = '$key'";
-                        }
-                }
+		# if $value is an array, then encode as JSON
+		# else store $value as type specified in gettype(...)
+		if ($type === "") {
+			$type = gettype($value);
+		}
+		if ($type == "array") {
+			$type = "json";
+			$value = json_encode($value);
+		}
 
-                self::query($sql);
+		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
-                $affectedRows = db_affected_rows();
+		$projectId = db_real_escape_string($projectId);
+		$key = db_real_escape_string($key);
 
-                $description = ucfirst(strtolower($event)) . ' External Module setting';
+		# oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
+		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
-                if(class_exists('Logging')){
-                        // REDCap v6.18.3 or later
-                        \Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-                }
-                else{
-                        // REDCap prior to v6.18.3
-                        log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-                }
+		$pidString = $projectId;
+		if (!$projectId) {
+			$pidString = "NULL";
+		}
 
-                if($affectedRows != 1){
-                        throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
-                }
+		if ($type == "boolean") {
+			$value = ($value) ? 'true' : 'false';
+		}
+		if (gettype($oldValue) == "boolean") {
+			$oldValue = ($oldValue) ? 'true' : 'false';
+		}
+		if((string) $value === (string) $oldValue){
+			// We don't need to do anything.
+			return;
+		} else if($value === null){
+			$event = "DELETE";
+			$sql = "DELETE FROM redcap_external_module_settings
+					WHERE
+						external_module_id = $externalModuleId
+						AND " . self::getSqlEqualClause('project_id', $pidString) . "
+						AND `key` = '$key'";
+		} else {
+			$value = db_real_escape_string($value);
+			if($oldValue == null) {
+				$event = "INSERT";
+				$sql = "INSERT INTO redcap_external_module_settings
+							(
+								`external_module_id`,
+								`project_id`,
+								`key`,
+								`type`,
+								`value`
+							)
+						VALUES
+						(
+							$externalModuleId,
+							$pidString,
+							'$key',
+							'$type',
+							'$value'
+						)";
+			} else {
+				$event = "UPDATE";
+				$sql = "UPDATE redcap_external_module_settings
+						SET value = '$value',
+							type = '$type'
+						WHERE
+							external_module_id = $externalModuleId
+							AND " . self::getSqlEqualClause('project_id', $projectId) . "
+							AND `key` = '$key'";
+			}
+		}
+
+		self::query($sql);
+
+		$affectedRows = db_affected_rows();
+
+		$description = ucfirst(strtolower($event)) . ' External Module setting';
+
+		if(class_exists('Logging')){
+			// REDCap v6.18.3 or later
+			\Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+		}
+		else{
+			// REDCap prior to v6.18.3
+			log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+		}
+
+		if($affectedRows != 1){
+			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
+		}
 	}
 
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
@@ -380,6 +409,41 @@ class ExternalModules
 								ON m.external_module_id = s.external_module_id
 							WHERE " . implode(' AND ', $whereClauses);
                 return self::query($sql);
+	}
+
+	static function validateSettingsRow($row)
+	{
+		if ($row == null) {
+			return null;
+		}
+
+		$type = $row['type'];
+		$value = $row['value'];
+
+		if ($type == "json") {
+			if ($json = json_decode($value)) {
+				$value = $json;
+			}
+		}
+		else if ($type == 'file') {
+			// do nothing
+		}
+		else if ($type == "boolean") {
+			if ($value == "true") {
+				$value = true;
+			} else if ($value == "false") {
+				$value = false;
+			}
+		}
+		else {
+			if (!settype($value, $type)) {
+				die('Unable to set the type of "' . $value . '" to "' . $type . '"!  This should never happen, as it means unexpected/inconsistent values exist in the database.');
+			}
+		}
+
+		$row['value'] = $value;
+
+		return $row;
 	}
 
 	private static function getSetting($moduleDirectoryPrefix, $projectId, $key)
