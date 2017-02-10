@@ -69,7 +69,7 @@ class ExternalModules
 
 	private static function isLocalhost()
 	{
-		return $_SERVER['HTTP_HOST'] == 'localhost';
+		return @$_SERVER['HTTP_HOST'] == 'localhost';
 	}
 
 	static function initialize()
@@ -79,6 +79,13 @@ class ExternalModules
 			ini_set('display_errors', 1);
 			ini_set('display_startup_errors', 1);
 			error_reporting(E_ALL);
+		}
+		else if(self::isTesting()){
+			// These were added simply to avoid warnings when running unit tests.
+			$_SERVER['REMOTE_ADDR'] = 'unit testing';
+			if(!defined('PAGE')){
+				define('PAGE', 'unit testing');
+			}
 		}
 
 		$modulesDirectoryName = '/modules/';
@@ -1088,7 +1095,7 @@ class ExternalModules
 		return false;
 	}
 
-	public function hasPermission($prefix, $version, $permissionName)
+	public static function hasPermission($prefix, $version, $permissionName)
 	{
 		return in_array($permissionName, self::getConfig($prefix, $version)['permissions']);
 	}
@@ -1124,7 +1131,7 @@ class ExternalModules
 
 	static function hasGlobalSettingsSavePermission()
 	{
-		return SUPER_USER;
+		return self::isTesting() || SUPER_USER;
 	}
 
 	# Taken from: http://stackoverflow.com/questions/3338123/how-do-i-recursively-delete-a-directory-and-its-entire-contents-files-sub-dir
