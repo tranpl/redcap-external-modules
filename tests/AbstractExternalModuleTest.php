@@ -179,4 +179,17 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertEquals($pid, $m->detectProjectId(null));
 		unset($_GET['pid']);
 	}
+
+	function testHasPermission()
+	{
+		$testPermission = 'some_test_permission';
+		$config = ['permissions' => []];
+
+		$m = $this->getInstance($config);
+		$this->assertFalse($m->hasPermission($testPermission));
+
+		$config['permissions'][] = $testPermission;
+		$m = $this->getInstance($config);
+		$this->assertTrue($m->hasPermission($testPermission));
+	}
 }
