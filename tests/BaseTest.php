@@ -18,6 +18,12 @@ abstract class BaseTest extends TestCase
 	private $testModuleInstance;
 
 	public static function setUpBeforeClass(){
+		// These were added simply to avoid warnings from REDCap code.
+		$_SERVER['REMOTE_ADDR'] = 'unit testing';
+		if(!defined('PAGE')){
+			define('PAGE', 'unit testing');
+		}
+
 		ExternalModules::initialize();
 	}
 

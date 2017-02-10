@@ -80,13 +80,6 @@ class ExternalModules
 			ini_set('display_startup_errors', 1);
 			error_reporting(E_ALL);
 		}
-		else if(self::isTesting()){
-			// These were added simply to avoid warnings when running unit tests.
-			$_SERVER['REMOTE_ADDR'] = 'unit testing';
-			if(!defined('PAGE')){
-				define('PAGE', 'unit testing');
-			}
-		}
 
 		$modulesDirectoryName = '/modules/';
 
