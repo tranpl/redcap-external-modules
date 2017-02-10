@@ -115,6 +115,18 @@ class ExternalModulesTest extends BaseTest
 		// the other values set by cacheAllEnableData() are tested via testGetEnabledModuleVersionsForProject()
 	}
 
+	function testGetEnabledModules()
+	{
+		$versionsByPrefix = ExternalModules::getEnabledModules();
+		$this->assertNull($versionsByPrefix[TEST_MODULE_PREFIX]);
+
+		$m = $this->getInstance();
+		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+
+		$versionsByPrefix = ExternalModules::getEnabledModules();
+		$this->assertEquals(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
+	}
+
 	function testGetEnabledModuleVersionsForProject_multiplePrefixesAndVersions()
 	{
 		$prefix1 = TEST_MODULE_PREFIX . '-1';
