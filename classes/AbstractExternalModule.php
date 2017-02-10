@@ -127,7 +127,7 @@ class AbstractExternalModule
 
 	function getConfig()
 	{
-		return ExternalModules::getConfig($this->PREFIX, $this->VERSION);;
+		return ExternalModules::getConfig($this->PREFIX, $this->VERSION);
 	}
 
 	function getModuleDirectoryName()
