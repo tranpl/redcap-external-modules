@@ -15,6 +15,8 @@ abstract class BaseTest extends TestCase
 {
 	protected $backupGlobals = FALSE;
 
+	private $testModuleInstance;
+
 	public static function setUpBeforeClass(){
 		ExternalModules::initialize();
 	}
@@ -31,6 +33,7 @@ abstract class BaseTest extends TestCase
 	private function cleanupSettings()
 	{
 		$this->setConfig([]);
+		$this->getInstance()->testHookArguments = null;
 
 		$this->removeGlobalSetting();
 		$this->removeProjectSetting();
@@ -75,19 +78,29 @@ abstract class BaseTest extends TestCase
 
 	protected function getInstance()
 	{
-		return new BaseTestExternalModule();
+		if($this->testModuleInstance == null){
+			$instance = new BaseTestExternalModule();
+			$moduleDirectoryName = ExternalModules::getModuleDirectoryName(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
+			$this->setExternalModulesProperty('instanceCache', [$moduleDirectoryName => $instance]);
+
+			$this->testModuleInstance = $instance;
+		}
+
+		return $this->testModuleInstance;
 	}
 
 	protected function setConfig($config)
 	{
-		$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
-		$configsProperty = $externalModulesClass->getProperty("configs");
-		$configsProperty->setAccessible(true);
-
-		$configs = $configsProperty->getValue();
 		$moduleDirectoryName = ExternalModules::getModuleDirectoryName(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
-		$configs[$moduleDirectoryName] = $config;
-		$configsProperty->setValue($configs);
+		$this->setExternalModulesProperty('configs', [$moduleDirectoryName => $config]);
+	}
+
+	private function setExternalModulesProperty($name, $value)
+	{
+		$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
+		$configsProperty = $externalModulesClass->getProperty($name);
+		$configsProperty->setAccessible(true);
+		$configsProperty->setValue($value);
 	}
 
 	protected function assertThrowsException($callable, $exceptionExcerpt){
@@ -112,6 +125,8 @@ abstract class BaseTest extends TestCase
 
 class BaseTestExternalModule extends AbstractExternalModule {
 
+	public $testHookArguments;
+
 	function __construct()
 	{
 		$this->PREFIX = TEST_MODULE_PREFIX;
@@ -128,5 +143,10 @@ class BaseTestExternalModule extends AbstractExternalModule {
 		$method->setAccessible(true);
 
 		return $method->invokeArgs ($this, $arguments);
+	}
+
+	function hook_test()
+	{
+		$this->testHookArguments = func_get_args();
 	}
 }

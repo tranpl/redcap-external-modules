@@ -289,6 +289,81 @@ class ExternalModulesTest extends BaseTest
 		$assertUrl($projectLinkUrl, $links[$projectLinkName]['url']);
 	}
 
+	function testCallHook_enabledStates()
+	{
+		$pid = TEST_SETTING_PID;
+		$m = $this->getInstance();
+		$this->setConfig(['permissions' => ['hook_test']]);
+		$this->assertTestHookCalled(false);
+
+		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$this->assertTestHookCalled(true);
+
+		$this->assertTestHookCalled(false, $pid);
+
+		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$this->assertTestHookCalled(true, $pid);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, false, $pid);
+		$this->assertTestHookCalled(false, $pid);
+
+		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, false);
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true, $pid);
+		$this->assertTestHookCalled(true, $pid);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, false, $pid);
+		$this->assertTestHookCalled(false, $pid);
+	}
+
+	function testCallHook_arguments()
+	{
+		$m = $this->getInstance();
+		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$this->cacheAllEnableData();
+
+		$this->setConfig(['permissions' => ['hook_test']]);
+
+		$argOne = 1;
+		$argTwo = 'a';
+		ExternalModules::callHook('redcap_test', [$argOne, $argTwo]);
+		$this->assertEquals($argOne, $m->testHookArguments[0]);
+		$this->assertEquals($argTwo, $m->testHookArguments[1]);
+	}
+
+	function testCallHook_permissions()
+	{
+		$m = $this->getInstance();
+		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+
+		$this->setConfig(['permissions' => ['hook_test']]);
+		$this->assertTestHookCalled(true);
+
+		$this->setConfig([]);
+		$this->assertTestHookCalled(false);;
+	}
+
+	private function assertTestHookCalled($called, $pid = null)
+	{
+		$arguments = [];
+		if($pid){
+			$arguments[] = $pid;
+		}
+
+		$this->cacheAllEnableData();
+		$m = $this->getInstance();
+
+		$m->testHookArguments = null;
+		ExternalModules::callHook('redcap_test', $arguments);
+		if($called){
+			$this->assertNotNull($m->testHookArguments);
+		}
+		else{
+			$this->assertNull($m->testHookArguments);
+		}
+	}
+
 	private function getLinks()
 	{
 		self::callPrivateMethod('cacheAllEnableData');
