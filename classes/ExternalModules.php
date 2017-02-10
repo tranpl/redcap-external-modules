@@ -1090,7 +1090,7 @@ class ExternalModules
 
 	public function hasPermission($prefix, $version, $permissionName)
 	{
-		return in_array($permissionName, $this->getConfig($prefix, $version)['permissions']);
+		return in_array($permissionName, self::getConfig($prefix, $version)['permissions']);
 	}
 
 	static function isGlobalSetting($moduleDirectoryPrefix, $key)
