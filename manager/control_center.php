@@ -7,7 +7,7 @@ ExternalModules::addResource('css/style.css');
 
 ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
 ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
-ExternalModules::addResource('js/project_lookup.js');
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 
 ?>
 
@@ -63,7 +63,7 @@ ExternalModules::addResource('js/project_lookup.js');
 				<table class="table table-no-top-row-border">
 					<thead>
 						<tr>
-							<th colspan="2">System Settings for All Projects</th>
+							<th colspan="3">System Settings for All Projects</th>
 							<th>Project Override<br>Permission Level</th>
 						</tr>
 					</thead>
@@ -81,8 +81,7 @@ ExternalModules::addResource('js/project_lookup.js');
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"
 		integrity="sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg=" crossorigin="anonymous"></script>
 
-<script src="js/control_center.js">
-</script>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/control_center.js'); ?>
 
 <?php
 

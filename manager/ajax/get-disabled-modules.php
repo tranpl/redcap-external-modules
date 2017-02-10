@@ -10,78 +10,78 @@ require_once '../../classes/ExternalModules.php';
 
 	$enabledModules = ExternalModules::getEnabledModules();
 
-	 if (!isset($_GET['pid'])) {
-		 $disabledModuleConfigs = ExternalModules::getDisabledModuleConfigs($enabledModules);
+	if (!isset($_GET['pid'])) {
+		$disabledModuleConfigs = ExternalModules::getDisabledModuleConfigs($enabledModules);
 
-		 if (empty($disabledModuleConfigs)) {
-			 echo 'None';
-		 } else {
-			 foreach ($disabledModuleConfigs as $moduleDirectoryPrefix => $versions) {
-				 $config = reset($versions);
-	 
-				 if(isset($enabledModules[$moduleDirectoryPrefix])){
-					 $enableButtonText = 'Change Version';
-				 }
-				 else{
-					 $enableButtonText = 'Enable';
-				 }
-	 
-				 ?>
-				 <tr data-module='<?= $moduleDirectoryPrefix ?>'>
-					 <td><?= $config['name'] ?></td>
-					 <td>
-						 <select name="version">
-							 <?php
-							 foreach($versions as $version=>$config){
-								 echo "<option>$version</option>";
-							 }
-							 ?>
-						 </select>
-					 </td>
-					 <td class="external-modules-action-buttons">
-						 <button class='enable-button'><?=$enableButtonText?></button>
-					 </td>
-				 </tr>
-				 <?php
-			 }
-		 }
-	 } else {
-		  foreach ($enabledModules as $prefix => $version) {
-			   $config = ExternalModules::getConfig($prefix, $version, $_GET['pid']);
-			   $enabled = ExternalModules::getProjectSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
-			   if ($enabled == "true") {
-				    $enabled = true;
-			   } else if ($enabled == "false"){
-				    $enabled = false;
-			   }
-			   if (!$enabled) {
-			   ?>
-				    <tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-					     <td style='vertical-align: middle;'><?= $config['name'] ?></td>
-					     <td style='vertical-align: middle;'><?= $version ?></td>   
-					     <td style='vertical-align: middle;' class="external-modules-action-buttons">
-						      <button class='enable-button'>Enable</button>					  
-					     </td>
-				    </tr>
-			   <?php
-			   }
-		  }
-	 }
+		if (empty($disabledModuleConfigs)) {
+			echo 'None';
+		} else {
+			foreach ($disabledModuleConfigs as $moduleDirectoryPrefix => $versions) {
+				$config = reset($versions);
+	
+				if(isset($enabledModules[$moduleDirectoryPrefix])){
+					$enableButtonText = 'Change Version';
+				}
+				else{
+					$enableButtonText = 'Enable';
+				}
+	
+				?>
+				<tr data-module='<?= $moduleDirectoryPrefix ?>'>
+					<td><?= $config['name'] ?></td>
+					<td>
+						<select name="version">
+							<?php
+							foreach($versions as $version=>$config){
+								echo "<option>$version</option>";
+							}
+							?>
+						</select>
+					</td>
+					<td class="external-modules-action-buttons">
+						<button class='enable-button'><?=$enableButtonText?></button>
+					</td>
+				</tr>
+				<?php
+			}
+		}
+	} else {
+		foreach ($enabledModules as $prefix => $version) {
+			$config = ExternalModules::getConfig($prefix, $version, $_GET['pid']);
+			$enabled = ExternalModules::getProjectSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
+			if ($enabled == "true") {
+				$enabled = true;
+			} else if ($enabled == "false"){
+				$enabled = false;
+			}
+			if (!$enabled) {
+			?>
+				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
+					<td style='vertical-align: middle;'><?= $config['name'] ?></td>
+					<td style='vertical-align: middle;'><?= $version ?></td>   
+					<td style='vertical-align: middle;' class="external-modules-action-buttons">
+						<button class='enable-button'>Enable</button>					
+					</td>
+				</tr>
+			<?php
+			}
+		}
+	}
 
 	?>
 </table>
 
 <script>
 <?php
-	 if (isset($_GET['pid'])) {
-		  echo "var pid = ".json_encode($_GET['pid']).";";
-	 } else {
-		  echo "var pid = null;";
-	 }
-	 if (isset($disabledoduleConfigs)) {
-		 echo "var disabledModules = ".json_encode($disabledModuleConfigs).";";
-	 }
+	if (isset($_GET['pid'])) {
+		echo "var pid = ".json_encode($_GET['pid']).";";
+		echo "var keyEnabled = '".ExternalModules::KEY_ENABLED."';";
+	} else {
+		echo "var pid = null;";
+		if (isset($disabledModuleConfigs)) {
+			echo "var disabledModules = ".json_encode($disabledModuleConfigs).";";
+		}
+	}
 ?>
 </script>
-<script src='../js/get-disabled-modules.js'>
-</script>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/get-disabled-modules.js'); ?>

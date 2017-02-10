@@ -20,7 +20,7 @@ $(function() {
 		  }
 
 		  var data = {};
-		  data['<?=ExternalModules::KEY_ENABLED?>'] = false;
+		  data[keyEnabled] = false;
 		  $.post('ajax/save-settings.php?pid=' + pid + '&moduleDirectoryPrefix=' + prefix + version_str, data, function(data){
 			   if (data.status == 'success') {
 				    reloadPage();

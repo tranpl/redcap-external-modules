@@ -239,19 +239,19 @@ class ExternalModules
 		return self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
 	}
 
-	private static function setGlobalFileSetting($moduleDirectoryPrefix, $key, $value)
+	static function setSystemFileSetting($moduleDirectoryPrefix, $key, $value)
 	{
-		self::setFileSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key, $value);
+		self::setFileSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key, $value);
 	}
 
-	private static function setFileSetting($moduleDirectoryPrefix, $projectId, $key, $value)
+	static function setFileSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
 		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value, "file");
 	}
 
-	static function removeGlobalFileSetting($moduleDirectoryPrefix, $key)
+	static function removeSystemFileSetting($moduleDirectoryPrefix, $key)
 	{
-		self::removeFileSetting($moduleDirectoryPrefix, self::GLOBAL_SETTING_PROJECT_ID, $key);
+		self::removeFileSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key);
 	}
 
 	static function removeFileSetting($moduleDirectoryPrefix, $projectId, $key)
@@ -273,9 +273,9 @@ class ExternalModules
 
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
 	{
-		if($projectId == self::GLOBAL_SETTING_PROJECT_ID){
-			if(!self::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
-				throw new Exception("You don't have permission to save global settings!");
+		if($projectId == self::SYSTEM_SETTING_PROJECT_ID){
+			if(!self::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
+				throw new Exception("You don't have permission to save system settings!");
 			}
 		}
 		else if(!self::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
@@ -318,8 +318,12 @@ class ExternalModules
 		if (gettype($oldValue) == "boolean") {
 			$oldValue = ($oldValue) ? 'true' : 'false';
 		}
-		if((string) $value === (string) $oldValue){
+		# if value is "", it is valid, so proceed on to if #2; if both null, then do nothing
+		if(((string) $value === (string) $oldValue) && ($value !== "")){
 			// We don't need to do anything.
+			return;
+		} else if (($value === "") && ($value === $oldValue)) {
+			// both empty strings ==> do nothing
 			return;
 		} else if($value === null){
 			$event = "DELETE";
@@ -922,74 +926,48 @@ class ExternalModules
 		}
 	}
 
-	static function getLinks(){
-		$pid = self::getPID();
+        static function getLinks(){
+                $pid = self::getPID();
 
-		$links['Manage External Modules'] = array(
-			'icon' => 'puzzle_small',
-			'url' => ExternalModules::$BASE_URL  . 'manager/control_center.php'
-		);
+                if(isset($pid)){
+                        $type = 'project';
+                }
+                else{
+                        $type = 'control-center';
+                }
 
-		ksort($links);
+                $links = array();
 
-		return $links;
-	}
+                $modules = self::getEnabledModuleInstances($pid);
+                foreach($modules as $instance){
+                        $config = $instance->getConfig();
 
-	static function getProjectLinks($pid){
-		$links = self::getProjectOrSystemLinks($pid);
+                        foreach($config['links'][$type] as $link){
+                                $name = $link['name'];
+                                $link['url'] = self::getUrl($instance->PREFIX, $link['url']);
+                                $links[$name] = $link;
+                        }
+                }
 
-		if(self::hasDesignRights()){
-			$links['Manage External Modules'] = array(
-				'icon' => 'puzzle_small',
-				'url' => ExternalModules::$BASE_URL  . 'manager/project.php?'
-			);
-		}
+                $addManageLink = function($url) use (&$links){
+                        $links['Manage External Modules'] = array(
+                                'icon' => 'puzzle_small',
+                                'url' => ExternalModules::$BASE_URL  . $url
+                        );
+                };
 
-		ksort($links);
+                if(isset($pid)){
+                        if(SUPER_USER || !empty($modules) && self::hasDesignRights()){
+                                $addManageLink('manager/project.php?');
+                        }
+                }
+                else{
+                        $addManageLink('manager/control_center.php');
+                }
 
-		return $links;
-	}
+                ksort($links);
 
-	private function getProjectOrSystemLinks($pid = null){
-		if(isset($pid)){
-			$type = 'project';
-		}
-		else{
-			$type = 'control-center';
-		}
-
-		$links = array();
-
-		$modules = self::getEnabledModuleInstances($pid);
-		foreach($modules as $instance){
-			$config = $instance->getConfig();
-
-			foreach($config['links'][$type] as $link){
-				$name = $link['name'];
-				$link['url'] = self::getUrl($instance->PREFIX, $link['url']);
-				$links[$name] = $link;
-			}
-		}
-
-		$addManageLink = function($url) use (&$links){
-			$links['Manage External Modules'] = array(
-				'icon' => 'brick',
-				'url' => ExternalModules::$BASE_URL  . $url
-			);
-		};
-
-		if(isset($pid)){
-			if(SUPER_USER || !empty($modules) && self::hasDesignRights()){
-				$addManageLink('manager/project.php?');
-			}
-		}
-		else{
-			$addManageLink('manager/control_center.php');
-		}
-
-		ksort($links);
-
-		return $links;
+                return $links;
 	}
 
 	private static function getPID()
@@ -1060,7 +1038,7 @@ class ExternalModules
                 }
 
 		if($config == NULL){
-			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
+			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath ".json_encode(self::getSystemwideEnabledVersions()));
 		}
 
 		foreach(['system-settings', 'project-settings'] as $key){
@@ -1111,7 +1089,7 @@ class ExternalModules
 
 	public static function getEnabledVersion($prefix)
 	{
-		$versionsByPrefix = self::getGloballyEnabledVersions();
+		$versionsByPrefix = self::getSystemwideEnabledVersions();
 		return @$versionsByPrefix[$prefix];
 	}
 
@@ -1218,5 +1196,12 @@ class ExternalModules
 			}
 			rmdir($dir);
 		}
+	}
+
+	static function getManagerJSDirectory()
+	{
+		return "js/";
+		# just in case absolute path is needed, I have documented it here
+		// return APP_PATH_WEBROOT_PARENT."/external_modules/manager/js/";
 	}
 }

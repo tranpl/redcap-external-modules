@@ -9,7 +9,7 @@ var configureSettings = function(configSettings, savedSettings) {
             var saved = savedSettings[setting.key];
             if(saved){
                 setting.value = saved.value;
-                setting.globalValue = saved.global_value;
+                setting.systemValue = saved.system_value;
             }
 
             if(setting.value != '' && setting.value != null) {

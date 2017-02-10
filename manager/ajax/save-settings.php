@@ -5,20 +5,14 @@ require_once '../../classes/ExternalModules.php';
 $pid = @$_GET['pid'];
 $moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
 
-<<<<<<< HEAD
 if(empty($pid) && !ExternalModules::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
 	die("You don't have permission to save system settings!");
 }
 
-$keys = array();
-foreach($_POST as $key=>$value){
-	if($value == ''){
-		$value = null;
-=======
 # for screening out files below
 $config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
 $files = array();
-foreach(['global-settings', 'project-settings'] as $settingsKey){
+foreach(['system-settings', 'project-settings'] as $settingsKey){
 	foreach($config[$settingsKey] as $row) {
 		if ($row['type'] && ($row['type'] == "file")) {
 			$files[] = $row['key'];
@@ -46,25 +40,24 @@ function isExternalModuleFile($key, $fileKeys) {
 foreach($_POST as $key=>$value){
 	# files are stored in a separate $.ajax call
 	# numeric value signifies a file present
-	# empty strings signify non-existent files (globalValues or empty)
+	# empty strings signify non-existent files (systemValues or empty)
 	if (!isExternalModuleFile($key, $files) || !is_numeric($value)) { 
 		if($value == '') {
 			$value = null;
 		}
 
 		if(empty($pid)){
-			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+			ExternalModules::setSystemSetting($moduleDirectoryPrefix, $key, $value);
 		} else {
 			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
 		}
 		if (preg_match("/____/", $key)) {
 			$instances[$key] = $value;
 		} else if (empty($pid)) {
-			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+			ExternalModules::setSystemSetting($moduleDirectoryPrefix, $key, $value);
 		} else {
 			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
 		}
->>>>>>> master
 	}
 
 	if(empty($pid)){

@@ -60,3 +60,7 @@
 #external-modules-configure-modal select {
 	max-width: 275px;
 }
+
+.external-modules-use-system-setting {
+	font-size: 10px;
+}

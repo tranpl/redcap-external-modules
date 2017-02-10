@@ -2,6 +2,8 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/project_lookup.js');
+
 if(!ExternalModules::areTablesPresent()){
 	echo 'Before using External Modules, you must run the following sql to create the appropriate tables:<br><br>';
 	echo '<textarea style="width: 100%; height: 300px">' . htmlspecialchars(file_get_contents(__DIR__ . '/../../sql/create tables.sql')) . '</textarea>';
@@ -58,9 +60,9 @@ here. In turn, each project can override this set of defaults with their own val
 	<script>
 		var pid = <?=json_encode($$_GET['pid'])?>;
 	</script>
-	<script src='js/enabled-modules-1.js'>
-	</script>
-<?php } ?>
+<?php
+	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-1.js');
+} ?>
 
 <table id='external-modules-enabled' class="table">
 	<?php
@@ -115,6 +117,11 @@ if($configsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
 	die();
 }
+$versionsByPrefixJSON = json_encode($versionsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
+if($versionsByPrefixJSON == null){
+	echo '<script>alert(' . json_encode('An error occurred while converting the versions to JSON: ' . json_last_error_msg()) . ');</script>';
+	die();
+}
 ?>
 
 <script>
@@ -127,4 +134,4 @@ if($configsByPrefixJSON == null){
 	}
 	var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 </script>
-<script src='js/enabled-modules-3.js'></script>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-3.js'); ?>

@@ -12,7 +12,7 @@ const TEST_SETTING_PID = 1;
 
 abstract class BaseTest extends TestCase
 {
-	protected $backupGlobals = FALSE;
+	protected $backupSystems = FALSE;
 
 	protected function setUp(){
 		self::cleanupSettings();

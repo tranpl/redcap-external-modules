@@ -19,7 +19,7 @@
 				optionsHtml += '<option value="' + getAttributeValueHtml(value) + '" ' + optionAttributes + '>' + choice.name + '</option>';
 			}
 
-			return '<select name="' + name + '" ' + selectAttributes + '>' + optionsHtml + '</select>';
+			return '<select class="external-modules-input-element" name="' + name + '" ' + selectAttributes + '>' + optionsHtml + '</select>';
 		};
 
 		var getInputElement = function(type, name, value, inputAttributes){
@@ -30,15 +30,15 @@
 				if (pid) {
 					return getProjectFileFieldElement(name, value, inputAttributes);
 				} else {
-					return getGlobalFileFieldElement(name, value, inputAttributes);
+					return getSystemFileFieldElement(name, value, inputAttributes);
 				}
 			} else {
-				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+				return '<input class="external-modules-input-element" type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 			}
 		};
 
 		// abstracted because file fields need to be reset in multiple places
-		var getGlobalFileFieldElement = function(name, value, inputAttributes) {
+		var getSystemFileFieldElement = function(name, value, inputAttributes) {
 			return getFileFieldElement(name, value, inputAttributes, "");
 		}
 
@@ -51,15 +51,17 @@
 		var getFileFieldElement = function(name, value, inputAttributes, pidString) {
 			var type = "file";
 			if ((typeof value != "undefined") && (value !== "")) {
-				var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
-                                html += '<span class="external-modules-edoc-file"></span>';
-                                html += '<button class="external-modules-delete-file" '+inputAttributes+'>Delete File</button>';
+				var htmlInputElement = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
+                                var html = htmlInputElement + '<span class="external-modules-edoc-file"></span>';
                                 $.post('ajax/get-edoc-name.php?' + pidString, { edoc : value }, function(data) {
-                                        $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
+					var htmlNew = "<b>" + data.doc_name + "</b><br>";
+                                	htmlNew += '<button class="external-modules-delete-file" '+inputAttributes+'>Delete File</button>';
+                                        var row = $("[name='"+name+"']").closest("tr");
+					row.find(".external-modules-edoc-file").html(htmlNew);
                                 });
                                 return html;
 			} else {
-				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+				return '<input class="external-modules-input-element" type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 			}
 		}
 
@@ -111,8 +113,8 @@
 				if(type == 'checkbox' && value == 1){
 					inputAttributes += ' checked';
 				}
-				// TODO Is this only triggered when a project is overriding the global value, but now allow-project-overrides is disabled?
-				var alreadyOverridden = setting.value != setting.globalValue;
+				// TODO Is this only triggered when a project is overriding the system value, but now allow-project-overrides is disabled?
+				var alreadyOverridden = setting.value != setting.systemValue;
 				if ((type == 'file') && (!setting['allow-project-overrides'] && alreadyOverridden)) {
 					inputAttributes += "disabled";
 				}
@@ -120,7 +122,7 @@
 				inputHtml = getInputElement(type, key, value, inputAttributes);
 			}
 
-			html += "<td>" + inputHtml + "</td>";
+			html += "<td class='external-modules-input-td'>" + inputHtml + "</td>";
 
 			// no repeatable files allowed
 			if (setting.repeatable && (type != "file")) {
@@ -154,7 +156,7 @@
 			return html;
 		};
 
-		var getGlobalSettingColumns = function(setting){
+		var getSystemSettingColumns = function(setting){
 			var columns = getSettingColumns(setting, '');
 
 			if(setting['allow-project-overrides']){
@@ -192,7 +194,7 @@
 			return s;
 		}
 
-		var getProjectSettingColumns = function(setting, global, instance){
+		var getProjectSettingColumns = function(setting, system, instance){
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
@@ -200,19 +202,28 @@
 			}
 
 			var inputAttributes = '';
-			var overrideCheckboxAttributes = 'data-global-value="' + getAttributeValueHtml(setting.globalValue) + '"';
+			var overrideButtonAttributes = 'data-system-value="' + getAttributeValueHtml(setting.systemValue) + '"';
 
-			if(global && setting.value == setting.globalValue){
-				inputAttributes += ' disabled';
+			if(system && (setting.type == "checkbox")) {
+				if (setting.value == "false") {
+					setting.value = 0;
+				}
+				if (setting.systemValue == "false") {
+					setting.systemValue = 0;
+				} 
 			}
-			else{
-				overrideCheckboxAttributes += ' checked';
+			if(system && (setting.value == setting.systemValue)){
+				overrideButtonAttributes += " style='display: none;'";
+			}
+
+			if (((setting.value == "true") || (setting.value == 1)) && (setting.type == "checkbox")) {
+				inputAttributes += " checked";
 			}
 
 			var columns = getSettingColumns(setting, inputAttributes, instance);
 
-			if(global){
-				columns += '<td class="external-modules-override-column"><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
+			if(system){
+				columns += "<td><div style='min-height: 50px;'><button "+overrideButtonAttributes+" class='external-modules-use-system-setting'>Use System Setting</button></div></td>";
 			}
 			else{
 				columns += '<td></td>';
@@ -221,8 +232,8 @@
 			return columns;
 		};
 
-		var shouldShowSettingOnProjectManagementPage = function(setting, global) {
-			if(!global){
+		var shouldShowSettingOnProjectManagementPage = function(setting, system) {
+			if(!system){
 				// Always show project level settings.
 				return true;
 			}
@@ -232,14 +243,14 @@
 				return false;
 			}
 
-			// Checking whether a global setting is actually overridden is necessary for the UI to reflect when
+			// Checking whether a system setting is actually overridden is necessary for the UI to reflect when
 			// settings are overridden prior to allow-project-overrides being set to false.
-			var alreadyOverridden = setting.value != setting.globalValue;
+			var alreadyOverridden = setting.value != setting.systemValue;
 
 			return setting['allow-project-overrides'] || alreadyOverridden;
 		}
 
-		var getSettingRows = function(global, configSettings, savedSettings){
+		var getSettingRows = function(system, configSettings, savedSettings){
 			var rowsHtml = '';
 
 			configSettings.forEach(function(setting){
@@ -247,7 +258,7 @@
 				var saved = savedSettings[setting.key];
 				if(saved){
 					setting.value = saved.value;
-					setting.globalValue = saved.global_value;
+					setting.systemValue = saved.system_value;
 				}
 
 				setting.overrideLevelKey = setting.key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
@@ -258,21 +269,44 @@
 
 
 				if(!pid){
-					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
+					rowsHtml += '<tr>' + getSystemSettingColumns(setting) + '</tr>';
 				}
-				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
+				else if(shouldShowSettingOnProjectManagementPage(setting, system)){
 					if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
 						for (var instance=0; instance < setting.value.length; instance++) {
-							rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, instance) + '</tr>';
+							rowsHtml += '<tr>' + getProjectSettingColumns(setting, system, instance) + '</tr>';
 						}
 					} else {
-						rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
 					}
 				}
 			})
 
 			return rowsHtml;
 		};
+
+		var onValueChange = function() {
+			var val;
+			if ($(this).type == "checkbox") {
+				val = $(this).is(":checked");
+			} else {
+				val = $(this).val();
+			}
+			var overrideButton = $(this).closest('tr').find('button.external-modules-use-system-setting');
+			if (overrideButton) {
+				var systemValue = overrideButton.data('system-value');
+				if (typeof systemValue != "undefined") {
+					if (systemValue == val) {
+						overrideButton.hide();
+					} else {
+						overrideButton.show();
+					}
+				}
+			}
+		};
+
+		$('#external-modules-configure-modal').on('change', '.external-modules-input-element', onValueChange);
+		$('#external-modules-configure-modal').on('check', '.external-modules-input-element', onValueChange);
 
 		$('#external-modules-configure-modal').on('click', '.external-modules-add-instance', function(){
 			// RULE: first variable is base name (e.g., survey_name)
@@ -370,7 +404,7 @@
 				var savedSettings = data.settings;
 
 				var settingsHtml = "";
-				settingsHtml += getSettingRows(true, config['global-settings'], savedSettings);
+				settingsHtml += getSettingRows(true, config['system-settings'], savedSettings);
 
 				if(pid) {
 					settingsHtml += getSettingRows(false, config['project-settings'], savedSettings);
@@ -378,64 +412,50 @@
 
 				tbody.html(settingsHtml);
 
-				ExternalModules.configureSettings(config['global-settings'], savedSettings);
+				configureSettings(config['system-settings'], savedSettings);
 			});
 		});
 
-		configureModal.on('click', '.external-modules-delete-file', function() {
+		var deleteFile = function(ob) {
 			var moduleDirectoryPrefix = configureModal.data('module');
 
-			var row = $(this).closest("tr");
+			var row = ob.closest("tr");
 			var input = row.find("input[type=hidden]");
 			var disabled = input.prop("disabled");
-			$(this).hide();
+			var deleteFileButton = row.find("button.external-modules-delete-file");
+			if (deleteFileButton) {
+				deleteFileButton.hide();
+			}
 
 			$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) { 
+				alert(JSON.stringify(data));
 				if (data.status == "success") {
 					var inputAttributes = "";
 					if (disabled) {
 						inputAttributes = "disabled";
 					}
-					row.find(".external-modules-edoc-file").html(getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
+					row.find(".external-modules-input-td").html(getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
 					input.remove();
 				} else {		// failure
 					alert("The file was not able to be deleted. "+JSON.stringify(data));
 				}
+
+				var overrideButton = row.find("button.external-modules-use-system-setting");
+				var systemValue = overrideButton.data("system-value");
+
+				if (systemValue != "") {    // compare to new value
+					overrideButton.show();
+				} else {
+					overrideButton.hide();
+				}
 			});
+		};
+		configureModal.on('click', '.external-modules-delete-file', function() {
+			deleteFile($(this));
 		});
 
-		configureModal.on('click', '.override-global-setting', function(){
-			var overrideCheckbox = $(this);
-			var globalValue = overrideCheckbox.data('global-value');
-			var inputs = overrideCheckbox.closest('tr').find('td:nth-child(2)').find('input, select');
-
-			if(overrideCheckbox.prop('checked')){
-				inputs.prop('disabled', false);
-				inputs.closest("tr").find(".external-modules-delete-file").prop("disabled", false);
-				resetSaveButton();
-			}
-			else{
-				var type = inputs[0].type;
-				if(type == 'radio'){
-					inputs.filter('[value=' + globalValue + ']').click();
-				}
-				else if(type == 'checkbox'){
-					inputs.prop('checked', globalValue);
-				}
-				else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
-					inputs.closest("td").html(getGlobalFileFieldElement(inputs.attr('name'), globalValue, "disabled"));
-					resetSaveButton();
- 				}
-				else{ // text or select
-					inputs.val(globalValue);
-				}
-
-				inputs.prop('disabled', true);
-			}
-		});
-
-		var resetSaveButton = function() {
-			if ($(this).val() != "") {
+		var resetSaveButton = function(val) {
+			if (val != "") {
 				$(".save").html("Save and Upload");
 			}
 			var allEmpty = true;
@@ -447,9 +467,47 @@
 			if (allEmpty) {
 				$(".save").html("Save");
 			}
-		}
+		};
 
-		configureModal.on('change', 'input[type=file]', resetSaveButton);
+		configureModal.on('click', '.external-modules-use-system-setting', function(){
+			var overrideButton = $(this);
+			var systemValue = overrideButton.data('system-value');
+			var row = overrideButton.closest('tr');
+			var inputs = row.find('td:nth-child(2)').find('input, select');
+
+			var type = inputs[0].type;
+			if(type == 'radio'){
+				inputs.filter('[value=' + systemValue + ']').click();
+			}
+			else if(type == 'checkbox'){
+				inputs.prop('checked', systemValue);
+			}
+			else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
+				deleteFile($(this));
+				resetSaveButton("");
+ 			}
+			else if(type == 'file') {
+				// if a real value
+				if (!isNaN(systemValue)) {
+					var edocLine = row.find(".external-modules-input-td");
+					if (edocLine) {
+						var inputAttributes = "";
+						if (inputs.prop("disabled")) {
+							inputAttributes = "disabled";
+						}
+						edocLine.html(getSystemFileFieldElement(inputs.attr('name'), systemValue, inputAttributes));
+						resetSaveButton(systemValue);
+						row.find(".external-modules-delete-file").show();
+					}
+				}
+			}
+			else{ // text or select
+				inputs.val(systemValue);
+			}
+			overrideButton.hide();
+		});
+
+		configureModal.on('change', 'input[type=file]', function() { resetSaveButton($(this).val()); });
 
 		// helper method for saving
 		var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
@@ -470,7 +528,7 @@
 					type: 'POST',
 					success: function(returnData) {
 						if (returnData.status != 'success') {
-							alert("One or more of the files could not be saved. "+JSON.stringify(data));
+							alert("One or more of the files could not be saved. "+JSON.stringify(returnData));
 						}
 
 						// proceed anyways to save data
@@ -511,7 +569,7 @@
 
 			configureModal.find('input, select').each(function(index, element){
 				var element = $(element);
-				var globalValue = element.closest('tr').find('.override-global-setting').data('global-value');
+				var systemValue = element.closest('tr').find('.override-system-setting').data('system-value');
 				var name = element.attr('name');
 				var type = element[0].type;
 
@@ -540,7 +598,7 @@
 						value = element.val();
 					}
 	
-					if(value == globalValue){
+					if(value == systemValue){
 						value = '';
 					}
 

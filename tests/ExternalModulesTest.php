@@ -179,33 +179,30 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 	}
 
-<<<<<<< HEAD
-=======
 	function testGetFileSettings() {
 		$m = self::getInstance();					
 
-		$edocIdGlobal = rand();
+		$edocIdSystem = rand();
 		$edocIdProject = rand();
 
-                # global
-		ExternalModules::setGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY, $edocIdGlobal);
+                # system
+		ExternalModules::setSystemFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY, $edocIdSystem);
 
                 # project
 		ExternalModules::setFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY, $edocIdProject);
 
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertEquals($edocIdProject, $array[FILE_SETTING_KEY]['value']);
-		$this->assertEquals($edocIdGlobal, $array[FILE_SETTING_KEY]['global_value']);
+		$this->assertEquals($edocIdSystem, $array[FILE_SETTING_KEY]['system_value']);
 
 		ExternalModules::removeFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY);
-		ExternalModules::removeGlobalFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
+		ExternalModules::removeSystemFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 
 		$this->assertNull($array[FILE_SETTING_KEY]['value']);
-		$this->assertNull($array[FILE_SETTING_KEY]['global_value']);
+		$this->assertNull($array[FILE_SETTING_KEY]['system_value']);
 	}
 
->>>>>>> master
 	private function getEnabledModuleVersionsForProjectIgnoreCache()
 	{
 		self::callPrivateMethod('cacheAllEnableData'); // Call this every time to clear/reset the cache.
@@ -237,8 +234,6 @@ class ExternalModulesTest extends BaseTest
 	{
 		return new \ReflectionClass('ExternalModules\ExternalModules');
 	}
-<<<<<<< HEAD
-=======
 
 	function testInstance()
 	{
@@ -274,5 +269,4 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($value4, $array[3]);
 	}
 
->>>>>>> master
 }
