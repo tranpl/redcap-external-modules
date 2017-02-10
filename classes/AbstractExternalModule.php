@@ -122,7 +122,7 @@ class AbstractExternalModule
 
 	function hasPermission($permissionName)
 	{
-		return in_array($permissionName, $this->getConfig()['permissions']);
+		return ExternalModules::hasPermission($this->PREFIX, $this->VERSION, $permissionName);
 	}
 
 	function getConfig()
@@ -132,8 +132,7 @@ class AbstractExternalModule
 
 	function getModuleDirectoryName()
 	{
-		$reflector = new \ReflectionClass(get_class($this));
-		return basename(dirname($reflector->getFileName()));
+		return ExternalModules::getModuleDirectoryName($this->PREFIX, $this->VERSION);
 	}
 
 	function setGlobalSetting($key, $value)

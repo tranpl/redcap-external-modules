@@ -117,13 +117,27 @@ class ExternalModulesTest extends BaseTest
 
 	function testGetEnabledModules()
 	{
+		$this->cacheAllEnableData();
 		$versionsByPrefix = ExternalModules::getEnabledModules();
+		$this->assertNull($versionsByPrefix[TEST_MODULE_PREFIX]);
+		$versionsByPrefix = ExternalModules::getEnabledModules(TEST_SETTING_PID);
 		$this->assertNull($versionsByPrefix[TEST_MODULE_PREFIX]);
 
 		$m = $this->getInstance();
 		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
 
+		$this->cacheAllEnableData();
 		$versionsByPrefix = ExternalModules::getEnabledModules();
+		$this->assertEquals(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
+		$versionsByPrefix = ExternalModules::getEnabledModules(TEST_SETTING_PID);
+		$this->assertNull($versionsByPrefix[TEST_MODULE_PREFIX]);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true, TEST_SETTING_PID);
+
+		$this->cacheAllEnableData();
+		$versionsByPrefix = ExternalModules::getEnabledModules();
+		$this->assertEquals(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
+		$versionsByPrefix = ExternalModules::getEnabledModules(TEST_SETTING_PID);
 		$this->assertEquals(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
 	}
 
@@ -216,9 +230,84 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($array[FILE_SETTING_KEY]['global_value']);
 	}
 
+	function testGetLinks()
+	{
+		$m = $this->getInstance();
+
+		$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
+		$configsProperty = $externalModulesClass->getProperty("configs");
+		$configsProperty->setAccessible(true);
+
+		$controlCenterLinkName = "Test Control Center Link Name";
+		$controlCenterLinkUrl = "some/control/center/url";
+		$projectLinkName = "Test Project Link Name";
+		$projectLinkUrl = "some/project/url";
+
+		$configsProperty->setValue([
+			$m->getModuleDirectoryName() => [
+				'links' => [
+					'control-center' => [
+						[
+							'name'=>$controlCenterLinkName,
+							'url'=>$controlCenterLinkUrl
+						]
+					],
+					'project' => [
+						[
+							'name'=>$projectLinkName,
+							'url'=>$projectLinkUrl
+						]
+					]
+				]
+			]
+		]);
+
+		$links = $this->getLinks();
+		$this->assertNull($links[$controlCenterLinkName]);
+		$this->assertNull($links[$projectLinkName]);
+
+		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+
+		$assertUrl = function($pageExpected, $actual) use ($externalModulesClass){
+			$method = $externalModulesClass->getMethod('getUrl');
+			$method->setAccessible(true);
+			$expected = $method->invoke(null, TEST_MODULE_PREFIX, $pageExpected);
+
+			$this->assertEquals($expected, $actual);
+		};
+
+		$links = $this->getLinks();
+		$assertUrl($controlCenterLinkUrl, $links[$controlCenterLinkName]['url']);
+		$this->assertNull($links[$projectLinkName]);
+
+		$_GET['pid'] = TEST_SETTING_PID;
+
+		$links = $this->getLinks();
+		$this->assertNull($links[$controlCenterLinkName]);
+		$this->assertNull($links[$projectLinkName]);
+
+		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true);
+
+		$links = $this->getLinks();
+		$this->assertNull($links[$controlCenterLinkName]);
+		$assertUrl($projectLinkUrl, $links[$projectLinkName]['url']);
+	}
+
+	private function getLinks()
+	{
+		self::callPrivateMethod('cacheAllEnableData');
+		return ExternalModules::getLinks();
+	}
+
+	// Calling this will effectively clear/reset the cache.
+	private function cacheAllEnableData()
+	{
+		self::callPrivateMethod('cacheAllEnableData');
+	}
+
 	private function getEnabledModuleVersionsForProjectIgnoreCache()
 	{
-		self::callPrivateMethod('cacheAllEnableData'); // Call this every time to clear/reset the cache.
+		$this->cacheAllEnableData();
 		return self::callPrivateMethod('getEnabledModuleVersionsForProject', TEST_SETTING_PID);
 	}
 

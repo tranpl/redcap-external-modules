@@ -15,6 +15,10 @@ abstract class BaseTest extends TestCase
 {
 	protected $backupGlobals = FALSE;
 
+	public static function setUpBeforeClass(){
+		ExternalModules::initialize();
+	}
+
 	protected function setUp(){
 		self::cleanupSettings();
 	}
@@ -33,6 +37,8 @@ abstract class BaseTest extends TestCase
 		$m->removeGlobalSetting(ExternalModules::KEY_VERSION, TEST_SETTING_PID);
 		$m->removeGlobalSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+
+		unset($_GET['pid']);
 	}
 
 	protected function setGlobalSetting($value)

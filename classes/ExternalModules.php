@@ -50,7 +50,6 @@ class ExternalModules
 	private static $globallyEnabledVersions;
 	private static $projectEnabledDefaults;
 	private static $projectEnabledOverrides;
-	private static $enabledInstancesByPID = array();
 
 	private static $configs = array();
 
@@ -168,22 +167,6 @@ class ExternalModules
 	static function getProjectFooterPath()
 	{
 		return APP_PATH_DOCROOT . 'ProjectGeneral/footer.php';
-	}
-
-	static function getEnabledModules()
-	{
-		$result = self::getGlobalSettings(null, array(self::KEY_VERSION));
-
-		$modules = array();
-		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
-			$prefix = $row['directory_prefix'];
-			if(!self::shouldExcludeModule($prefix)){
-				$value = $row['value'];
-				$modules[$prefix] = $value;
-			}
-		}
-
-		return $modules;
 	}
 
 	static function disable($moduleDirectoryPrefix)
@@ -638,23 +621,25 @@ class ExternalModules
 			}
 		}
 
-		$modules = self::getEnabledModuleInstances($pid);
-		foreach($modules as $instance){
+		$versionsByPrefix = self::getEnabledModules($pid);
+		foreach($versionsByPrefix as $prefix=>$version){
 			$methodName = "hook_$name";
 
-			if(method_exists($instance, $methodName)){
-				if(!$instance->hasPermission($methodName)){
-					throw new Exception("The \"" . $instance->PREFIX . "\" external module must request permission in order to define the following hook: $methodName()");
-				}
+			if(!self::hasPermission($prefix, $version, $methodName)){
+				// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+				continue;
+			}
 
-				self::setActiveModulePrefix($instance->PREFIX);
+			$instance = self::getModuleInstance($prefix, $version);
+			if(method_exists($instance, $methodName)){
+				self::setActiveModulePrefix($prefix);
 				try{
 					call_user_func_array(array($instance,$methodName), $arguments);
 				}
 				catch(Exception $e){
-					$message = "The '" . $instance->PREFIX . "' module threw the following exception when calling the hook method '$methodName':\n\n" . $e;
+					$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '$methodName':\n\n" . $e;
 					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $instance->PREFIX", $message);
+					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
 				}
 				self::setActiveModulePrefix(null);
 			}
@@ -721,27 +706,14 @@ class ExternalModules
 	// Accepts a project id as the first parameter.
 	// If the project id is null, all globally enabled module instances are returned.
 	// Otherwise, only instances enabled for the current project id are returned.
-	private static function getEnabledModuleInstances($pid)
+	static function getEnabledModules($pid = null)
 	{
-		$instances = @self::$enabledInstancesByPID[$pid];
-		if(!isset($instances)){
-			if($pid == null){
-				// Cache globally enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
-				$prefixes = self::getGloballyEnabledVersions();
-			}
-			else{
-				$prefixes = self::getEnabledModuleVersionsForProject($pid);
-			}
-
-			$instances = array();
-			foreach($prefixes as $prefix=>$version){
-				$instances[] = self::getModuleInstance($prefix, $version);
-			}
-
-			self::$enabledInstancesByPID[$pid] = $instances;
+		if($pid == null){
+			return self::getGloballyEnabledVersions();
 		}
-
-		return $instances;
+		else{
+			return self::getEnabledModuleVersionsForProject($pid);
+		}
 	}
 
 	private static function getGloballyEnabledVersions()
@@ -860,7 +832,6 @@ class ExternalModules
 		self::$globallyEnabledVersions = $globallyEnabledVersions;
 		self::$projectEnabledDefaults = $projectEnabledDefaults;
 		self::$projectEnabledOverrides = $projectEnabledOverrides;
-		self::$enabledInstancesByPID = array();
 	}
 
 	static function areTablesPresent()
@@ -907,13 +878,13 @@ class ExternalModules
 
 		$links = array();
 
-		$modules = self::getEnabledModuleInstances($pid);
-		foreach($modules as $instance){
-			$config = $instance->getConfig();
+		$versionsByPrefix = self::getEnabledModules($pid);
+		foreach($versionsByPrefix as $prefix=>$version){
+			$config = ExternalModules::getConfig($prefix, $version);
 
 			foreach($config['links'][$type] as $link){
 				$name = $link['name'];
-				$link['url'] = self::getUrl($instance->PREFIX, $link['url']);
+				$link['url'] = self::getUrl($prefix, $link['url']);
 				$links[$name] = $link;
 			}
 		}
@@ -1115,6 +1086,11 @@ class ExternalModules
 		}
 
 		return false;
+	}
+
+	public function hasPermission($prefix, $version, $permissionName)
+	{
+		return in_array($permissionName, $this->getConfig($prefix, $version)['permissions']);
 	}
 
 	static function isGlobalSetting($moduleDirectoryPrefix, $key)
