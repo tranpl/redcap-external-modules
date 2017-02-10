@@ -14,7 +14,7 @@ class AbstractExternalModule
 
 	function __construct()
 	{
-		list($prefix, $version) = ExternalModules::getParseModuleDirectoryPrefixAndVersion(self::getModuleDirectoryName());
+		list($prefix, $version) = ExternalModules::getParseModuleDirectoryPrefixAndVersion($this->getModuleDirectoryName());
 
 		$this->PREFIX = $prefix;
 		$this->VERSION = $version;
@@ -132,7 +132,8 @@ class AbstractExternalModule
 
 	function getModuleDirectoryName()
 	{
-		return ExternalModules::getModuleDirectoryName($this->PREFIX, $this->VERSION);
+		$reflector = new \ReflectionClass(get_class($this));
+		return basename(dirname($reflector->getFileName()));
 	}
 
 	function setGlobalSetting($key, $value)

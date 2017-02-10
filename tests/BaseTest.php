@@ -141,6 +141,11 @@ class BaseTestExternalModule extends AbstractExternalModule {
 		parent::__construct();
 	}
 
+	function getModuleDirectoryName()
+	{
+		return ExternalModules::getModuleDirectoryName($this->PREFIX, $this->VERSION);
+	}
+
 	function __call($name, $arguments)
 	{
 		// We end up in here when we try to call a private method.
