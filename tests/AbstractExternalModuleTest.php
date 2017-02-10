@@ -96,7 +96,8 @@ class AbstractExternalModuleTest extends BaseTest
 
 	function assertConfigValid($config)
 	{
-		self::getInstance($config);
+		$this->setConfig($config);
+		self::getInstance();
 	}
 
 	function assertConfigInvalid($config, $exceptionExcerpt)
@@ -182,14 +183,16 @@ class AbstractExternalModuleTest extends BaseTest
 
 	function testHasPermission()
 	{
+		$m = $this->getInstance();
+
 		$testPermission = 'some_test_permission';
 		$config = ['permissions' => []];
 
-		$m = $this->getInstance($config);
+		$this->setConfig($config);
 		$this->assertFalse($m->hasPermission($testPermission));
 
 		$config['permissions'][] = $testPermission;
-		$m = $this->getInstance($config);
+		$this->setConfig($config);
 		$this->assertTrue($m->hasPermission($testPermission));
 	}
 }

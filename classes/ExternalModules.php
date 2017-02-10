@@ -969,7 +969,7 @@ class ExternalModules
 
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$config = @self::$configs[$moduleDirectoryName];
-		if($config == null){
+		if($config === null){
 			$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
 			$config = json_decode(file_get_contents($configFilePath), true);
 

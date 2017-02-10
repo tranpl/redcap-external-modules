@@ -10,7 +10,7 @@ class ExternalModulesTest extends BaseTest
 	{
 		$defaultValue = rand();
 
-		$m = $this->getInstance([
+		$this->setConfig([
 			'global-settings' => [
 				[
 					'key' => TEST_SETTING_KEY,
@@ -18,6 +18,8 @@ class ExternalModulesTest extends BaseTest
 				]
 			]
 		]);
+
+		$m = $this->getInstance();
 
 		$this->assertNull($this->getGlobalSetting());
 		ExternalModules::initializeSettingDefaults($m);
@@ -232,31 +234,23 @@ class ExternalModulesTest extends BaseTest
 
 	function testGetLinks()
 	{
-		$m = $this->getInstance();
-
-		$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
-		$configsProperty = $externalModulesClass->getProperty("configs");
-		$configsProperty->setAccessible(true);
-
 		$controlCenterLinkName = "Test Control Center Link Name";
 		$controlCenterLinkUrl = "some/control/center/url";
 		$projectLinkName = "Test Project Link Name";
 		$projectLinkUrl = "some/project/url";
 
-		$configsProperty->setValue([
-			$m->getModuleDirectoryName() => [
-				'links' => [
-					'control-center' => [
-						[
-							'name'=>$controlCenterLinkName,
-							'url'=>$controlCenterLinkUrl
-						]
-					],
-					'project' => [
-						[
-							'name'=>$projectLinkName,
-							'url'=>$projectLinkUrl
-						]
+		$this->setConfig([
+			'links' => [
+				'control-center' => [
+					[
+						'name'=>$controlCenterLinkName,
+						'url'=>$controlCenterLinkUrl
+					]
+				],
+				'project' => [
+					[
+						'name'=>$projectLinkName,
+						'url'=>$projectLinkUrl
 					]
 				]
 			]
@@ -266,9 +260,11 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($links[$controlCenterLinkName]);
 		$this->assertNull($links[$projectLinkName]);
 
+		$m = $this->getInstance();
 		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
 
-		$assertUrl = function($pageExpected, $actual) use ($externalModulesClass){
+		$assertUrl = function($pageExpected, $actual){
+			$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
 			$method = $externalModulesClass->getMethod('getUrl');
 			$method->setAccessible(true);
 			$expected = $method->invoke(null, TEST_MODULE_PREFIX, $pageExpected);

@@ -30,6 +30,8 @@ abstract class BaseTest extends TestCase
 
 	private function cleanupSettings()
 	{
+		$this->setConfig([]);
+
 		$this->removeGlobalSetting();
 		$this->removeProjectSetting();
 
@@ -71,9 +73,21 @@ abstract class BaseTest extends TestCase
 		self::getInstance()->removeProjectSetting(TEST_SETTING_KEY, TEST_SETTING_PID);
 	}
 
-	protected function getInstance($config = [])
+	protected function getInstance()
 	{
-		return new BaseTestExternalModule($config);
+		return new BaseTestExternalModule();
+	}
+
+	protected function setConfig($config)
+	{
+		$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
+		$configsProperty = $externalModulesClass->getProperty("configs");
+		$configsProperty->setAccessible(true);
+
+		$configs = $configsProperty->getValue();
+		$moduleDirectoryName = ExternalModules::getModuleDirectoryName(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
+		$configs[$moduleDirectoryName] = $config;
+		$configsProperty->setValue($configs);
 	}
 
 	protected function assertThrowsException($callable, $exceptionExcerpt){
@@ -98,20 +112,12 @@ abstract class BaseTest extends TestCase
 
 class BaseTestExternalModule extends AbstractExternalModule {
 
-	private $CONFIG;
-
-	function __construct($config)
+	function __construct()
 	{
-		$this->CONFIG = $config;
-		parent::__construct();
-
 		$this->PREFIX = TEST_MODULE_PREFIX;
 		$this->VERSION = TEST_MODULE_VERSION;
-	}
 
-	function getConfig()
-	{
-		return $this->CONFIG;
+		parent::__construct();
 	}
 
 	function __call($name, $arguments)
