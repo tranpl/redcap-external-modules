@@ -71,10 +71,12 @@ class ExternalModules
 
 	private static function isLocalhost()
 	{
-		if (isset($_SERVER['HTTP_HOST'])) {
-			return $_SERVER['HTTP_HOST'] == 'localhost';
-		}
-		return false;
+		$host = @$_SERVER['HTTP_HOST'];
+
+		// If the hostname is an IP address, assume we're accessing a developer's PC and return true.
+		$isIpAddress = ip2long($host);
+
+		return $host == 'localhost' || $isIpAddress;
 	}
 
         static function getIconURL($icon) {

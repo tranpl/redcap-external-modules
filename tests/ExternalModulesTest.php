@@ -179,6 +179,19 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($prefixes[TEST_MODULE_PREFIX]);
 	}
 
+	function testIsLocalhost()
+	{
+		$assertLocalhost = function($expected, $host){
+			$_SERVER['HTTP_HOST'] = $host;
+			$this->assertEquals($expected, $this->callPrivateMethod('isLocalhost'));
+		};
+
+		$assertLocalhost(true, 'localhost');
+		$assertLocalhost(true, '1.2.3.4');
+		$assertLocalhost(false, 'redcap.vanderbilt.edu');
+		$assertLocalhost(false, 'redcap.somewhere-else.edu');
+	}
+
 	function testGetFileSettings() {
 		$m = self::getInstance();					
 
