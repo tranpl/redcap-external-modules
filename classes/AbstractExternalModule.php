@@ -12,11 +12,9 @@ class AbstractExternalModule
 	public $PREFIX;
 	public $VERSION;
 
-	protected $CONFIG;
-
 	function __construct()
 	{
-		list($prefix, $version) = ExternalModules::getParseModuleDirectoryPrefixAndVersion(self::getModuleDirectoryName());
+		list($prefix, $version) = ExternalModules::getParseModuleDirectoryPrefixAndVersion($this->getModuleDirectoryName());
 
 		$this->PREFIX = $prefix;
 		$this->VERSION = $version;
@@ -124,24 +122,12 @@ class AbstractExternalModule
 
 	function hasPermission($permissionName)
 	{
-		return in_array($permissionName, $this->getConfig()['permissions']);
+		return ExternalModules::hasPermission($this->PREFIX, $this->VERSION, $permissionName);
 	}
 
 	function getConfig()
 	{
-		if(!isset($this->CONFIG)){
-			$config = ExternalModules::getConfig($this->PREFIX, $this->VERSION);
-
-			foreach(array('system-settings', 'project-settings') as $type){
-				if(!isset($config[$type])){
-					$config[$type] = array();
-				}
-			}
-
-			$this->CONFIG = $config;
-		}
-
-		return $this->CONFIG;
+		return ExternalModules::getConfig($this->PREFIX, $this->VERSION);
 	}
 
 	function getModuleDirectoryName()

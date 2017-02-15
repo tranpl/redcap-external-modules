@@ -14,6 +14,18 @@ abstract class BaseTest extends TestCase
 {
 	protected $backupSystems = FALSE;
 
+	private $testModuleInstance;
+
+	public static function setUpBeforeClass(){
+		// These were added simply to avoid warnings from REDCap code.
+		$_SERVER['REMOTE_ADDR'] = 'unit testing';
+		if(!defined('PAGE')){
+			define('PAGE', 'unit testing');
+		}
+
+		ExternalModules::initialize();
+	}
+
 	protected function setUp(){
 		self::cleanupSettings();
 	}
@@ -25,6 +37,9 @@ abstract class BaseTest extends TestCase
 
 	private function cleanupSettings()
 	{
+		$this->setConfig([]);
+		$this->getInstance()->testHookArguments = null;
+
 		$this->removeSystemSetting();
 		$this->removeProjectSetting();
 
@@ -32,6 +47,8 @@ abstract class BaseTest extends TestCase
 		$m->removeSystemSetting(ExternalModules::KEY_VERSION, TEST_SETTING_PID);
 		$m->removeSystemSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+
+		unset($_GET['pid']);
 	}
 
 	protected function setSystemSetting($value)
@@ -64,9 +81,31 @@ abstract class BaseTest extends TestCase
 		self::getInstance()->removeProjectSetting(TEST_SETTING_KEY, TEST_SETTING_PID);
 	}
 
-	protected function getInstance($config = [])
+	protected function getInstance()
 	{
-		return new BaseTestExternalModule($config);
+		if($this->testModuleInstance == null){
+			$instance = new BaseTestExternalModule();
+			$moduleDirectoryName = ExternalModules::getModuleDirectoryName(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
+			$this->setExternalModulesProperty('instanceCache', [$moduleDirectoryName => $instance]);
+
+			$this->testModuleInstance = $instance;
+		}
+
+		return $this->testModuleInstance;
+	}
+
+	protected function setConfig($config)
+	{
+		$moduleDirectoryName = ExternalModules::getModuleDirectoryName(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
+		$this->setExternalModulesProperty('configs', [$moduleDirectoryName => $config]);
+	}
+
+	private function setExternalModulesProperty($name, $value)
+	{
+		$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
+		$configsProperty = $externalModulesClass->getProperty($name);
+		$configsProperty->setAccessible(true);
+		$configsProperty->setValue($value);
 	}
 
 	protected function assertThrowsException($callable, $exceptionExcerpt){
@@ -90,13 +129,20 @@ abstract class BaseTest extends TestCase
 }
 
 class BaseTestExternalModule extends AbstractExternalModule {
-	function __construct($config)
-	{
-		$this->CONFIG = $config;
-		parent::__construct();
 
+	public $testHookArguments;
+
+	function __construct()
+	{
 		$this->PREFIX = TEST_MODULE_PREFIX;
 		$this->VERSION = TEST_MODULE_VERSION;
+
+		parent::__construct();
+	}
+
+	function getModuleDirectoryName()
+	{
+		return ExternalModules::getModuleDirectoryName($this->PREFIX, $this->VERSION);
 	}
 
 	function __call($name, $arguments)
@@ -107,5 +153,10 @@ class BaseTestExternalModule extends AbstractExternalModule {
 		$method->setAccessible(true);
 
 		return $method->invokeArgs ($this, $arguments);
+	}
+
+	function hook_test()
+	{
+		$this->testHookArguments = func_get_args();
 	}
 }

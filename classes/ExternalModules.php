@@ -51,7 +51,8 @@ class ExternalModules
 	private static $systemwideEnabledVersions;
 	private static $projectEnabledDefaults;
 	private static $projectEnabledOverrides;
-	private static $enabledInstancesByPID = array();
+
+	private static $configs = array();
 
 	private static $RESERVED_SETTINGS = array(
 		array(
@@ -71,12 +72,7 @@ class ExternalModules
 
 	private static function isLocalhost()
 	{
-		$host = @$_SERVER['HTTP_HOST'];
-
-		// If the hostname is an IP address, assume we're accessing a developer's PC and return true.
-		$isIpAddress = ip2long($host);
-
-		return $host == 'localhost' || $isIpAddress;
+		return @$_SERVER['HTTP_HOST'] == 'localhost';
 	}
 
         static function getIconURL($icon) {
@@ -170,21 +166,6 @@ class ExternalModules
 	static function getProjectFooterPath()
 	{
 		return APP_PATH_DOCROOT . 'ProjectGeneral/footer.php';
-	}
-
-	static function getEnabledModules()
-	{
-		$result = self::getSystemSettings(null, array(self::KEY_VERSION));
-
-		$modules = array();
-		while($row = db_fetch_assoc($result)){
-			$prefix = $row['directory_prefix'];
-			if(!self::shouldExcludeModule($prefix)){
-				$modules[$prefix] = self::transformValueFromDB($row['value']);$row['value'];
-			}
-		}
-
-		return $modules;
 	}
 
 	static function disable($moduleDirectoryPrefix)
@@ -641,23 +622,25 @@ class ExternalModules
 			}
 		}
 
-		$modules = self::getEnabledModuleInstances($pid);
-		foreach($modules as $instance){
+		$versionsByPrefix = self::getEnabledModules($pid);
+		foreach($versionsByPrefix as $prefix=>$version){
 			$methodName = "hook_$name";
 
-			if(method_exists($instance, $methodName)){
-				if(!$instance->hasPermission($methodName)){
-					throw new Exception("The \"" . $instance->PREFIX . "\" external module must request permission in order to define the following hook: $methodName()");
-				}
+			if(!self::hasPermission($prefix, $version, $methodName)){
+				// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+				continue;
+			}
 
-				self::setActiveModulePrefix($instance->PREFIX);
+			$instance = self::getModuleInstance($prefix, $version);
+			if(method_exists($instance, $methodName)){
+				self::setActiveModulePrefix($prefix);
 				try{
 					call_user_func_array(array($instance,$methodName), $arguments);
 				}
 				catch(Exception $e){
-					$message = "The '" . $instance->PREFIX . "' module threw the following exception when calling the hook method '$methodName':\n\n" . $e;
+					$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '$methodName':\n\n" . $e;
 					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $instance->PREFIX", $message);
+					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
 				}
 				self::setActiveModulePrefix(null);
 			}
@@ -727,30 +710,14 @@ class ExternalModules
 	// Accepts a project id as the first parameter.
 	// If the project id is null, all systemwide enabled module instances are returned.
 	// Otherwise, only instances enabled for the current project id are returned.
-	private static function getEnabledModuleInstances($pid)
+	static function getEnabledModules($pid = null)
 	{
-		$instances = null;
-		if ($pid) {
-			$instances = @self::$enabledInstancesByPID[$pid];
+		if($pid == null){
+			return self::getGloballyEnabledVersions();
 		}
-		if(!isset($instances)){
-			if($pid == null){
-				// Cache systemwide enabled module instances.  Yes, the caching will still work even though the key ($pid) is null.
-				$prefixes = self::getSystemwideEnabledVersions();
-			}
-			else{
-				$prefixes = self::getEnabledModuleVersionsForProject($pid);
-			}
-
-			$instances = array();
-			foreach($prefixes as $prefix=>$version){
-				$instances[] = self::getModuleInstance($prefix, $version);
-			}
-
-			self::$enabledInstancesByPID[$pid] = $instances;
+		else{
+			return self::getEnabledModuleVersionsForProject($pid);
 		}
-
-		return $instances;
 	}
 
 	private static function getSystemwideEnabledVersions()
@@ -893,7 +860,6 @@ class ExternalModules
 		self::$systemwideEnabledVersions = $systemwideEnabledVersions;
 		self::$projectEnabledDefaults = $projectEnabledDefaults;
 		self::$projectEnabledOverrides = $projectEnabledOverrides;
-		self::$enabledInstancesByPID = array();
 	}
 
 	static function areTablesPresent()
@@ -928,48 +894,48 @@ class ExternalModules
 		}
 	}
 
-        static function getLinks(){
-                $pid = self::getPID();
+	static function getLinks(){
+		$pid = self::getPID();
 
-                if(isset($pid)){
-                        $type = 'project';
-                }
-                else{
-                        $type = 'control-center';
-                }
+		if(isset($pid)){
+			$type = 'project';
+		}
+		else{
+			$type = 'control-center';
+		}
 
-                $links = array();
+		$links = array();
 
-                $modules = self::getEnabledModuleInstances($pid);
-                foreach($modules as $instance){
-                        $config = $instance->getConfig();
+		$versionsByPrefix = self::getEnabledModules($pid);
+		foreach($versionsByPrefix as $prefix=>$version){
+			$config = ExternalModules::getConfig($prefix, $version);
 
-                        foreach($config['links'][$type] as $link){
-                                $name = $link['name'];
-                                $link['url'] = self::getUrl($instance->PREFIX, $link['url']);
-                                $links[$name] = $link;
-                        }
-                }
+			foreach($config['links'][$type] as $link){
+				$name = $link['name'];
+				$link['url'] = self::getUrl($prefix, $link['url']);
+				$links[$name] = $link;
+			}
+		}
 
-                $addManageLink = function($url) use (&$links){
-                        $links['Manage External Modules'] = array(
-                                'icon' => 'puzzle_small',
-                                'url' => ExternalModules::$BASE_URL  . $url
-                        );
-                };
+		$addManageLink = function($url) use (&$links){
+			$links['Manage External Modules'] = array(
+				'icon' => 'brick',
+				'url' => ExternalModules::$BASE_URL  . $url
+			);
+		};
 
-                if(isset($pid)){
-                        if(SUPER_USER || !empty($modules) && self::hasDesignRights()){
-                                $addManageLink('manager/project.php?');
-                        }
-                }
-                else{
-                        $addManageLink('manager/control_center.php');
-                }
+		if(isset($pid)){
+			if(SUPER_USER || !empty($modules) && self::hasDesignRights()){
+				$addManageLink('manager/project.php?');
+			}
+		}
+		else{
+			$addManageLink('manager/control_center.php');
+		}
 
-                ksort($links);
+		ksort($links);
 
-                return $links;
+		return $links;
 	}
 
 	private static function getPID()
@@ -1030,17 +996,16 @@ class ExternalModules
 		}
 
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
-		$config = json_decode(file_get_contents($configFilePath), true);
-                if (isset($config['global-settings'])) {
-                        if (!isset($config['system-settings'])) {
-                                $config['system-settings'] = $config['global-settings'];
-                        }
-                        unset($config['global-settings']);
-                }
+		$config = @self::$configs[$moduleDirectoryName];
+		if($config === null){
+			$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
+			$config = json_decode(file_get_contents($configFilePath), true);
 
-		if($config == NULL){
-			throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath ".json_encode(self::getSystemwideEnabledVersions()));
+			if($config == null){
+				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
+			}
+
+			$configs[$moduleDirectoryName] = $config;
 		}
 
 		foreach(['system-settings', 'project-settings'] as $key){
@@ -1086,7 +1051,9 @@ class ExternalModules
 			}
 		}
 
-		return self::addReservedSettings($config);
+		$config = self::addReservedSettings($config);
+
+		return $config;
 	}
 
 	public static function getEnabledVersion($prefix)
@@ -1149,6 +1116,11 @@ class ExternalModules
 		return false;
 	}
 
+	public static function hasPermission($prefix, $version, $permissionName)
+	{
+		return in_array($permissionName, self::getConfig($prefix, $version)['permissions']);
+	}
+
 	static function isSystemSetting($moduleDirectoryPrefix, $key)
 	{
 		$version = self::getSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
@@ -1180,7 +1152,7 @@ class ExternalModules
 
 	static function hasSystemSettingsSavePermission()
 	{
-		return SUPER_USER;
+		return self::isTesting() || SUPER_USER;
 	}
 
 	# Taken from: http://stackoverflow.com/questions/3338123/how-do-i-recursively-delete-a-directory-and-its-entire-contents-files-sub-dir
