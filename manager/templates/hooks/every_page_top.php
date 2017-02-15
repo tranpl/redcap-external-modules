@@ -48,17 +48,17 @@ $links = ExternalModules::getLinks();
 			foreach($links as $name=>$link){
 				?>
 				newLink = exampleLink.clone()
-			<?php
-				$url = $link['url']."&pid=".$project_id;
-				if (preg_match("/\?$/", $link['url'])) {
-					$url = $link['url']."pid=".$project_id;
-				}
-			?>
-				newLink.find('img').attr('src', "<?= ExternalModules::getIconURL($link['icon']) ?>");
-				newLink.find('a').attr('href', '<?= $url ?>')
-				newLink.find('a').html('<?= $name ?>')
+				newLink.find('img').attr('src', '<?php
+                                if (file_exists(ExternalModules::$BASE_PATH . '/images/' . $link['icon'] . '.png')) {
+                                        echo ExternalModules::$BASE_URL . '/images/' . $link['icon'] . ".png";
+                                } else {
+                                        echo APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] . ".png";
+                                }
+                                	?>')
+				newLink.find('a').attr('href', '<?= $link['url'] ?>&pid=<?= $project_id ?>')
+				newLink.find('a').html('<?= $name ?>');
 				menubox.append(newLink)
-			<?php
+				<?php
 			}
 			?>
 

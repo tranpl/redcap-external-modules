@@ -65,8 +65,6 @@ class ExternalModules
 			'project-name' => 'Enable on this project',
 			'type' => 'checkbox',
 			'allow-project-overrides' => true,
-			'hidden' => false,
-                        'default' => 'false',
 		)
 	);
 
@@ -74,17 +72,6 @@ class ExternalModules
 	{
 		return @$_SERVER['HTTP_HOST'] == 'localhost';
 	}
-
-        static function getIconURL($icon) {
-                $sfx = ".png";
-                if (file_exists(self::$BASE_PATH. '/images/' . $icon . $sfx)) {
-                        return self::$BASE_URL . '/images/' . $icon . $sfx;
-                } else if (file_exists(APP_PATH_DOCROOT . "/Resources/images/" . $icon . $sfx))  {
-                        return APP_PATH_IMAGES . $icon . $sfx;
-                } else {
-                        return $icon . $sfx;
-                }
-        }
 
 	static function initialize()
 	{
@@ -126,7 +113,23 @@ class ExternalModules
 						A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
 						Disabling that module...
 					</h4>
-					<script src='js/ExternalModules.js'>
+					<script>
+						var request = new XMLHttpRequest();
+						request.onreadystatechange = function() {
+							if (request.readyState == XMLHttpRequest.DONE ) {
+								var messageElement = document.getElementById('external-modules-message')
+								if(request.responseText == 'success'){
+									messageElement.innerHTML = 'The "<?=$activeModulePrefix?>" external module was automatically disabled in order to allow REDCap to function properly.  The REDCap administrator has been notified.  Please save a copy of the above error and fix it before re-enabling the module.';
+								}
+								else{
+									messageElement.innerHTML += '<br>An error occurred while disabling the "<?=$activeModulePrefix?>" module: ' + request.responseText;
+								}
+							}
+						};
+
+						request.open("POST", "<?=self::$BASE_URL?>/manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
+						request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+						request.send("module=<?=$activeModulePrefix?>");
 					</script>
 					<?php
 				}
@@ -136,12 +139,12 @@ class ExternalModules
 
 	private static function setActiveModulePrefix($prefix)
 	{
-		 self::$activeModulePrefix = $prefix;
+		self::$activeModulePrefix = $prefix;
 	}
 
 	private static function getActiveModulePrefix()
 	{
-		 return self::$activeModulePrefix;
+		return self::$activeModulePrefix;
 	}
 
 	private static function sendAdminEmail($subject, $message)
@@ -219,14 +222,16 @@ class ExternalModules
 
 	static function setProjectSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
-		return self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
+		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value);
 	}
 
+	# value is edoc ID
 	static function setSystemFileSetting($moduleDirectoryPrefix, $key, $value)
 	{
 		self::setFileSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key, $value);
 	}
 
+	# value is edoc ID
 	static function setFileSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
 		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value, "file");
@@ -301,12 +306,8 @@ class ExternalModules
 		if (gettype($oldValue) == "boolean") {
 			$oldValue = ($oldValue) ? 'true' : 'false';
 		}
-		# if value is "", it is valid, so proceed on to if #2; if both null, then do nothing
-		if(((string) $value === (string) $oldValue) && ($value !== "")){
+		if((string) $value === (string) $oldValue){
 			// We don't need to do anything.
-			return;
-		} else if (($value === "") && ($value === $oldValue)) {
-			// both empty strings ==> do nothing
 			return;
 		} else if($value === null){
 			$event = "DELETE";
@@ -372,9 +373,9 @@ class ExternalModules
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
-		while($row = db_fetch_assoc($result)){
+		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 			$key = $row['key'];
-			$value = self::transformValueFromDB($row['value']);
+			$value = $row['value'];
 
 			$setting =& $settings[$key];
 			if(!isset($setting)){
@@ -391,8 +392,8 @@ class ExternalModules
 			}
 			else{
 				$setting['value'] = $value;
-		        }
-                }
+			}
+		}
 
 		return $settings;
 	}
@@ -413,12 +414,11 @@ class ExternalModules
 			$whereClauses[] = self::getSQLInClause('s.key', $keys);
 		}
 
-		$sql = "SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value
+		return self::query("SELECT directory_prefix, s.project_id, s.project_id, s.key, s.value, s.type
 							FROM redcap_external_modules m
 							JOIN redcap_external_module_settings s
 								ON m.external_module_id = s.external_module_id
-							WHERE " . implode(' AND ', $whereClauses);
-                return self::query($sql);
+							WHERE " . implode(' AND ', $whereClauses));
 	}
 
 	static function validateSettingsRow($row)
@@ -461,15 +461,16 @@ class ExternalModules
 		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
-		if($numRows == 1){
-			$row = db_fetch_assoc($result);
-			return self::transformValueFromDB($row['value']);
+		if($numRows == 1) {
+			$row = self::validateSettingsRow(db_fetch_assoc($result));
+
+			return $row['value'];
 		}
 		else if($numRows == 0){
 			return null;
 		}
 		else{
-			throw new Exception("More than one External Module setting exists for prefix $moduleDirectoryPrefix, project $projectId, and key '$key'!  This should never happen!");
+			throw new Exception("More than one External Module setting exists for project $projectId and key '$key'!  This should never happen!");
 		}
 	}
 
@@ -559,12 +560,12 @@ class ExternalModules
 		$valueListSql = "";
 		$nullSql = "";
 
-                foreach($array as $item){
-                        if(!empty($valueListSql)){
-				        $valueListSql .= ', ';
-                        }
-        
-                        $item = db_real_escape_string($item);
+		foreach($array as $item){
+		if(!empty($valueListSql)){
+			$valueListSql .= ', ';
+		}
+
+		$item = db_real_escape_string($item);
 
 			if($item == 'NULL'){
 				$nullSql = "$columnName IS NULL";
@@ -584,8 +585,8 @@ class ExternalModules
 			$parts[] = $nullSql;
 		}
 
-                return "(" . implode(" OR ", $parts) . ")";
-        }
+		return "(" . implode(" OR ", $parts) . ")";
+    }
 
 	static function callHook($name, $arguments)
 	{
@@ -593,7 +594,7 @@ class ExternalModules
 			return;
 		}
 
-		if(!defined('PAGE')){
+		if(!defined(PAGE)){
 			$page = ltrim($_SERVER['REQUEST_URI'], '/');
 			define('PAGE', $page);
 		}
@@ -664,10 +665,7 @@ class ExternalModules
 		self::setActiveModulePrefix($prefix);
 
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$instance = null;
-		if (isset(self::$instanceCache[$moduleDirectoryName])) {
-			$instance = @self::$instanceCache[$moduleDirectoryName];
-		}
+		$instance = @self::$instanceCache[$moduleDirectoryName];
 		if(!isset($instance)){
 			$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
 			$className = self::getMainClassName($prefix);
@@ -713,7 +711,7 @@ class ExternalModules
 	static function getEnabledModules($pid = null)
 	{
 		if($pid == null){
-			return self::getGloballyEnabledVersions();
+			return self::getSystemwideEnabledVersions();
 		}
 		else{
 			return self::getEnabledModuleVersionsForProject($pid);
@@ -749,14 +747,13 @@ class ExternalModules
 
 	private static function getEnabledModuleVersionsForProject($pid)
 	{
-                // look for UNIT-TESTING-PREFIX here
 		$projectEnabledOverrides = self::getProjectEnabledOverrides();
 
 		$enabledPrefixes = self::getProjectEnabledDefaults();
 		$overrides = @$projectEnabledOverrides[$pid];
 		if(isset($overrides)){
 			foreach($overrides as $prefix => $value){
-				if($value == 1){
+				if($value){
 					$enabledPrefixes[$prefix] = true;
 				}
 				else{
@@ -764,9 +761,6 @@ class ExternalModules
 				}
 			}
 		}
-                if ($b) {
-                        throw new Exception("overrrides: ".json_encode($overrides)." enabledPrefixes: ".json_encode($enabledPrefixes));
-                }
 
 		$systemwideEnabledVersions = self::getSystemwideEnabledVersions();
 
@@ -800,26 +794,6 @@ class ExternalModules
 		return PHP_SAPI == 'cli' && strpos($_SERVER['argv'][0], 'phpunit') !== FALSE;
 	}
 
-        private static function transformValueToDB($value) {
-                if ($value === false) {
-                        return "|false";
-                } else if ($value === true) {
-                        return "|true";
-                } else {
-                        return $value;
-                }
-        }
-
-        private static function transformValueFromDB($value) {
-                if ($value == "|false") {
-                        return false;
-                } else if ($value == "|true") {
-                        return true;
-                } else {
-                        return $value;
-                }
-        }
-
 	private static function cacheAllEnableData()
 	{
 		$systemwideEnabledVersions = array();
@@ -829,11 +803,11 @@ class ExternalModules
 		// Only attempt to detect enabled modules if the external module tables exist.
 		if(self::areTablesPresent()){
 			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
-			while($row = db_fetch_assoc($result)){
+			while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 				$pid = $row['project_id'];
 				$prefix = $row['directory_prefix'];
 				$key = $row['key'];
-				$value = self::transformValueFromDB($row['value']);
+				$value = $row['value'];
 
 				if(self::shouldExcludeModule($prefix)){
 					continue;
@@ -846,7 +820,7 @@ class ExternalModules
 					if(isset($pid)){
 						$projectEnabledOverrides[$pid][$prefix] = $value;
 					}
-					else if($value == 1) {
+					else if($value) {
 						$projectEnabledDefaults[$prefix] = true;
 					}
 				}
@@ -919,7 +893,7 @@ class ExternalModules
 
 		$addManageLink = function($url) use (&$links){
 			$links['Manage External Modules'] = array(
-				'icon' => 'brick',
+				'icon' => 'puzzle_small',
 				'url' => ExternalModules::$BASE_URL  . $url
 			);
 		};
@@ -1005,10 +979,15 @@ class ExternalModules
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 			}
 
+			# backwards compatibility
+			if (!isset($config['system-settings']) && isset($config['global-settings'])) {
+				$config['system-settings'] = $config['global-settings'];
+			}
+
 			$configs[$moduleDirectoryName] = $config;
 		}
 
-		foreach(['system-settings', 'project-settings'] as $key){
+		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
 			if(!isset($config[$key])){
 				$config[$key] = array();
 			}
@@ -1076,17 +1055,17 @@ class ExternalModules
 			$existingSettingKeys[$details['key']] = true;
 		}
 
-                $visibleReservedSettings = array();
-                foreach(self::$RESERVED_SETTINGS as $details){
-                        $key = $details['key'];
-                        if(isset($existingSettingKeys[$key])){
-                                throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
-                        }
+		$visibleReservedSettings = array();
+		foreach(self::$RESERVED_SETTINGS as $details){
+			$key = $details['key'];
+			if(isset($existingSettingKeys[$key])){
+				throw new Exception("The '$key' setting key is reserved for internal use.  Please use a different setting key in your module.");
+			}
 
-                        if(@$details['hidden'] != true){
-                                $visibleReservedSettings[] = $details;
-                        }
-                }
+			if(@$details['hidden'] != true){
+				$visibleReservedSettings[] = $details;
+			}
+		}
 
 		// Merge arrays so that reserved settings always end up at the top of the list.
 		$config['system-settings'] = array_merge($visibleReservedSettings, $systemSettings);
@@ -1172,10 +1151,54 @@ class ExternalModules
 		}
 	}
 
-	static function getManagerJSDirectory()
-	{
-		return "js/";
-		# just in case absolute path is needed, I have documented it here
-		// return APP_PATH_WEBROOT_PARENT."/external_modules/manager/js/";
+	# there is no getInstance because settings returns an array of repeated elements
+	# getInstance would merely consist of dereferencing the array; Ockham's razor
+
+	# sets the instance to a JSON string into the database
+	# $instance is 0-based index for array
+	# if the old value is a number/string, etc., this function will transform it into a JSON
+	# fills is with null values for non-expressed positions in the JSON before instance
+	# JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
+	# the form of other JSON-encoded strings.
+	static function setInstance($prefix, $projectId, $key, $instance, $value) {
+		if (is_int($instance)) {
+			$oldValue = self::getSetting($prefix, $projectId, $key);
+			$json = array();
+			if (gettype($oldValue) != "array") {
+				if ($oldValue !== null) {
+					$json[] = $oldValue;
+				}
+			}
+
+			# fill in with prior values
+			for ($i=count($json); $i < $instance; $i++) {
+				if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
+					$json[$i] = $oldValue[$i];
+				} else {
+					# pad with null for prior values when $n is ahead; should never be used
+					$json[$i] = null;
+				}
+			}
+
+			# do not set null values for current instance; always set to empty string 
+			if ($value !== null) {
+				$json[$instance] = $value;
+			} else {
+				$json[$instance] = "";
+			}
+
+			#single-element JSONs are simply data values
+			if (count($json) == 1) {
+				self::setSetting($prefix, $projectId, $key, $json[0]);
+			} else {
+				self::setSetting($prefix, $projectId, $key, $json);
+			}
+		}
 	}
+
+	static function getManagerJSDirectory() {
+                return "js/";
+                # just in case absolute path is needed, I have documented it here
+                // return APP_PATH_WEBROOT_PARENT."/external_modules/manager/js/";
+        }
 }

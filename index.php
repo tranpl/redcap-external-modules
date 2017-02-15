@@ -13,7 +13,7 @@ if(empty($prefix)){
 
 $version = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_VERSION);
 if(empty($version)){
-	die("The requested module is currently disabled system-wide.");
+	die("The requested module is currently disabled systemwide.");
 }
 
 if($pid != null){

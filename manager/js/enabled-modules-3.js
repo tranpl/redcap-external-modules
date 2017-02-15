@@ -223,7 +223,7 @@
 			var columns = getSettingColumns(setting, inputAttributes, instance);
 
 			if(system){
-				columns += "<td><div style='min-height: 50px;'><button "+overrideButtonAttributes+" class='external-modules-use-system-setting'>Use System Setting</button></div></td>";
+				columns += "<td style='width: 50px'><div style='min-height: 50px;'><button "+overrideButtonAttributes+" class='external-modules-use-system-setting'>Use<br>System<br>Setting</button></div></td>";
 			}
 			else{
 				columns += '<td></td>';

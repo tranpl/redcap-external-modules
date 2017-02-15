@@ -35,7 +35,7 @@ $(function(){
 
 				$.post('ajax/enable-module.php', {prefix: prefix, version: version}, function (data) {
 					if (data == 'success') {
-						reloadPage();
+						reloadThisPage();
 						disabledModal.modal('hide');
 					}
 					else {

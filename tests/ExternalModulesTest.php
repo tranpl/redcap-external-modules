@@ -31,7 +31,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNotEquals($defaultValue, $this->getSystemSetting());
 	}
 
-	function testgetProjectSettingsAsArray_systemOnly()
+	function testGetProjectSettingsAsArray_systemOnly()
 	{
 		$value = rand();
 		$this->setSystemSetting($value);
@@ -40,16 +40,16 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($value, $array[TEST_SETTING_KEY]['system_value']);
 	}
 
-	function testgetProjectSettingsAsArray_projectOnly()
+	function testGetProjectSettingsAsArray_projectOnly()
 	{
 		$value = rand();
 		$this->setProjectSetting($value);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertEquals($value, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals(null, $array[TEST_SETTING_KEY]['system_value']);
+		$this->assertEquals(null, @$array[TEST_SETTING_KEY]['system_value']);
 	}
 
-	function testgetProjectSettingsAsArray_both()
+	function testGetProjectSettingsAsArray_both()
 	{
 		$systemValue = rand();
 		$projectValue = rand();
@@ -126,7 +126,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull(@$versionsByPrefix[TEST_MODULE_PREFIX]);
 
 		$m = $this->getInstance();
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
 
 		$this->cacheAllEnableData();
 		$versionsByPrefix = ExternalModules::getEnabledModules();
@@ -182,6 +182,7 @@ class ExternalModulesTest extends BaseTest
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
 
+
 		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true, TEST_SETTING_PID);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
@@ -190,7 +191,7 @@ class ExternalModulesTest extends BaseTest
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNull(@$prefixes[TEST_MODULE_PREFIX]);
 
-		$rv = $m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
+		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNotNull($prefixes[TEST_MODULE_PREFIX]);
 
@@ -205,19 +206,6 @@ class ExternalModulesTest extends BaseTest
 		$m->setProjectSetting(ExternalModules::KEY_ENABLED, false, TEST_SETTING_PID);
 		$prefixes = self::getEnabledModuleVersionsForProjectIgnoreCache();
 		$this->assertNull(@$prefixes[TEST_MODULE_PREFIX]);
-	}
-
-	function testIsLocalhost()
-	{
-		$assertLocalhost = function($expected, $host){
-			$_SERVER['HTTP_HOST'] = $host;
-			$this->assertEquals($expected, $this->callPrivateMethod('isLocalhost'));
-		};
-
-		$assertLocalhost(true, 'localhost');
-		$assertLocalhost(true, '1.2.3.4');
-		$assertLocalhost(false, 'redcap.vanderbilt.edu');
-		$assertLocalhost(false, 'redcap.somewhere-else.edu');
 	}
 
 	function testGetFileSettings() {
@@ -240,8 +228,8 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::removeSystemFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 
-		$this->assertNull($array[FILE_SETTING_KEY]['value']);
-		$this->assertNull($array[FILE_SETTING_KEY]['system_value']);
+		$this->assertNull(@$array[FILE_SETTING_KEY]['value']);
+		$this->assertNull(@$array[FILE_SETTING_KEY]['system_value']);
 	}
 
 	function testGetLinks()
@@ -273,7 +261,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertNull($links[$projectLinkName]);
 
 		$m = $this->getInstance();
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
 
 		$assertUrl = function($pageExpected, $actual){
 			$externalModulesClass = new \ReflectionClass("ExternalModules\\ExternalModules");
@@ -308,18 +296,18 @@ class ExternalModulesTest extends BaseTest
 		$this->setConfig(['permissions' => ['hook_test']]);
 		$this->assertTestHookCalled(false);
 
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
 		$this->assertTestHookCalled(true);
 
 		$this->assertTestHookCalled(false, $pid);
 
-		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, true);
 		$this->assertTestHookCalled(true, $pid);
 
 		$m->setProjectSetting(ExternalModules::KEY_ENABLED, false, $pid);
 		$this->assertTestHookCalled(false, $pid);
 
-		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, false);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, false);
 		$m->setProjectSetting(ExternalModules::KEY_ENABLED, true, $pid);
 		$this->assertTestHookCalled(true, $pid);
 
@@ -330,8 +318,8 @@ class ExternalModulesTest extends BaseTest
 	function testCallHook_arguments()
 	{
 		$m = $this->getInstance();
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
-		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, true);
 		$this->cacheAllEnableData();
 
 		$this->setConfig(['permissions' => ['hook_test']]);
@@ -346,8 +334,8 @@ class ExternalModulesTest extends BaseTest
 	function testCallHook_permissions()
 	{
 		$m = $this->getInstance();
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
-		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, true);
 
 		$this->setConfig(['permissions' => ['hook_test']]);
 		$this->assertTestHookCalled(true);
@@ -386,7 +374,6 @@ class ExternalModulesTest extends BaseTest
 	private function cacheAllEnableData()
 	{
 		self::callPrivateMethod('cacheAllEnableData');
->>>>>>> master
 	}
 
 	private function getEnabledModuleVersionsForProjectIgnoreCache()

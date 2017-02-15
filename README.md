@@ -35,7 +35,7 @@ Here are a few details on managing modules:
 * To enable a module on a specific project, go to the **Manage External Modules** link on the project homepage, click **Configure** next to the module name, check the **Enabled** checkbox, then click save.
 * To enable a module on ALL projects by default, go to the **Manage External Modules** link under **Control Center**, click **Configure** next to the module name, check the **Enable on all projects by default** checkbox, then click save.
 
-The only setting that actually does anything in the example module is the **Project Menu Background CSS** setting.  This will change the background color of the menu on project pages, and is a great demo of simple hook usage, and how a setting can be set system-wide and/or overridden per project.
+The only setting that actually does anything in the example module is the **Project Menu Background CSS** setting.  This will change the background color of the menu on project pages, and is a great demo of simple hook usage, and how a setting can be set systemwide and/or overridden per project.
 
 
 ## AbstractExternalModule
@@ -44,9 +44,9 @@ The **AbstractExternalModule** class must be extended when creating an external 
 
 Method  | Description
 ------- | -----------
-setSystemSetting($key,&nbsp;$value) | Set the setting specified by the key to the specified value system-wide (shared by all projects).
-getSystemSetting($key) | Get the value stored system-wide for the specified key.
-removeSystemSetting($key) | Remove the value stored system-wide for the specified key.
-setProjectSetting($key,&nbsp;$value&nbsp;[,&nbsp;$pid]) | Set the setting specified by the key to the specified value for this project (override the system setting).  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead.
-getProjectSetting($key&nbsp;[,&nbsp;$pid]) | Returns the value stored for the specified key for the current project if it exists.  If this setting key is not set (overriden) for the current project, the system value for this key is returned.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead.
+setSystemSetting($key,&nbsp;$value) | Set the setting specified by the key to the specified value systemwide (shared by all projects).
+getSystemSetting($key) | Get the value stored systemwide for the specified key.
+removeSystemSetting($key) | Remove the value stored systemwide for the specified key.
+setProjectSetting($key,&nbsp;$value&nbsp;[,&nbsp;$pid]) | Set the setting specified by the key to the specified value for this project (override the systemwide setting).  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead.
+getProjectSetting($key&nbsp;[,&nbsp;$pid]) | Returns the value stored for the specified key for the current project if it exists.  If this setting key is not set (overriden) for the current project, the systemwide value for this key is returned.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead.
 removeProjectSetting($key&nbsp;[,&nbsp;$pid]) | Remove the value stored for this project and the specified key.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead. 
