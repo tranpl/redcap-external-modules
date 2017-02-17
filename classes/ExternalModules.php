@@ -70,7 +70,12 @@ class ExternalModules
 
 	private static function isLocalhost()
 	{
-		return @$_SERVER['HTTP_HOST'] == 'localhost';
+		$host = @$_SERVER['HTTP_HOST'];
+
+		// If the hostname is an IP address, assume we're accessing a developer's PC and return true.
+		$isIpAddress = ip2long($host);
+
+		return $host == 'localhost' || $isIpAddress;
 	}
 
 	static function initialize()
@@ -200,9 +205,18 @@ class ExternalModules
 		}
 	}
 
+	static function getGlobalSetting($moduleDirectoryPrefix, $key)
+	{
+		return self::getSystemSetting($moduleDirectoryPrefix, $key);
+	}
 	static function getSystemSetting($moduleDirectoryPrefix, $key)
 	{
 		return self::getSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key);
+	}
+
+	static function getGlobalSettings($moduleDirectoryPrefixes, $keys = null)
+	{
+		return self::getSystemSettings($moduleDirectoryPrefixes, $keys);
 	}
 
 	static function getSystemSettings($moduleDirectoryPrefixes, $keys = null)
@@ -210,9 +224,19 @@ class ExternalModules
 		return self::getSettings($moduleDirectoryPrefixes, self::SYSTEM_SETTING_PROJECT_ID, $keys);
 	}
 
+	static function setGlobalSetting($moduleDirectoryPrefix, $key, $value)
+	{
+		self::setSystemSetting($moduleDirectoryPrefix, $key, $value);
+	}
+
 	static function setSystemSetting($moduleDirectoryPrefix, $key, $value)
 	{
 		self::setProjectSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key, $value);
+	}
+
+	static function removeGlobalSetting($moduleDirectoryPrefix, $key)
+	{
+		self::removeSystemSetting($moduleDirectoryPrefix, $key);
 	}
 
 	static function removeSystemSetting($moduleDirectoryPrefix, $key)
@@ -226,6 +250,12 @@ class ExternalModules
 	}
 
 	# value is edoc ID
+	static function setGlobalFileSetting($moduleDirectoryPrefix, $key, $value)
+	{
+		self::setSystemFileSetting($moduleDirectoryPrefix, $key, $value);
+	}
+
+	# value is edoc ID
 	static function setSystemFileSetting($moduleDirectoryPrefix, $key, $value)
 	{
 		self::setFileSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key, $value);
@@ -235,6 +265,11 @@ class ExternalModules
 	static function setFileSetting($moduleDirectoryPrefix, $projectId, $key, $value)
 	{
 		self::setSetting($moduleDirectoryPrefix, $projectId, $key, $value, "file");
+	}
+
+	static function removeGlobalFileSetting($moduleDirectoryPrefix, $key)
+	{
+		self::removeSystemFileSetting($moduleDirectoryPrefix, $key);
 	}
 
 	static function removeSystemFileSetting($moduleDirectoryPrefix, $key)
@@ -718,6 +753,11 @@ class ExternalModules
 		}
 	}
 
+	private static function getGloballyEnabledVersions()
+	{
+		return self::getSystemwideEnabledVersions();
+	}
+
 	private static function getSystemwideEnabledVersions()
 	{
 		if(!isset(self::$systemwideEnabledVersions)){
@@ -1127,6 +1167,11 @@ class ExternalModules
 
 		$rights = \REDCap::getUserRights();
 		return $rights[USERID]['design'] == 1;
+	}
+
+	static function hasGlobalSettingsSavePermission()
+	{
+		return self::hasSystemSettingsSavePermission();
 	}
 
 	static function hasSystemSettingsSavePermission()

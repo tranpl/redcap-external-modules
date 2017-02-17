@@ -49,11 +49,6 @@ require_once '../../classes/ExternalModules.php';
 		foreach ($enabledModules as $prefix => $version) {
 			$config = ExternalModules::getConfig($prefix, $version, $_GET['pid']);
 			$enabled = ExternalModules::getProjectSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
-			if ($enabled == "true") {
-				$enabled = true;
-			} else if ($enabled == "false"){
-				$enabled = false;
-			}
 			if (!$enabled) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>

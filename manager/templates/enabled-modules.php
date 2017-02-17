@@ -61,13 +61,18 @@ here. In turn, each project can override this set of defaults with their own val
 		var pid = <?=json_encode($$_GET['pid'])?>;
 	</script>
 <?php
-	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-1.js');
-} ?>
+} 
+	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-preface.js');
+?>
 
 <table id='external-modules-enabled' class="table">
 	<?php
 
-	$versionsByPrefix = ExternalModules::getEnabledModules();
+	if (isset($_GET['pid'])) {
+		$versionsByPrefix = ExternalModules::getEnabledModuleVersionsForProject($_GET['pid']);
+	} else {
+		$versionsByPrefix = ExternalModules::getEnabledModules();
+	}
 	$configsByPrefix = array();
 
 	if (empty($versionsByPrefix)) {
@@ -134,4 +139,4 @@ if($versionsByPrefixJSON == null){
 	}
 	var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 </script>
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-3.js'); ?>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules.js'); ?>

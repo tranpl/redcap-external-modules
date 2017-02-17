@@ -54,7 +54,6 @@ $(function(){
 			$.post('ajax/save-settings.php?pid=' + pid + '&moduleDirectoryPrefix=' + prefix, data, function(data){
 				if (data.status == 'success') {
 					reloadThisPage();
-					disabledModal.modal('hide');
 				}
 				else {
 					var message = 'An error occurred while enabling the module: ' + data;
@@ -62,6 +61,7 @@ $(function(){
 					alert(message);
 				}
 			});
+			return false;
 		}
 	});
 
