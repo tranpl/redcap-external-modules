@@ -1011,36 +1011,49 @@ class ExternalModules
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
 		if(!empty($pid)) {
 			foreach($config['project-settings'] as $configKey => $configRow) {
-				if($configRow['type'] == 'field-list') {
+				if ($configRow['type'] == 'field-list') {
 					$choices = [];
 
 					$sql = "SELECT field_name,element_label
 							FROM redcap_metadata
-							WHERE project_id = '".db_real_escape_string($pid)."'
+							WHERE project_id = '" . db_real_escape_string($pid) . "'
 							ORDER BY field_order";
 					$result = self::query($sql);
 
-					while($row = db_fetch_assoc($result)){
-						$choices[] = ['value' => $row['field_name'],'name' => $row['field_name'] . " - " . substr($row['element_label'],0,20)];
+					while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['field_name'], 'name' => $row['field_name'] . " - " . substr($row['element_label'], 0, 20)];
 					}
 
 					$config['project-settings'][$configKey]['choices'] = $choices;
-				}
-				else if($configRow['type'] == 'form-list') {
+				} else if ($configRow['type'] == 'form-list') {
 					$choices = [];
 
 
 					$sql = "SELECT DISTINCT form_name
 							FROM redcap_metadata
-							WHERE project_id = '".db_real_escape_string($pid)."'
+							WHERE project_id = '" . db_real_escape_string($pid) . "'
 							ORDER BY field_order";
 					$result = self::query($sql);
 
-					while($row = db_fetch_assoc($result)){
-						$choices[] = ['value' => $row['form_name'],'name' => $row['form_name']];
+					while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['form_name'], 'name' => $row['form_name']];
 					}
 
 					$config['project-settings'][$configKey]['choices'] = $choices;
+				}else if($configRow['type'] == 'sub_settings') {
+					foreach ($config['sub_settings'] as $configKey => $configRow) {
+						$choices = [];
+
+						$sql = "SELECT DISTINCT form_name
+							FROM redcap_metadata
+							WHERE project_id = '" . db_real_escape_string($pid) . "'
+							ORDER BY field_order";
+						$result = self::query($sql);
+
+						while ($row = db_fetch_assoc($result)) {
+							$choices[] = ['value' => $row['form_name'], 'name' => $row['form_name']];
+						}
+					}
 				}
 			}
 		}
