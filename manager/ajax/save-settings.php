@@ -33,26 +33,24 @@ function isExternalModuleFile($key, $fileKeys) {
 	return false;
 }
 
+$saved = array();
 # store everything BUT files and multiple instances (after the first one)
 foreach($_POST as $key=>$value){
 	# files are stored in a separate $.ajax call
 	# numeric value signifies a file present
 	# empty strings signify non-existent files (globalValues or empty)
-	if (!isExternalModuleFile($key, $files) || !is_numeric($value)) { 
+	if (!isExternalModuleFile($key, $files) || !is_numeric($value)) {
 		if($value == '') {
 			$value = null;
 		}
 
-		if(empty($pid)){
-			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
-		} else {
-			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
-		}
 		if (preg_match("/____/", $key)) {
 			$instances[$key] = $value;
 		} else if (empty($pid)) {
+		    $saved[$key] = $value;
 			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
 		} else {
+            $saved[$key] = $value;
 			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
 		}
 	}
@@ -76,13 +74,15 @@ foreach($instances as $key => $value) {
 	}
 
 	# do not put in database if last and value is blank
-	if (!$last || $value != "") { 
-		$a = preg_split("/____/", $key);
+//	if (!$last || $value != "") {
+	    $saved[$shortKey."____".$n] = $value;
 		$data = ExternalModules::setInstance($moduleDirectoryPrefix, $pid, $shortKey, (int) $n, $value);
-	}
-}
+//	}
 
+}
 header('Content-type: application/json');
 echo json_encode(array(
-	'status' => 'success'
+	'status' => 'success',
+    'instances' => json_encode($instances),
+    'saved' => json_encode($saved)
 ));

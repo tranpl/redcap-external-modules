@@ -155,7 +155,7 @@ if($versionsByPrefixJSON == null){
 			}
 		}
 
-		var getSettingColumns = function(setting, inputAttributes, instance){
+		var getSettingColumns = function(setting, inputAttributes, instance, header){
 			var type = setting.type;
 			var key = setting.key;
 			var value = setting.value;
@@ -171,7 +171,9 @@ if($versionsByPrefixJSON == null){
 
 			if (typeof instance != "undefined") {
 				// for looping for repeatable elements
-				value = value[instance];
+                if( (header < 1 || typeof header == "undefined")){
+                    value = value[instance];
+                }
 				if (instance > 0) {
 					key = key + "____" + instance;
 				}
@@ -196,7 +198,7 @@ if($versionsByPrefixJSON == null){
 				inputHtml = getTextareaElement(key, value, inputAttributes);
 			}
 			else if(type == 'sub_settings'){
-				inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+setting.key+"'>" + setting.name + ":</label><td></td>";
+				inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label>";
 			}
 			else if(type == 'radio'){
 				inputHtml = "";
@@ -233,17 +235,26 @@ if($versionsByPrefixJSON == null){
 				var removeButtonStyle = " style='display: none;'";
 				var originalTagStyle = " style='display: none;'";
 
-				if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
-					addButtonStyle = "";
-				}
 
-				if ((typeof instance != "undefined") && (instance > 0)) {
-					removeButtonStyle = "";
-				}
+                if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
+                    addButtonStyle = "";
+                }
 
-				if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
-					originalTagStyle = "";
-				}
+                if ((typeof instance != "undefined") && (instance > 0)) {
+                    removeButtonStyle = "";
+                }
+
+                if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
+                    originalTagStyle = "";
+                }
+
+                //we are on the original element
+                if(type == 'sub_settings' && (instance === 0) && header > 0){
+                    originalTagStyle = "";
+                    addButtonStyle = " style='display: none;'";
+                    removeButtonStyle = " style='display: none;'";
+                }
+
 
 				var settingsClass = '';
 				if(type == 'sub_settings'){
@@ -259,7 +270,7 @@ if($versionsByPrefixJSON == null){
 			}
 
 			//we add it after repeateable as it is a sub-setting and depends on it
-			if(type == 'sub_settings'){
+			if(type == 'sub_settings' &&  (header < 1 || typeof header == "undefined")){
 				html += getSubSettingsElements(key, setting.sub_settings, instance);
 			}
 
@@ -304,7 +315,7 @@ if($versionsByPrefixJSON == null){
 			return s;
 		}
 
-		var getProjectSettingColumns = function(setting, global, instance){
+		var getProjectSettingColumns = function(setting, global, instance, header){
 			var setting = $.extend({}, setting);
 			var projectName = setting['project-name'];
 			if(projectName){
@@ -321,7 +332,7 @@ if($versionsByPrefixJSON == null){
 				overrideCheckboxAttributes += ' checked';
 			}
 
-			var columns = getSettingColumns(setting, inputAttributes, instance);
+			var columns = getSettingColumns(setting, inputAttributes, instance, header);
 
 			if(global){
 				columns += '<td class="external-modules-override-column"><input type="checkbox" class="override-global-setting" ' + overrideCheckboxAttributes + '></td>';
@@ -351,126 +362,73 @@ if($versionsByPrefixJSON == null){
 			return setting['allow-project-overrides'] || alreadyOverridden;
 		}
 
-		var getSettingRows = function(global, configSettings, savedSettings){
-			var rowsHtml = '';
+        var getSettingRows = function(global, configSettings, savedSettings){
+            var rowsHtml = '';
 
-			configSettings.forEach(function(setting){
-				var setting = $.extend({}, setting);
-				var saved = savedSettings[setting.key];
-				if(saved){
-					setting.value = saved.value;
-					setting.globalValue = saved.global_value;
-				}
+            configSettings.forEach(function(setting){
+                var setting = $.extend({}, setting);
+                var saved = savedSettings[setting.key];
 
-				setting.overrideLevelKey = setting.key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
-				var overrideLevel = savedSettings[setting.overrideLevelKey];
-				if(overrideLevel){
-					setting.overrideLevelValue = overrideLevel.value
-				}
+                var indexSubSet = 0;
+                if (setting.sub_settings) {
+                    var i = 0;
+                    setting.sub_settings.forEach(function(subSetting) {
+
+                        if (savedSettings[subSetting.key]) {
+                            setting.sub_settings[i].value = savedSettings[subSetting.key].value;
+                            setting.sub_settings[i].globalValue =  savedSettings[subSetting.key].global_value;
+                            indexSubSet = subSetting.value.length;
+                            i++;
+                        }
+                    });
+                }
+                else if(saved) {
+                    setting.value = saved.value;
+                    setting.globalValue = saved.global_value;
+                }
+
+                setting.overrideLevelKey = setting.key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
+                var overrideLevel = savedSettings[setting.overrideLevelKey];
+                if(overrideLevel){
+                    setting.overrideLevelValue = overrideLevel.value
+                }
 
 
-				if(!pid){
-					rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
-				}
-				else if(shouldShowSettingOnProjectManagementPage(setting, global)){
-					if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
-						for (var instance=0; instance < setting.value.length; instance++) {
-							rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, instance) + '</tr>';
-						}
-					} else {
-						rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
-					}
-				}
-			})
+                if(!pid){
+                    rowsHtml += '<tr>' + getGlobalSettingColumns(setting) + '</tr>';
+                }
+                else if(shouldShowSettingOnProjectManagementPage(setting, global)){
+                    var rowTitleSubSetHtml = '';
+                    if(setting.sub_settings) { //SUB_SETTINGS
+                        if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]')) {
+                            if(indexSubSet == 0){
+                                rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+                            }
+                        }
+                        for (var instance = 0; instance < indexSubSet; instance++) {
+                            //we add the sub_settings header
+                            if(indexSubSet == 0){ //if values empty NEW form
+                                rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+                            }else{
+                                rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, instance, indexSubSet) + '</tr>';
+                            }
 
-			return rowsHtml;
-		};
+                            setting.sub_settings.forEach(function (subSetting) {
+                                rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, global, instance) + '</tr>';
+                            });
+                        }
+                    }else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
+                        for (var instance=0; instance < setting.value.length; instance++) {
+                            rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, instance) + '</tr>';
+                        }
+                    }else{
+                        rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+                    }
+                }
+            })
 
-		/*$('#external-modules-configure-modal').on('click', '.external-modules-add-instance', function(){
-			// RULE: first variable is base name (e.g., survey_name)
-			// second and following variables are base name + ____X, where X is a 0-based name
-			// so survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
-
-			// find the name of the variable on this row, which is the old variable
-			var oldName = $(this).closest('tr').find('input').attr('name');
-			if (!oldName) {
-				oldName = $(this).closest('tr').find('select').attr('name');
-			}
-			if (!oldName) {
-				oldName = $(this).closest('tr').find('textarea').attr('name');
-			}
-
-			// make a new variable name for the new variable
-			var idx = 1;
-			var newName = oldName + "____"+idx;   // default: guess that this is the second variable
-			var ary;
-			if (ary = oldName.match(/____(\d+)$/)) {
-				// transfer number (old + 1)
-				idx = Number(ary[1]) + 1;
-				newName = oldName.replace("____"+ary[1], "____"+idx);
-			}
-			var $newInstance = $(this).closest('tr').clone();
-			$newInstance.insertAfter($(this).closest('tr'));
-
-			// rename new instance of input/select and set value to empty string
-			$newInstance.find('[name="'+oldName+'"]').attr('name', newName);
-			$newInstance.find('[name="'+newName+'"]').val('');
-
-			// rename label
-			$newInstance.closest("tr").find('span.external-modules-instance-label').html((idx+1)+". ");
-			$(this).closest("tr").find('span.external-modules-instance-label').html((idx)+". ");
-
-			// show only last +
-			$(this).hide();
-			// show original sign if previous was first item
-			if (!oldName.match(/____/)) {
-				$("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance").show();
-			}
-			$newInstance.find(".external-modules-remove-instance").show();
-		});
-
-		$('#external-modules-configure-modal').on('click', '.external-modules-remove-instance', function(){
-			// see RULE on external-modules-add-instance
-			// we must maintain said RULE here
-			// RULE 2: Cannot remove first item
-
-			// get old name
-			var oldName = $(this).closest('tr').find('input').attr('name');
-			if (!oldName) {
-				oldName = $(this).closest('tr').find('select').attr('name');
-			}
-			if (!oldName) {
-				oldName = $(this).closest('tr').find('textarea').attr('name');
-			}
-
-			// this oldName will have a ____ in it; split and conquer
-			var oldNameParts = oldName.split(/____/);
-			var baseName = oldNameParts[0];
-
-			var i = 1;
-			var j = 1;
-			while ($("[name='"+baseName+"____"+i+"']").length) {
-				if (i == oldNameParts[1]) {
-					// remove tr
-					$("[name='"+baseName+"____"+i+"']").closest('tr').remove();
-				} else {
-					// rename label
-					$("[name='"+baseName+"____"+i+"']").closest("tr").find('span.external-modules-instance-label').html((j+1)+". ");
-					// rename tr: i --> j
-					$("[name='"+baseName+"____"+i+"']").attr('name', baseName+"____"+j);
-					j++;
-				}
-				i++;
-			}
-			if (j > 1) {
-				$("[name='"+baseName+"____"+(j-1)+"']").closest("tr").find(".external-modules-add-instance").show();
-			} else {
-				$("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance").show();
-				$("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance").hide();
-			}
-		});*/
-
-		/////SUB-SETTINGS
+            return rowsHtml;
+        };
 
 		/**
 		 * Function that given a position, returns the element name
@@ -531,6 +489,7 @@ if($versionsByPrefixJSON == null){
 			if($(this).hasClass('external-modules-add-instance-subsettings')) {
 				$(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
 
+
 					var oldName = getOldName($(this).find('td:nth-child(2)'));
 					var newName = getNewName(oldName);
 					var idx = getIdx();
@@ -560,7 +519,7 @@ if($versionsByPrefixJSON == null){
 			}
 
 			//We show which one is the original
-			$(this).closest("tr").find(".external-modules-original-instance"+newclass).show();
+//			$(this).closest("tr").find(".external-modules-original-instance"+newclass).show();
 
 			var newName = getNewName(oldName);
 			var idx = getIdx();
@@ -675,6 +634,8 @@ if($versionsByPrefixJSON == null){
 				if(data.status != 'success'){
 					return;
 				}
+
+//				alert(JSON.stringify(data));
 
 				var savedSettings = data.settings;
 
@@ -798,7 +759,7 @@ if($versionsByPrefixJSON == null){
 		// helper method for saving
 		var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
 			$.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(returnData){
-				if(returnData.status != 'success'){
+                if(returnData.status != 'success'){
 					alert('An error occurred while saving settings: ' + returnData);
 					configureModal.show();
 					return;
@@ -816,7 +777,7 @@ if($versionsByPrefixJSON == null){
 			var version = versionsByPrefix[moduleDirectoryPrefix];
 
 			var data = {};
-                        var files = {};
+            var files = {};
 
 			configureModal.find('input, select, textarea').each(function(index, element){
 				var element = $(element);
@@ -860,7 +821,8 @@ if($versionsByPrefixJSON == null){
 			var url = 'ajax/save-file.php?pid=' + pidString +
 						     '&moduleDirectoryPrefix=' + moduleDirectoryPrefix +
 						     '&moduleDirectoryVersion=' + version;
-                        saveFilesIfTheyExist(url, files, function() {
+
+            saveFilesIfTheyExist(url, files, function() {
 				saveSettings(pidString, moduleDirectoryPrefix, version, data);
 			});
 		});
