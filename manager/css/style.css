@@ -70,10 +70,10 @@
 	 text-align: center;
 }
 
-.external-modules-add-instance, .external-modules-remove-instance {
+.external-modules-add-instance, .external-modules-remove-instance, .external-modules-add-instance-subsettings, .external-modules-remove-instance-subsettings{
 	 width: 30px;
 }
 
-.external-modules-original-instance {
+.external-modules-original-instance, .external-modules-original-instance-subsettings {
 	 font-size: 10px;
 }
