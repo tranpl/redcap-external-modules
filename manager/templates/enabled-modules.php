@@ -377,12 +377,15 @@ if($versionsByPrefixJSON == null){
                         if (savedSettings[subSetting.key]) {
                             setting.sub_settings[i].value = savedSettings[subSetting.key].value;
                             setting.sub_settings[i].globalValue =  savedSettings[subSetting.key].global_value;
-                            indexSubSet = subSetting.value.length;
+
+							//we keep the length of the array to know the number of elements
+							if(subSetting.value && Array.isArray(subSetting.value)){
+								indexSubSet = subSetting.value.length;
+							}
                             i++;
                         }
                     });
-                }
-                else if(saved) {
+                } else if(saved) {
                     setting.value = saved.value;
                     setting.globalValue = saved.global_value;
                 }
