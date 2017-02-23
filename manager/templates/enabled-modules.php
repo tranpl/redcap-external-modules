@@ -56,12 +56,19 @@ here. In turn, each project can override this set of defaults with their own val
 <h3>Modules Currently Available on this System</h3>
 <?php } ?>
 
-<?php if (isset($_GET['pid'])) { ?>
-	<script>
-		var pid = <?=json_encode($$_GET['pid'])?>;
-	</script>
+<script>
+	var override = '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>';
+	var enabled = '<?=ExternalModules::KEY_ENABLED?>';
+	var overrideSuffix = '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
+<?php
+if (isset($_GET['pid'])) {
+?>
+	var pid = <?=json_encode($$_GET['pid'])?>;
 <?php
 } 
+?>
+</script>
+<?php
 	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-preface.js');
 ?>
 
@@ -88,11 +95,6 @@ here. In turn, each project can override this set of defaults with their own val
 			$enabled = false;
 			if (isset($_GET['pid'])) {
 				$enabled = ExternalModules::getSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
-				if ($enabled == "false") {
-					$enabled = false;
-				} else if ($enabled == "true") {
-					$enabled = true;
-				}
 			}
 			if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>

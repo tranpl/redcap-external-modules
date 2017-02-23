@@ -57,6 +57,31 @@ foreach($_POST as $key=>$value){
 	}
 }
 
+# instances must come after the initial settings have been saved
+foreach($instances as $key => $value) {
+	# allow the last match to be blank and not put into the database
+	$last = true;
+	$a = preg_split("/____/", $key);
+	$shortKey = $a[0];
+	$n = $a[1];
+
+	# check if the current element is the last in the repeatable element
+	foreach ($_POST as $key2 => $value2) {
+		$a2 = preg_split("/____/", $key2);
+		if (($a2[0] == $shortKey) && ($a2[1] > $n)) {
+			$last = false;
+			break;
+		}
+	}
+
+	# do not put in database if last and value is blank
+	if (!$last || $value != "") {
+		$a = preg_split("/____/", $key);
+		$data = ExternalModules::setInstance($moduleDirectoryPrefix, $pid, $shortKey, (int) $n, $value);
+	}
+}
+
+
 header('Content-type: application/json');
 $rv = array(
 	'status' => 'success',

@@ -442,4 +442,18 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($value4, $array[3]);
 	}
 
+	function testIsLocalhost()
+	{
+		$assertLocalhost = function($expected, $host){
+			$_SERVER['HTTP_HOST'] = $host;
+			$this->assertEquals($expected, $this->callPrivateMethod('isLocalhost'));
+		};
+
+		$assertLocalhost(true, 'localhost');
+		$assertLocalhost(true, '1.2.3.4');
+		$assertLocalhost(false, 'redcap.vanderbilt.edu');
+		$assertLocalhost(false, 'redcap.somewhere-else.edu');
+	}
+
+
 }

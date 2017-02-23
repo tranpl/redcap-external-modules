@@ -162,11 +162,11 @@
 			if(setting['allow-project-overrides']){
 				var overrideChoices = [
 					{ value: '', name: 'Superusers Only' },
-					{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Admins' },
+					{ value: override, name: 'Project Admins' },
 				];
 
 				var selectAttributes = '';
-				if(setting.key == '<?=ExternalModules::KEY_ENABLED?>'){
+				if(setting.key == enabled){
 					// For now, we've decided that only super users can enable modules on projects.
 					// To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
 					selectAttributes = 'disabled'
@@ -261,7 +261,7 @@
 					setting.systemValue = saved.system_value;
 				}
 
-				setting.overrideLevelKey = setting.key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
+				setting.overrideLevelKey = setting.key + overrideSuffix;
 				var overrideLevel = savedSettings[setting.overrideLevelKey];
 				if(overrideLevel){
 					setting.overrideLevelValue = overrideLevel.value

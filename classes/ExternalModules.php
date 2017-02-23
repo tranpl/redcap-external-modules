@@ -474,9 +474,9 @@ class ExternalModules
 			// do nothing
 		}
 		else if ($type == "boolean") {
-			if ($value == "true") {
+			if ($value === "true") {
 				$value = true;
-			} else if ($value == "false") {
+			} else if ($value === "false") {
 				$value = false;
 			}
 		}

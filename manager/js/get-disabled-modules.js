@@ -49,11 +49,10 @@ $(function(){
 			enableModal.modal('show');
 			return false;
 		} else {   // pid
-			var data = {};
-			data[keyEnabled] = true;
-			$.post('ajax/save-settings.php?pid=' + pid + '&moduleDirectoryPrefix=' + prefix, data, function(data){
-				if (data.status == 'success') {
+			$.post('ajax/enable-module.php?pid=' + pid, {prefix: prefix, version: version}, function(data){
+				if (data == 'success') {
 					reloadThisPage();
+					disabledModal.modal('hide');
 				}
 				else {
 					var message = 'An error occurred while enabling the module: ' + data;

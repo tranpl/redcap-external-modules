@@ -10,6 +10,10 @@ if (empty($module)) {
 	return;
 }
 
-ExternalModules::disable($module);
+if (isset($_GET["pid"])) {
+	ExternalModules::setProjectSetting($module, $_GET['pid'], ExternalModules::KEY_ENABLED, false);
+} else {
+	ExternalModules::disable($module);
+}
 
 echo 'success';

@@ -13,16 +13,8 @@ $(function() {
 		  var row = $(event.target).closest('tr');
 		  var prefix = row.data('module');
 
-		  var version = row.data('version');
-		  var version_str = '';
-		  if (version) {
-			   version_str = "&version="+version;
-		  }
-
-		  var data = {};
-		  data[keyEnabled] = false;
-		  $.post('ajax/save-settings.php?pid=' + pid + '&moduleDirectoryPrefix=' + prefix + version_str, data, function(data){
-			   if (data.status == 'success') {
+		  $.post('ajax/disable-module.php?pid=' + pid, { module: prefix }, function(data){
+			   if (data == 'success') {
 				    reloadPage();
 			   }
 			   else {
