@@ -94,12 +94,12 @@ if (isset($_GET['pid'])) {
 			$configsByPrefix[$prefix] = $config;
 			$enabled = false;
 			if (isset($_GET['pid'])) {
-				$enabled = ExternalModules::getSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
+				$enabled = ExternalModules::getProjectSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
 			}
 			if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-					<td><?= $config['name'] . ' - ' . $version ?></td>
+					<td><?= $config['name'] . ' - ' . $version ?> <?= (string)$enabled ?></td>
 					<td class="external-modules-action-buttons">
 						<button class='external-modules-configure-button'>Configure</button>
 						<button class='external-modules-disable-button'>Disable</button>
