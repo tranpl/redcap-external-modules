@@ -99,7 +99,7 @@ if (isset($_GET['pid'])) {
 			if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-					<td><?= $config['name'] . ' - ' . $version ?> <?= (string)$enabled ?></td>
+					<td><?= $config['name'] . ' - ' . $version ?></td>
 					<td class="external-modules-action-buttons">
 						<button class='external-modules-configure-button'>Configure</button>
 						<button class='external-modules-disable-button'>Disable</button>
