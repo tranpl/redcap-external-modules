@@ -902,6 +902,7 @@ class ExternalModules
 			$fullLocalPath = __DIR__ . "/../$path";
 
 			// Add the filemtime to the url for cache busting.
+			clearstatcache(true, $path);
 			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
 		}
 
