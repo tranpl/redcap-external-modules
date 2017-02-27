@@ -27,11 +27,11 @@ $pid = $_GET['pid'];
 			$configsByPrefix[$prefix] = $config;
 			?>
 			<tr data-module='<?= $prefix ?>'>
-				<td><?= $config['name'] . ' - ' . $version ?></td>
+				<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div></td>
 				<td class="external-modules-action-buttons">
 					<button class='external-modules-configure-button'>Configure</button>
 					<?php if (!isset($pid)) { ?>
-						<button class='external-modules-disable-button'>Disable</button>
+						<br><button class='external-modules-disable-button'>Disable</button>
 					<?php } ?>
 				</td>
 			</tr>
