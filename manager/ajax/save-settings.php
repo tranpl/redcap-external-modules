@@ -42,16 +42,13 @@ foreach($_POST as $key=>$value){
 			$value = null;
 		}
 
-		if(empty($pid)){
-			ExternalModules::setSystemSetting($moduleDirectoryPrefix, $key, $value);
-		} else {
-			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
-		}
 		if (preg_match("/____/", $key)) {
 			$instances[$key] = $value;
 		} else if (empty($pid)) {
-			ExternalModules::setSystemSetting($moduleDirectoryPrefix, $key, $value);
+		    $saved[$key] = $value;
+			ExternalModules::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
 		} else {
+            $saved[$key] = $value;
 			ExternalModules::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
 		}
 	}
@@ -75,16 +72,9 @@ foreach($instances as $key => $value) {
 	}
 
 	# do not put in database if last and value is blank
-	if (!$last || $value != "") {
-		$a = preg_split("/____/", $key);
+//	if (!$last || $value != "") {
 		$data = ExternalModules::setInstance($moduleDirectoryPrefix, $pid, $shortKey, (int) $n, $value);
-	}
+//	}
 }
-
-
 header('Content-type: application/json');
-$rv = array(
-	'status' => 'success',
-);
-echo json_encode($rv);
-
+echo json_encode(array('status' => 'success'));

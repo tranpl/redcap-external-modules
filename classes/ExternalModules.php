@@ -104,6 +104,7 @@ class ExternalModules
 					$error = error_get_last();
 					$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 					$message .= 'Error Message: ' . $error['message'] . "\n";
+					$message .= 'Server: ' . gethostname() . "\n";
 					$message .= 'File: ' . $error['file'] . "\n";
 					$message .= 'Line: ' . $error['line'] . "\n";
 
@@ -1045,43 +1046,53 @@ class ExternalModules
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
 		if(!empty($pid)) {
 			foreach($config['project-settings'] as $configKey => $configRow) {
-				if($configRow['type'] == 'field-list') {
-					$choices = [];
-
-					$sql = "SELECT field_name,element_label
-							FROM redcap_metadata
-							WHERE project_id = '".db_real_escape_string($pid)."'
-							ORDER BY field_order";
-					$result = self::query($sql);
-
-					while($row = db_fetch_assoc($result)){
-						$choices[] = ['value' => $row['field_name'],'name' => $row['field_name'] . " - " . substr($row['element_label'],0,20)];
-					}
-
-					$config['project-settings'][$configKey]['choices'] = $choices;
-				}
-				else if($configRow['type'] == 'form-list') {
-					$choices = [];
-
-
-					$sql = "SELECT DISTINCT form_name
-							FROM redcap_metadata
-							WHERE project_id = '".db_real_escape_string($pid)."'
-							ORDER BY field_order";
-					$result = self::query($sql);
-
-					while($row = db_fetch_assoc($result)){
-						$choices[] = ['value' => $row['form_name'],'name' => $row['form_name']];
-					}
-
-					$config['project-settings'][$configKey]['choices'] = $choices;
-				}
+				$config['project-settings'][$configKey] = self::getAdditionalFieldChoices($configRow,$pid);
 			}
 		}
 
 		$config = self::addReservedSettings($config);
 
 		return $config;
+	}
+
+	public static function getAdditionalFieldChoices($configRow,$pid) {
+		if ($configRow['type'] == 'field-list') {
+			$choices = [];
+
+			$sql = "SELECT field_name,element_label
+					FROM redcap_metadata
+					WHERE project_id = '" . db_real_escape_string($pid) . "'
+					ORDER BY field_order";
+			$result = self::query($sql);
+
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['field_name'], 'name' => $row['field_name'] . " - " . substr($row['element_label'], 0, 20)];
+			}
+
+			$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'form-list') {
+			$choices = [];
+
+			$sql = "SELECT DISTINCT form_name
+					FROM redcap_metadata
+					WHERE project_id = '" . db_real_escape_string($pid) . "'
+					ORDER BY field_order";
+			$result = self::query($sql);
+
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['form_name'], 'name' => $row['form_name']];
+			}
+
+			$configRow['choices'] = $choices;
+		}
+		else if($configRow['type'] == 'sub_settings') {
+			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
+				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);
+			}
+		}
+
+		return $configRow;
 	}
 
 	public static function getEnabledVersion($prefix)
