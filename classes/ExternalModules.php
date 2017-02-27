@@ -97,6 +97,7 @@ class ExternalModules
 					$error = error_get_last();
 					$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 					$message .= 'Error Message: ' . $error['message'] . "\n";
+					$message .= 'Server: ' . gethostname() . "\n";
 					$message .= 'File: ' . $error['file'] . "\n";
 					$message .= 'Line: ' . $error['line'] . "\n";
 
