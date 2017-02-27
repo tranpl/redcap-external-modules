@@ -440,6 +440,8 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($value2, $array[1]);
 		$this->assertEquals($value3, $array[2]);
 		$this->assertEquals($value4, $array[3]);
+
+		ExternalModules::removeProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY);
 	}
 
 	function testIsLocalhost()
