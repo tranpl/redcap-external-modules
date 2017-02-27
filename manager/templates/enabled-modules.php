@@ -638,8 +638,6 @@ if($versionsByPrefixJSON == null){
 					return;
 				}
 
-//				alert(JSON.stringify(data));
-
 				var savedSettings = data.settings;
 
 				var settingsHtml = "";
