@@ -181,15 +181,23 @@ class ExternalModules
 		self::removeSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
 	}
 
-	static function enable($moduleDirectoryPrefix, $version)
+	static function enableForProject($moduleDirectoryPrefix, $version, $project_id)
 	{
 		# Attempt to create an instance of the module before enabling it system wide.
 		# This should catch problems like syntax errors in module code.
 		$instance = self::getModuleInstance($moduleDirectoryPrefix, $version);
 
-		self::initializeSettingDefaults($instance);
+		if (!isset($project_id)) {
+			self::initializeSettingDefaults($instance);
+			self::setSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION, $version);
+		} else {
+			self::setProjectSetting($moduleDirectoryPrefix, $project_id, self::KEY_ENABLED, true);
+		}
+	}
 
-		self::setSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION, $version);
+	static function enable($moduleDirectoryPrefix, $version)
+	{
+		self::enableForProject($moduleDirectoryPrefix, $version, null);
 	}
 
 	static function initializeSettingDefaults($moduleInstance)

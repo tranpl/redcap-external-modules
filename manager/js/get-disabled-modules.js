@@ -14,7 +14,7 @@ $(function(){
 
 		var row = $(event.target).closest('tr');
 		var prefix = row.data('module');
-		var version = row.find('select').val();
+		var version = row.find('[name="version"]').val();
 
 		if (!pid) {
 			var enableButton = enableModal.find('.enable-button');

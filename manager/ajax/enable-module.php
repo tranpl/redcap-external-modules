@@ -4,7 +4,7 @@ namespace ExternalModules;
 require_once '../../classes/ExternalModules.php';
 
 if (isset($_GET['pid'])) {
-	 ExternalModules::setProjectSetting($_POST['prefix'], $_GET['pid'], ExternalModules::KEY_ENABLED, true);
+	 ExternalModules::enableForProject($_POST['prefix'], $_POST['version'], $_GET['pid']);
 }
 else {
 	 ExternalModules::enable($_POST['prefix'], $_POST['version']);
