@@ -106,15 +106,6 @@ if($versionsByPrefixJSON == null){
 				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 			}
 		};
-		
-		var getTextareaElement = function(name, value, inputAttributes){
-			if (typeof value == "undefined") {
-				value = "";
-			}
-
-			return '<textarea name="' + name + '" ' + inputAttributes + '>'+getAttributeValueHtml(value)+'</textarea>';
-
-		};
 
 		// abstracted because file fields need to be reset in multiple places
 		var getGlobalFileFieldElement = function(name, value, inputAttributes) {
@@ -173,10 +164,6 @@ if($versionsByPrefixJSON == null){
 			else if(type == 'project-id'){
 				inputAttributes += ' class="project_id_textbox" id="test-id"';
 				inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, inputAttributes) + "</div>";
-			}
-			else if(type == 'textarea'){
-				inputAttributes += ' rows = "6" cols="45"';
-				inputHtml = getTextareaElement(key, value, inputAttributes);
 			}
 			else if(type == 'radio'){
 				inputHtml = "";
@@ -592,7 +579,7 @@ if($versionsByPrefixJSON == null){
 			var data = {};
                         var files = {};
 
-			configureModal.find('input, select, textarea').each(function(index, element){
+			configureModal.find('input, select').each(function(index, element){
 				var element = $(element);
 				var globalValue = element.closest('tr').find('.override-global-setting').data('global-value');
 				var name = element.attr('name');
