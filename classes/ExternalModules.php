@@ -521,7 +521,7 @@ class ExternalModules
 	{
 		$value = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
-		if($value == null){
+		if($value === null){
 			$value =  self::getSystemSetting($moduleDirectoryPrefix, $key);
 		}
 
