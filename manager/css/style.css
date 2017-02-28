@@ -81,8 +81,10 @@
 .external-modules-original-instance, .external-modules-original-instance-subsettings {
 	 font-size: 10px;
 }
+
 .modal-content{
-	width:700px;
+	width: 700px;
+}
 
 .external-modules-title {
 	font-weight: bold;

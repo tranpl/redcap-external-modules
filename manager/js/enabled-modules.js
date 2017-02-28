@@ -352,28 +352,30 @@ $(function(){
 			else if(shouldShowSettingOnProjectManagementPage(setting, system)){
 				var rowTitleSubSetHtml = '';
 				// SUB_SETTING
-				if (setting.sub_settings && setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]') && (indexSubSet == 0)) {
+				if (setting.sub_settings) {
+					if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]') && (indexSubSet == 0)) {
+						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
+					}
+					for (var instance = 0; instance < indexSubSet; instance++) {
+						//we add the sub_settings header
+						if(indexSubSet == 0){
+							//if values empty NEW form
+							rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
+						}else{
+							rowsHtml += '<tr>' + getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
+						}
+
+						setting.sub_settings.forEach(function (subSetting) {
+							rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, system, instance) + '</tr>';
+						});
+					}
+				} else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
+					for (var instance=0; instance < setting.value.length; instance++) {
+						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system, instance) + '</tr>';
+					}
+				} else {
 					rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
 				}
-				for (var instance = 0; instance < indexSubSet; instance++) {
-					//we add the sub_settings header
-					if(indexSubSet == 0){
-						//if values empty NEW form
-						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
-					}else{
-						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
-					}
-
-					setting.sub_settings.forEach(function (subSetting) {
-						rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, system, instance) + '</tr>';
-					});
-				}
-			} else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
-				for (var instance=0; instance < setting.value.length; instance++) {
-					rowsHtml += '<tr>' + getProjectSettingColumns(setting, system, instance) + '</tr>';
-				}
-			} else {
-				rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
 			}
 		});
 
@@ -616,7 +618,7 @@ $(function(){
 
 			tbody.html(settingsHtml);
 
-			configureSettings(config['system-settings'], savedSettings);
+			ExternalModules.configureSettings(config['system-settings'], savedSettings);
 		});
 	});
 

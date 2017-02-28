@@ -9,6 +9,7 @@ if(!ExternalModules::hasDesignRights()){
 }
 
 ExternalModules::addResource('css/style.css');
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.js');
 ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 ?>
 
