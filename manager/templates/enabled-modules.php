@@ -107,6 +107,15 @@ if($versionsByPrefixJSON == null){
 			}
 		};
 
+		var getTextareaElement = function(name, value, inputAttributes){
+			if (typeof value == "undefined") {
+				value = "";
+			}
+
+			return '<textarea name="' + name + '" ' + inputAttributes + '>'+getAttributeValueHtml(value)+'</textarea>';
+
+		};
+
 		var getSubSettingsElements = function(name, value, instance){
 			if (typeof value == "undefined") {
 				value = "";
@@ -771,7 +780,7 @@ if($versionsByPrefixJSON == null){
 			var data = {};
             var files = {};
 
-			configureModal.find('input, select').each(function(index, element){
+			configureModal.find('input, select, textarea').each(function(index, element){
 				var element = $(element);
 				var globalValue = element.closest('tr').find('.override-global-setting').data('global-value');
 				var name = element.attr('name');
