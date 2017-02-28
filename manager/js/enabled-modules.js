@@ -661,7 +661,7 @@ $(function(){
 	});
 
 	var resetSaveButton = function(val) {
-		if (val != "") {
+		if ((typeof val != "undefined") && (val != "")) {
 			$(".save").html("Save and Upload");
 		}
 		var allEmpty = true;
