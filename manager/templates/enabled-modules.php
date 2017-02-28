@@ -100,6 +100,7 @@ if (isset($_GET['pid'])) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
 					<td><?= $config['name'] . ' - ' . $version ?></td>
+					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div></td>
 					<td class="external-modules-action-buttons">
 						<button class='external-modules-configure-button'>Configure</button>
 						<button class='external-modules-disable-button'>Disable</button>

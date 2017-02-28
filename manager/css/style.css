@@ -83,4 +83,15 @@
 }
 .modal-content{
 	width:700px;
+
+.external-modules-title {
+	font-weight: bold;
+}
+
+.external-modules-description {
+	font-size: 11px;
+}
+
+.external-modules-disable-button {
+	margin-top: 5px;
 }

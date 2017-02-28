@@ -52,8 +52,7 @@ require_once '../../classes/ExternalModules.php';
 			if (!$enabled) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-					<td style='vertical-align: middle;'><?= $config['name'] ?></td>
-					<td style='vertical-align: middle;'><?= $version ?><input type='hidden' name='version' value='<?= $version ?>'></td>   
+					<td><div class='external-modules-title'><?= $config['name'] ?> <?= $version ?><input type='hidden' name='version' value='<?= $version ?>'></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : '';?></div></td>
 					<td style='vertical-align: middle;' class="external-modules-action-buttons">
 						<button class='enable-button'>Enable</button>					
 					</td>
