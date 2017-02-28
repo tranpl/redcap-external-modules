@@ -671,10 +671,10 @@ class ExternalModules
 			foreach ($prevDelayed as $prefix=>$version) {
 				self::$versionBeingExecuted = $version;
 
-                		if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
-                        		// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
-                        		continue;
-                		}
+				if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+					// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+					continue;
+				}
 
 				self::startHook($prefix, $version, $arguments);
 			}
