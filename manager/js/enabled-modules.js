@@ -205,9 +205,9 @@ $(function(){
 			}
 
 			html += "<td class='external-modules-add-remove-column'>";
-			html += "<button class='external-modules-add-instance'" + addButtonStyle + ">+</button>";
-			html += "<button class='external-modules-remove-instance'" + removeButtonStyle + ">-</button>";
-			html += "<span class='external-modules-original-instance'" + originalTagStyle + ">original</span>";
+			html += "<button class='external-modules-add-instance"+settingsClass+"'" + addButtonStyle + ">+</button>";
+			html += "<button class='external-modules-remove-instance"+settingsClass+"'"+ removeButtonStyle + ">-</button>";
+			html += "<span class='external-modules-original-instance"+settingsClass+"'" + originalTagStyle + ">original</span>";
 			html += "</td>";
 		} else {
 			html += "<td></td>";
@@ -320,12 +320,13 @@ $(function(){
 		configSettings.forEach(function(setting){
 			var setting = $.extend({}, setting);
 			var saved = savedSettings[setting.key];
+			var indexSubSet = 0;
 			if (setting.sub_settings) {
 				var i = 0;
 				setting.sub_settings.forEach(function(subSetting) {
 					if (savedSettings[subSetting.key]) {
 						setting.sub_settings[i].value = savedSettings[subSetting.key].value;
-						setting.sub_settings[i].globalValue =  savedSettings[subSetting.key].global_value;
+						setting.sub_settings[i].systemValue =  savedSettings[subSetting.key].system_value;
 						//we keep the length of the array to know the number of elements
 						if(subSetting.value && Array.isArray(subSetting.value)){
 							indexSubSet = subSetting.value.length;
@@ -352,19 +353,19 @@ $(function(){
 				var rowTitleSubSetHtml = '';
 				// SUB_SETTING
 				if (setting.sub_settings && setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]') && (indexSubSet == 0)) {
-					rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+					rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
 				}
 				for (var instance = 0; instance < indexSubSet; instance++) {
 					//we add the sub_settings header
 					if(indexSubSet == 0){
 						//if values empty NEW form
-						rowsHtml += '<tr>' + getProjectSettingColumns(setting, global) + '</tr>';
+						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
 					}else{
-						rowsHtml += '<tr>' + getProjectSettingColumns(setting, global, instance, indexSubSet) + '</tr>';
+						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
 					}
 
 					setting.sub_settings.forEach(function (subSetting) {
-						rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, global, instance) + '</tr>';
+						rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, system, instance) + '</tr>';
 					});
 				}
 			} else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
@@ -457,11 +458,10 @@ $(function(){
 		// RULE 2: Cannot remove first item
 		var newInstanceTotal = "";
 		var newclass = "";
+		var oldName = "";
 		if($(this).hasClass('external-modules-add-instance-subsettings')) {
 			$(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
-
-
-				var oldName = getOldName($(this).find('td:nth-child(2)'));
+				oldName = getOldName($(this).find('td:nth-child(2)'));
 				var newName = getNewName(oldName);
 				var idx = getIdx();
 
@@ -478,10 +478,10 @@ $(function(){
 
 				newInstanceTotal += '<tr class = "subsettings-table">' + $newInstance.html() + '</tr>';
 			});
-			var oldName = $(this).closest('tr').find('label').attr('name');
+			oldName = $(this).closest('tr').find('label').attr('name');
 			newclass = "-subsettings";
 		}else if($(this).hasClass('external-modules-add-instance')) {
-			var oldName = getOldName($(this).closest('tr'));
+			oldName = getOldName($(this).closest('tr'));
 		}
 
 		// show original sign if previous was first item
