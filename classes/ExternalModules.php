@@ -594,6 +594,11 @@ class ExternalModules
     }
 
 	private static function startHook($prefix, $version, $arguments) {
+                if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+                       	// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+                       	continue;
+                }
+
 		$instance = self::getModuleInstance($prefix, $version);
 		if(method_exists($instance, self::$hookBeingExecuted)){
 			self::setActiveModulePrefix($prefix);
@@ -654,11 +659,6 @@ class ExternalModules
 		$versionsByPrefix = self::getEnabledModules($pid);
 		foreach($versionsByPrefix as $prefix=>$version){
 			self::$versionBeingExecuted = $version;
-
-                	if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
-                        	// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
-                        	continue;
-                	}
 
 			self::startHook($prefix, $version, $arguments);
 		}
@@ -893,6 +893,7 @@ class ExternalModules
 			$fullLocalPath = __DIR__ . "/../$path";
 
 			// Add the filemtime to the url for cache busting.
+                        clearstatcache(true, $path);
 			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
 		}
 
