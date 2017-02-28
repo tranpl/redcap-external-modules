@@ -593,7 +593,7 @@ class ExternalModules
 			return;
 		}
 
-		if(!defined(PAGE)){
+		if(!defined('PAGE')){
 			$page = ltrim($_SERVER['REQUEST_URI'], '/');
 			define('PAGE', $page);
 		}
