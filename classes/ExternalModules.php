@@ -594,10 +594,10 @@ class ExternalModules
     }
 
 	private static function startHook($prefix, $version, $arguments) {
-                if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
-                       	// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
-                       	continue;
-                }
+		if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+			// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+			return;
+		}
 
 		$instance = self::getModuleInstance($prefix, $version);
 		if(method_exists($instance, self::$hookBeingExecuted)){
