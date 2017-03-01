@@ -189,6 +189,15 @@ if($versionsByPrefixJSON == null){
 			else if(type == 'form-list'){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 			}
+			else if(type == 'user-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'user-role-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'dag-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
 			else if(type == 'project-id'){
 				inputAttributes += ' class="project_id_textbox" id="test-id"';
 				inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, inputAttributes) + "</div>";
