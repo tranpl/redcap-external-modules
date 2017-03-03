@@ -843,6 +843,7 @@ class ExternalModules
 
 	static function isTypePresentInTable()
 	{
+		global $db;
 		$sql = "SELECT * 
 			FROM information_schema.COLUMNS 
 			WHERE 
