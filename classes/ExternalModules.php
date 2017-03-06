@@ -1182,7 +1182,7 @@ class ExternalModules
 	## Duplicate of authorization code for REDCap, but with the check for NOAUTH removed
 	public static function reauthorize()
 	{
-		global $auth_meth, $app_name, $username, $password, $hostname, $db, $institution, $double_data_entry,
+		global $auth_meth, $app_name, $username, $password, $hostname, $db, $institution, $double_data_entry, $userid, $err,
 			   $project_contact_name, $autologout_timer, $lang, $isMobileDevice, $password_reset_duration, $enable_user_whitelist,
 			   $homepage_contact_email, $homepage_contact, $isAjax, $rc_autoload_function, $two_factor_auth_enabled;
 
@@ -1367,16 +1367,18 @@ class ExternalModules
 		// OpenID (general)
 		elseif ($auth_meth == 'openid') {
 			// Authenticate via OpenID provider
-			$userid = \Authentication::authenticateOpenID();
+			## TODO: Integrate open ID into re-authorization
+			//$userid = \Authentication::authenticateOpenID();
 			// Now redirect back to our original page in order to remove all the "openid..." parameters in the query string
-			if (isset($_GET['openid_return_to'])) redirect(urldecode($_GET['openid_return_to']));
+			//if (isset($_GET['openid_return_to'])) redirect(urldecode($_GET['openid_return_to']));
 		}
 		// OpenID (Google's Oauth2 - OpenID Connect)
 		elseif ($auth_meth == 'openid_google') {
 			// Authenticate via OpenID provider
-			$userid = \Authentication::authenticateOpenIDGoogle();
+			## TODO: Integrate google open ID into re-authorization
+			//$userid = \Authentication::authenticateOpenIDGoogle();
 			// Now redirect back to our original page in order to remove all the "openid..." parameters in the query string
-			if (isset($_GET['openid_return_to'])) redirect(urldecode($_GET['openid_return_to']));
+			//if (isset($_GET['openid_return_to'])) redirect(urldecode($_GET['openid_return_to']));
 		}
 		// Error was made in Control Center for authentication somehow
 		elseif ($auth_meth == '') {
