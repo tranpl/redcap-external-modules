@@ -107,7 +107,7 @@ if($versionsByPrefixJSON == null){
 				return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
 			}
 		};
-		
+
 		var getTextareaElement = function(name, value, inputAttributes){
 			if (typeof value == "undefined") {
 				value = "";

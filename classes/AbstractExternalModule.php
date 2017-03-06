@@ -194,4 +194,8 @@ class AbstractExternalModule
 
 		return $pid;
 	}
+
+	public function delayModuleExecution() {
+		ExternalModules::delayModuleExecution();
+	}
 }

@@ -315,6 +315,26 @@ class ExternalModulesTest extends BaseTest
 		$this->assertTestHookCalled(false, $pid);
 	}
 
+	function testCallHook_delay()
+	{
+		$m = $this->getInstance();
+		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$this->cacheAllEnableData();
+
+		$this->setConfig(['permissions' => ['hook_test_delay']]);
+
+		$numExecutions = 5;
+		$argTwo = rand();
+		$argThree = 'q';
+		ExternalModules::callHook('redcap_test_delay', [$numExecutions, $argTwo, $argThree]);
+		$this->assertEquals(2, $m->executionNumber);  // 2 iterations
+		$this->assertEquals(10, $m->doneMarker);
+		$this->assertEquals($numExecutions, $m->testHookArguments[0]);
+		$this->assertEquals($argTwo, $m->testHookArguments[1]);
+		$this->assertEquals($argThree, $m->testHookArguments[2]);
+	}
+
 	function testCallHook_arguments()
 	{
 		$m = $this->getInstance();

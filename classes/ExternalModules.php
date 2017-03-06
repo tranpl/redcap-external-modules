@@ -42,6 +42,12 @@ class ExternalModules
 	public static $MODULES_URL;
 	public static $MODULES_PATH;
 
+	# index is hook $name, then $prefix, then $version
+	private static $delayed;
+
+	private static $hookBeingExecuted;
+	private static $versionBeingExecuted;
+
 	private static $initialized = false;
 	private static $activeModulePrefix;
 	private static $instanceCache = array();
@@ -587,6 +593,27 @@ class ExternalModules
 		return "(" . implode(" OR ", $parts) . ")";
     }
 
+	private static function startHook($prefix, $version, $arguments) {
+		if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+			// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+			return;
+		}
+
+		$instance = self::getModuleInstance($prefix, $version);
+		if(method_exists($instance, self::$hookBeingExecuted)){
+			self::setActiveModulePrefix($prefix);
+			try{
+				call_user_func_array(array($instance,self::$hookBeingExecuted), $arguments);
+			}
+			catch(Exception $e){
+				$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '".self::$hookBeingExecuted."':\n\n" . $e;
+				error_log($message);
+				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
+			}
+			self::setActiveModulePrefix(null);
+		}
+	}
+
 	static function callHook($name, $arguments)
 	{
 		if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS])){
@@ -622,29 +649,42 @@ class ExternalModules
 			}
 		}
 
+		self::$hookBeingExecuted = "hook_$name";
+
+		if (!self::$delayed) {
+			self::$delayed = array();
+		}
+		self::$delayed[self::$hookBeingExecuted] = array();
+
 		$versionsByPrefix = self::getEnabledModules($pid);
 		foreach($versionsByPrefix as $prefix=>$version){
-			$methodName = "hook_$name";
+			self::$versionBeingExecuted = $version;
 
-			if(!self::hasPermission($prefix, $version, $methodName)){
-				// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
-				continue;
-			}
+			self::startHook($prefix, $version, $arguments);
+		}
 
-			$instance = self::getModuleInstance($prefix, $version);
-			if(method_exists($instance, $methodName)){
-				self::setActiveModulePrefix($prefix);
-				try{
-					call_user_func_array(array($instance,$methodName), $arguments);
+		$prevNumDelayed = count($versionsByPrefix) + 1;
+		while (($prevNumDelayed > count(self::$delayed[self::$hookBeingExecuted])) && (count(self::$delayed[self::$hookBeingExecuted]) > 0)) {
+			$prevDelayed = self::$delayed[self::$hookBeingExecuted];
+			 $prevNumDelayed = count($prevDelayed);
+			self::$delayed[self::$hookBeingExecuted] = array();
+			foreach ($prevDelayed as $prefix=>$version) {
+				self::$versionBeingExecuted = $version;
+
+				if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+					// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+					continue;
 				}
-				catch(Exception $e){
-					$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '$methodName':\n\n" . $e;
-					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
-				}
-				self::setActiveModulePrefix(null);
+
+				self::startHook($prefix, $version, $arguments);
 			}
 		}
+		self::$hookBeingExecuted = "";
+		self::$versionBeingExecuted = "";
+	}
+
+	public static function delayModuleExecution() {
+		self::$delayed[self::$hookBeingExecuted][self::$activeModulePrefix] = self::$versionBeingExecuted;
 	}
 
 	# This function exists solely to provide a scope where we don't care if local variables get overwritten by code in the required file.
@@ -910,7 +950,7 @@ class ExternalModules
 			$fullLocalPath = __DIR__ . "/../$path";
 
 			// Add the filemtime to the url for cache busting.
-			clearstatcache(true, $path);
+                        clearstatcache(true, $path);
 			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
 		}
 
