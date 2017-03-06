@@ -1,5 +1,7 @@
 <?php
 namespace ExternalModules;
+
+define('NOAUTH',true);
 require_once dirname(__FILE__) . '/classes/ExternalModules.php';
 
 $id = $_GET['id'];
@@ -14,6 +16,11 @@ if(empty($prefix)){
 $version = ExternalModules::getGlobalSetting($prefix, ExternalModules::KEY_VERSION);
 if(empty($version)){
 	die("The requested module is currently disabled globally.");
+}
+
+$configuration = ExternalModules::getConfig($prefix, $version);
+if($configuration["no-auth-links"][$page] != true) {
+	ExternalModules::reauthorize();
 }
 
 if($pid != null){
