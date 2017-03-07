@@ -1263,6 +1263,7 @@ class ExternalModules
 	# JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
 	# the form of other JSON-encoded strings.
 	static function setInstance($prefix, $projectId, $key, $instance, $value) {
+		$instance = (int) $instance;
 		if (is_int($instance)) {
 			$oldValue = self::getSetting($prefix, $projectId, $key);
 			$json = array();
