@@ -1264,38 +1264,36 @@ class ExternalModules
 	# the form of other JSON-encoded strings.
 	static function setInstance($prefix, $projectId, $key, $instance, $value) {
 		$instance = (int) $instance;
-		if (is_int($instance)) {
-			$oldValue = self::getSetting($prefix, $projectId, $key);
-			$json = array();
-			if (gettype($oldValue) != "array") {
-				if ($oldValue !== null) {
-					$json[] = $oldValue;
-				}
+		$oldValue = self::getSetting($prefix, $projectId, $key);
+		$json = array();
+		if (gettype($oldValue) != "array") {
+			if ($oldValue !== null) {
+				$json[] = $oldValue;
 			}
+		}
 
-			# fill in with prior values
-			for ($i=count($json); $i < $instance; $i++) {
-				if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
-					$json[$i] = $oldValue[$i];
-				} else {
-					# pad with null for prior values when $n is ahead; should never be used
-					$json[$i] = null;
-				}
-			}
-
-			# do not set null values for current instance; always set to empty string 
-			if ($value !== null) {
-				$json[$instance] = $value;
+		# fill in with prior values
+		for ($i=count($json); $i < $instance; $i++) {
+			if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
+				$json[$i] = $oldValue[$i];
 			} else {
-				$json[$instance] = "";
+				# pad with null for prior values when $n is ahead; should never be used
+				$json[$i] = null;
 			}
+		}
 
-			#single-element JSONs are simply data values
-			if (count($json) == 1) {
-				self::setSetting($prefix, $projectId, $key, $json[0]);
-			} else {
-				self::setSetting($prefix, $projectId, $key, $json);
-			}
+		# do not set null values for current instance; always set to empty string 
+		if ($value !== null) {
+			$json[$instance] = $value;
+		} else {
+			$json[$instance] = "";
+		}
+
+		#single-element JSONs are simply data values
+		if (count($json) == 1) {
+			self::setSetting($prefix, $projectId, $key, $json[0]);
+		} else {
+			self::setSetting($prefix, $projectId, $key, $json);
 		}
 	}
 }
