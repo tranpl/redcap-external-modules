@@ -43,6 +43,12 @@ class ExternalModules
 	public static $MODULES_URL;
 	public static $MODULES_PATH;
 
+	# index is hook $name, then $prefix, then $version
+	private static $delayed;
+
+	private static $hookBeingExecuted;
+	private static $versionBeingExecuted;
+
 	private static $initialized = false;
 	private static $activeModulePrefix;
 	private static $instanceCache = array();
@@ -632,13 +638,34 @@ class ExternalModules
 		return "(" . implode(" OR ", $parts) . ")";
     }
 
+	private static function startHook($prefix, $version, $arguments) {
+		if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+			// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+			return;
+		}
+
+		$instance = self::getModuleInstance($prefix, $version);
+		if(method_exists($instance, self::$hookBeingExecuted)){
+			self::setActiveModulePrefix($prefix);
+			try{
+				call_user_func_array(array($instance,self::$hookBeingExecuted), $arguments);
+			}
+			catch(Exception $e){
+				$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '".self::$hookBeingExecuted."':\n\n" . $e;
+				error_log($message);
+				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
+			}
+			self::setActiveModulePrefix(null);
+		}
+	}
+
 	static function callHook($name, $arguments)
 	{
 		if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS])){
 			return;
 		}
 
-		if(!defined(PAGE)){
+		if(!defined('PAGE')){
 			$page = ltrim($_SERVER['REQUEST_URI'], '/');
 			define('PAGE', $page);
 		}
@@ -667,29 +694,42 @@ class ExternalModules
 			}
 		}
 
+		self::$hookBeingExecuted = "hook_$name";
+
+		if (!self::$delayed) {
+			self::$delayed = array();
+		}
+		self::$delayed[self::$hookBeingExecuted] = array();
+
 		$versionsByPrefix = self::getEnabledModules($pid);
 		foreach($versionsByPrefix as $prefix=>$version){
-			$methodName = "hook_$name";
+			self::$versionBeingExecuted = $version;
 
-			if(!self::hasPermission($prefix, $version, $methodName)){
-				// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
-				continue;
-			}
+			self::startHook($prefix, $version, $arguments);
+		}
 
-			$instance = self::getModuleInstance($prefix, $version);
-			if(method_exists($instance, $methodName)){
-				self::setActiveModulePrefix($prefix);
-				try{
-					call_user_func_array(array($instance,$methodName), $arguments);
+		$prevNumDelayed = count($versionsByPrefix) + 1;
+		while (($prevNumDelayed > count(self::$delayed[self::$hookBeingExecuted])) && (count(self::$delayed[self::$hookBeingExecuted]) > 0)) {
+			$prevDelayed = self::$delayed[self::$hookBeingExecuted];
+			 $prevNumDelayed = count($prevDelayed);
+			self::$delayed[self::$hookBeingExecuted] = array();
+			foreach ($prevDelayed as $prefix=>$version) {
+				self::$versionBeingExecuted = $version;
+
+				if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+					// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+					continue;
 				}
-				catch(Exception $e){
-					$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '$methodName':\n\n" . $e;
-					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
-				}
-				self::setActiveModulePrefix(null);
+
+				self::startHook($prefix, $version, $arguments);
 			}
 		}
+		self::$hookBeingExecuted = "";
+		self::$versionBeingExecuted = "";
+	}
+
+	public static function delayModuleExecution() {
+		self::$delayed[self::$hookBeingExecuted][self::$activeModulePrefix] = self::$versionBeingExecuted;
 	}
 
 	# This function exists solely to provide a scope where we don't care if local variables get overwritten by code in the required file.
@@ -850,7 +890,7 @@ class ExternalModules
 		$projectEnabledDefaults = array();
 
 		// Only attempt to detect enabled modules if the external module tables exist.
-		if(self::areTablesPresent()){
+		if(self::getSqlToRunIfDBOutdated() === ""){
 			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
 			while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 				$pid = $row['project_id'];
@@ -891,6 +931,63 @@ class ExternalModules
 		return db_num_rows($result) > 0;
 	}
 
+	static function isTypePresentInTable()
+	{
+		global $db;
+		$sql = "SELECT * 
+			FROM information_schema.COLUMNS 
+			WHERE 
+				TABLE_SCHEMA = '".db_real_escape_string($db)."' 
+				AND TABLE_NAME = 'redcap_external_module_settings' 
+				AND COLUMN_NAME = 'type'";
+
+		$result = self::query($sql);
+		return db_num_rows($result) > 0;
+	}
+
+	# returns SQL statements to be run when the database is outdated.
+	# returns "" if the database is up-to-date
+	#
+	# Checks in order for various conditions
+	# Helper methods in methodName return true if up-to-date; false if out-of-date
+	static function getSqlToRunIfDBOutdated()
+	{
+		$sql = array();
+		$sql[] = array( "file" => "sql/create tables.sql",
+				"methodName" => "areTablesPresent"
+				);
+		$sql[] = array( "file" => "sql/migration-2017-01-18_10-03-00.sql",
+				"methodName" => "isTypePresentInTable"
+				);
+
+		$sqlToReturn = array();
+		foreach ($sql as $row) {
+			$isPresent = self::callPrivateMethod($row['methodName']);
+			if (!$isPresent) {
+				$sqlToReturn[] = htmlspecialchars(file_get_contents(__DIR__ . '/../'.$row['file']));
+			}
+		}
+		return implode("\n", $sqlToReturn);
+	}
+
+        private function callPrivateMethod($methodName)
+        {
+                $args = func_get_args();
+                array_shift($args); // remove the method name
+
+                $class = self::getReflectionClass();
+                $method = $class->getMethod($methodName);
+                $method->setAccessible(true);
+
+                return $method->invokeArgs(null, $args);
+        }
+
+        private function getReflectionClass()
+        {
+                return new \ReflectionClass('ExternalModules\ExternalModules');
+        }
+
+
 	static function addResource($path)
 	{
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
@@ -903,7 +1000,7 @@ class ExternalModules
 			$fullLocalPath = __DIR__ . "/../$path";
 
 			// Add the filemtime to the url for cache busting.
-			clearstatcache(true, $path);
+                        clearstatcache(true, $path);
 			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
 		}
 
@@ -1056,7 +1153,53 @@ class ExternalModules
 	}
 
 	public static function getAdditionalFieldChoices($configRow,$pid) {
-		if ($configRow['type'] == 'field-list') {
+                if ($configRow['type'] == 'user-role-list') {
+                        $choices = [];
+
+                        $sql = "SELECT role_id,role_name
+                                        FROM redcap_user_roles
+                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
+                                        ORDER BY role_id";
+                        $result = self::query($sql);
+
+                        while ($row = db_fetch_assoc($result)) {
+                                $choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
+                        }
+
+                        $configRow['choices'] = $choices;
+                }
+                else if ($configRow['type'] == 'user-list') {
+                        $choices = [];
+
+                        $sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
+                                        FROM redcap_user_rights ur, redcap_user_information ui
+                                        WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
+                                                AND ui.username = ur.username
+                                        ORDER BY ui.ui_id";
+                        $result = self::query($sql);
+
+                        while ($row = db_fetch_assoc($result)) {
+                                $choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
+                        }
+
+                        $configRow['choices'] = $choices;
+                }
+                else if ($configRow['type'] == 'dag-list') {
+                        $choices = [];
+
+                        $sql = "SELECT group_id,group_name
+                                        FROM redcap_data_access_groups
+                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
+                                        ORDER BY group_id";
+                        $result = self::query($sql);
+
+                        while ($row = db_fetch_assoc($result)) {
+                                $choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
+                        }
+
+                        $configRow['choices'] = $choices;
+                }
+		else if ($configRow['type'] == 'field-list') {
 			$choices = [];
 
 			$sql = "SELECT field_name,element_label
@@ -1226,38 +1369,37 @@ class ExternalModules
 	# JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
 	# the form of other JSON-encoded strings.
 	static function setInstance($prefix, $projectId, $key, $instance, $value) {
-		if (is_int($instance)) {
-			$oldValue = self::getSetting($prefix, $projectId, $key);
-			$json = array();
-			if (gettype($oldValue) != "array") {
-				if ($oldValue !== null) {
-					$json[] = $oldValue;
-				}
+		$instance = (int) $instance;
+		$oldValue = self::getSetting($prefix, $projectId, $key);
+		$json = array();
+		if (gettype($oldValue) != "array") {
+			if ($oldValue !== null) {
+				$json[] = $oldValue;
 			}
+		}
 
-			# fill in with prior values
-			for ($i=count($json); $i < $instance; $i++) {
-				if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
-					$json[$i] = $oldValue[$i];
-				} else {
-					# pad with null for prior values when $n is ahead; should never be used
-					$json[$i] = null;
-				}
-			}
-
-			# do not set null values for current instance; always set to empty string 
-			if ($value !== null) {
-				$json[$instance] = $value;
+		# fill in with prior values
+		for ($i=count($json); $i < $instance; $i++) {
+			if ((gettype($oldValue) == "array") && (count($oldValue) > $i)) {
+				$json[$i] = $oldValue[$i];
 			} else {
-				$json[$instance] = "";
+				# pad with null for prior values when $n is ahead; should never be used
+				$json[$i] = null;
 			}
+		}
 
-			#single-element JSONs are simply data values
-			if (count($json) == 1) {
-				self::setSetting($prefix, $projectId, $key, $json[0]);
-			} else {
-				self::setSetting($prefix, $projectId, $key, $json);
-			}
+		# do not set null values for current instance; always set to empty string 
+		if ($value !== null) {
+			$json[$instance] = $value;
+		} else {
+			$json[$instance] = "";
+		}
+
+		#single-element JSONs are simply data values
+		if (count($json) == 1) {
+			self::setSetting($prefix, $projectId, $key, $json[0]);
+		} else {
+			self::setSetting($prefix, $projectId, $key, $json);
 		}
 	}
 
