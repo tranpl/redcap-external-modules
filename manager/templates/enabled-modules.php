@@ -78,6 +78,7 @@ if($versionsByPrefixJSON == null){
 			}
 
 			var optionsHtml = '';
+			optionsHtml += '<option value=""></option>';
 			for(var i in choices ){
 				var choice = choices[i];
 				var value = choice.value;
@@ -188,6 +189,15 @@ if($versionsByPrefixJSON == null){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 			}
 			else if(type == 'form-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'user-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'user-role-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'dag-list'){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 			}
 			else if(type == 'project-id'){

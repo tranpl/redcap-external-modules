@@ -1098,7 +1098,53 @@ class ExternalModules
 	}
 
 	public static function getAdditionalFieldChoices($configRow,$pid) {
-		if ($configRow['type'] == 'field-list') {
+                if ($configRow['type'] == 'user-role-list') {
+                        $choices = [];
+
+                        $sql = "SELECT role_id,role_name
+                                        FROM redcap_user_roles
+                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
+                                        ORDER BY role_id";
+                        $result = self::query($sql);
+
+                        while ($row = db_fetch_assoc($result)) {
+                                $choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
+                        }
+
+                        $configRow['choices'] = $choices;
+                }
+                else if ($configRow['type'] == 'user-list') {
+                        $choices = [];
+
+                        $sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
+                                        FROM redcap_user_rights ur, redcap_user_information ui
+                                        WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
+                                                AND ui.username = ur.username
+                                        ORDER BY ui.ui_id";
+                        $result = self::query($sql);
+
+                        while ($row = db_fetch_assoc($result)) {
+                                $choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
+                        }
+
+                        $configRow['choices'] = $choices;
+                }
+                else if ($configRow['type'] == 'dag-list') {
+                        $choices = [];
+
+                        $sql = "SELECT group_id,group_name
+                                        FROM redcap_data_access_groups
+                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
+                                        ORDER BY group_id";
+                        $result = self::query($sql);
+
+                        while ($row = db_fetch_assoc($result)) {
+                                $choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
+                        }
+
+                        $configRow['choices'] = $choices;
+                }
+		else if ($configRow['type'] == 'field-list') {
 			$choices = [];
 
 			$sql = "SELECT field_name,element_label
