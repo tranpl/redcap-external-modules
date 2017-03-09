@@ -1050,12 +1050,6 @@ class ExternalModules
                                         ORDER BY role_id";
                         $result = self::query($sql);
 
-			if (db_num_rows($result) > 0) {
-                                $choices[] = ['value' => "", 'name' => ""];
-			} else {
-                                $choices[] = ['value' => "", 'name' => ""];
-			}
-
                         while ($row = db_fetch_assoc($result)) {
                                 $choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
                         }
@@ -1072,12 +1066,6 @@ class ExternalModules
                                         ORDER BY ui.ui_id";
                         $result = self::query($sql);
 
-			if (db_num_rows($result) > 0) {
-                                $choices[] = ['value' => "", 'name' => ""];
-			} else {
-                                $choices[] = ['value' => "", 'name' => ""];
-			}
-
                         while ($row = db_fetch_assoc($result)) {
                                 $choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
                         }
@@ -1092,12 +1080,6 @@ class ExternalModules
                                         WHERE project_id = '" . db_real_escape_string($pid) . "'
                                         ORDER BY group_id";
                         $result = self::query($sql);
-
-			if (db_num_rows($result) > 0) {
-                                $choices[] = ['value' => "", 'name' => ""];
-			} else {
-                                $choices[] = ['value' => "", 'name' => ""];
-			}
 
                         while ($row = db_fetch_assoc($result)) {
                                 $choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
@@ -1114,12 +1096,6 @@ class ExternalModules
 					ORDER BY field_order";
 			$result = self::query($sql);
 
-			if (db_num_rows($result) > 0) {
-                                $choices[] = ['value' => "", 'name' => ""];
-			} else {
-                                $choices[] = ['value' => "", 'name' => ""];
-			}
-
 			while ($row = db_fetch_assoc($result)) {
 				$choices[] = ['value' => $row['field_name'], 'name' => $row['field_name'] . " - " . substr($row['element_label'], 0, 20)];
 			}
@@ -1134,12 +1110,6 @@ class ExternalModules
 					WHERE project_id = '" . db_real_escape_string($pid) . "'
 					ORDER BY field_order";
 			$result = self::query($sql);
-
-			if (db_num_rows($result) > 0) {
-                                $choices[] = ['value' => "", 'name' => ""];
-			} else {
-                                $choices[] = ['value' => "", 'name' => ""];
-			}
 
 			while ($row = db_fetch_assoc($result)) {
 				$choices[] = ['value' => $row['form_name'], 'name' => $row['form_name']];
