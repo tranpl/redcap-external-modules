@@ -289,7 +289,15 @@ class ExternalModules
 		}
 		if ($type == "array") {
 			$type = "json";
-			$value = json_encode($value);
+			$newValue = array();
+			foreach ($value as $v) {
+				# cannot store null values; store as blank strings instead
+				if ($v === null) {
+					$v = "";
+				}
+				$newValue[] = $v;
+			}
+			$value = json_encode($newValue);
 		}
 
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
