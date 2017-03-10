@@ -12,6 +12,7 @@ class AbstractExternalModule
 	public $PREFIX;
 	public $VERSION;
 
+	# constructor
 	function __construct()
 	{
 		list($prefix, $version) = ExternalModules::getParseModuleDirectoryPrefixAndVersion($this->getModuleDirectoryName());
@@ -23,6 +24,7 @@ class AbstractExternalModule
 		self::checkSettings();
 	}
 
+	# checks the config.json settings for validity of syntax
 	protected function checkSettings()
 	{
 		$config = $this->getConfig();
@@ -68,6 +70,8 @@ class AbstractExternalModule
 		}
 	}
 
+	# checks a config.json setting key $key for validity
+	# throws an exception if invalid
 	private function checkSettingKey($key)
 	{
 		if(!self::isSettingKeyValid($key)){
@@ -75,6 +79,8 @@ class AbstractExternalModule
 		}
 	}
 
+	# validity check for a setting key $key
+	# returns boolean
 	protected function isSettingKeyValid($key)
 	{
 		// Only allow lowercase characters, numbers, dashes, and underscores to ensure consistency between modules (and so we don't have to worry about escaping).
@@ -109,6 +115,7 @@ class AbstractExternalModule
 		throw new Exception('Not yet implemented!');
 	}
 
+	# check whether the current External Module has permission to call the requested method $methodName
 	private function checkPermissions($methodName)
 	{
 		# Convert from camel to snake case.
@@ -120,61 +127,81 @@ class AbstractExternalModule
 		}
 	}
 
+	# checks whether the current External Module has permission for $permissionName
 	function hasPermission($permissionName)
 	{
 		return ExternalModules::hasPermission($this->PREFIX, $this->VERSION, $permissionName);
 	}
 
+	# get the config for the current External Module
+	# consists of config.json and filled-in values
 	function getConfig()
 	{
 		return ExternalModules::getConfig($this->PREFIX, $this->VERSION);
 	}
 
+	# get the directory name of the current external module
 	function getModuleDirectoryName()
 	{
 		$reflector = new \ReflectionClass(get_class($this));
 		return basename(dirname($reflector->getFileName()));
 	}
 
+	# a GLOBAL/SYSTEM setting is a value to be used on all projects. It can be overridden by a particular project
+	# a PROJECT setting is a value set by each project. It may be a value that overrides a system setting
+	#      or it may be a value set for that project alone with no suggested System-level value.
+	#      the project_id corresponds to the value in REDCap
+	#      if a project_id (pid) is null, then it becomes a global/system value 
+
+	# sets the global setting for the current external module's $key
 	function setGlobalSetting($key, $value)
 	{
 		ExternalModules::setGlobalSetting($this->PREFIX, $key, $value);
 	}
 
+	# returns the global setting's value for the current external module's $key
 	function getGlobalSetting($key)
 	{
 		return ExternalModules::getGlobalSetting($this->PREFIX, $key);
 	}
 
+	# removes the value completely from the current external module's $key
 	function removeGlobalSetting($key)
 	{
 		ExternalModules::removeGlobalSetting($this->PREFIX, $key);
 	}
 
+	# sets the project-level setting
 	function setProjectSetting($key, $value, $pid = null)
 	{
 		$pid = self::requireProjectId($pid);
 		ExternalModules::setProjectSetting($this->PREFIX, $pid, $key, $value);
 	}
 
+	# returns the project-level setting
 	function getProjectSetting($key, $pid = null)
 	{
 		$pid = self::requireProjectId($pid);
 		return ExternalModules::getProjectSetting($this->PREFIX, $pid, $key);
 	}
 
+	# returns an array of the project-level settings (all values for the given project, including
+	# any global/system values that were not overridden)
 	function getAllProjectSettings($pid = null)
 	{
 		$pid = self::requireProjectId($pid);
 		return ExternalModules::getSettings($this->PREFIX, $pid);
 	}
 
+	# removes a setting's entry from the database for a particular project
+	# if a global/system value exists, it will not be used
 	function removeProjectSetting($key, $pid = null)
 	{
 		$pid = self::requireProjectId($pid);
 		ExternalModules::removeProjectSetting($this->PREFIX, $pid, $key);
 	}
 
+	# function to enforce that a pid is required for a particular function
 	private function requireProjectId($pid)
 	{
 		$pid = self::detectProjectId($pid);
@@ -186,6 +213,7 @@ class AbstractExternalModule
 		return $pid;
 	}
 
+	# if $pid is empty/null, can get the pid from $_GET if it exists
 	private function detectProjectId($pid)
 	{
 		if($pid == null){
@@ -195,6 +223,14 @@ class AbstractExternalModule
 		return $pid;
 	}
 
+	# pushes the execution of the module to the end of the queue
+	# helpful to wait for data to be processed by other modules
+	# execution of the module will be restarted from the beginning
+	# For example:
+	# 	if ($data['field'] === "") {
+	#		delayModuleExecution();
+	#		return;       // the module will be restarted from the beginning
+	#	}
 	public function delayModuleExecution() {
 		ExternalModules::delayModuleExecution();
 	}

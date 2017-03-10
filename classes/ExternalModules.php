@@ -38,8 +38,13 @@ class ExternalModules
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
 
+	# base URL for external modules
 	public static $BASE_URL;
+
+	# URL for the modules directory
 	public static $MODULES_URL;
+
+	# path for the modules directory
 	public static $MODULES_PATH;
 
 	# index is hook $name, then $prefix, then $version
@@ -59,6 +64,10 @@ class ExternalModules
 
 	private static $configs = array();
 
+	# two reserved settings that are there for each project
+	# KEY_VERSION, if present, denotes that the project is enabled system-wide
+	# KEY_ENABLED is present when enabled for each project
+	# Modules can be enabled for all projects (system-wide) if KEY_ENABLED == 1 for system value
 	private static $RESERVED_SETTINGS = array(
 		array(
 			'key' => self::KEY_VERSION,
@@ -73,11 +82,13 @@ class ExternalModules
 		)
 	);
 
+	# defines criteria to judge someone is on a development box or not
 	private static function isLocalhost()
 	{
 		return @$_SERVER['HTTP_HOST'] == 'localhost';
 	}
 
+	# initializes the External Module aparatus
 	static function initialize()
 	{
 		if(self::isLocalhost()){
@@ -142,11 +153,13 @@ class ExternalModules
 		}
 	}
 
+	# controls which module is currently being manipulated
 	private static function setActiveModulePrefix($prefix)
 	{
 		self::$activeModulePrefix = $prefix;
 	}
 
+	# returns which module is currently being manipulated
 	private static function getActiveModulePrefix()
 	{
 		return self::$activeModulePrefix;
@@ -166,6 +179,10 @@ class ExternalModules
 		$email->send();
 	}
 
+	# there are two situations which external modules are displayed
+	# under a project or under the control center
+
+	# this gets the project header
 	static function getProjectHeaderPath()
 	{
 		return APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
@@ -176,11 +193,13 @@ class ExternalModules
 		return APP_PATH_DOCROOT . 'ProjectGeneral/footer.php';
 	}
 
+	# disables a module system-wide
 	static function disable($moduleDirectoryPrefix)
 	{
 		self::removeGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION);
 	}
 
+	# enables a module system-wide
 	static function enable($moduleDirectoryPrefix, $version)
 	{
 		# Attempt to create an instance of the module before enabling it system wide.
@@ -192,6 +211,7 @@ class ExternalModules
 		self::setGlobalSetting($moduleDirectoryPrefix, self::KEY_VERSION, $version);
 	}
 
+	# initializes the global/system settings
 	static function initializeSettingDefaults($moduleInstance)
 	{
 		$config = $moduleInstance->getConfig();
@@ -252,6 +272,7 @@ class ExternalModules
 		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
 	}
 
+	# returns boolean
 	public static function isProjectSettingDefined($prefix, $key)
 	{
 		$config = self::getConfig($prefix);
@@ -264,6 +285,8 @@ class ExternalModules
 		return false;
 	}
 
+	# this is a helper method
+	# call set [Global=System,Project] Setting instead of calling this method
 	private static function setSetting($moduleDirectoryPrefix, $projectId, $key, $value, $type = "")
 	{
 		if($projectId == self::GLOBAL_SETTING_PROJECT_ID){
@@ -381,6 +404,16 @@ class ExternalModules
 		}
 	}
 
+	# get all the settings as an array instead of one by one
+	# returns an associative array with index of key and value of value
+	# arrays of values (e.g., repeatble) will be returned as arrays
+	# As in,
+	# 	$ary['key'] = 'string';
+	#	$ary['key2'] = 123;
+	#	$ary['key3'] = [ 1, 'abc', 3 ];
+	#	$ary['key3'][0] = 1;
+	#	$ary['key3'][1] = 'abc';
+	#	$ary['key3'][2] = 3;
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::GLOBAL_SETTING_PROJECT_ID, $projectId));
@@ -434,6 +467,8 @@ class ExternalModules
 							WHERE " . implode(' AND ', $whereClauses));
 	}
 
+	# row contains the data type in field 'type' and the value in field 'value'
+	# this makes sure that the data returned in 'value' is of that correct type
 	static function validateSettingsRow($row)
 	{
 		if ($row == null) {
@@ -502,6 +537,10 @@ class ExternalModules
 		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
 	}
 
+	# directory name is [institution]_[module]_v[X].[Y]
+	# prefix is [institution]_[module]
+	# gets stored in database as module_id number
+	# translates prefix string into a module_id number
 	private static function getIdForPrefix($prefix)
 	{
 		if(!isset(self::$idsByPrefix)){
@@ -525,6 +564,7 @@ class ExternalModules
 		return $id;
 	}
 
+	# translates a module_id number into a prefix string
 	public static function getPrefixForID($id){
 		$id = db_real_escape_string($id);
 
@@ -538,6 +578,7 @@ class ExternalModules
 		return null;
 	}
 
+	# executes a database query and returns the result
 	private static function query($sql)
 	{
 		$result = db_query($sql);
@@ -549,6 +590,7 @@ class ExternalModules
 		return $result;
 	}
 
+	# converts an equals clause into SQL
 	private static function getSQLEqualClause($columnName, $value)
 	{
 		$columnName = db_real_escape_string($columnName);
@@ -562,6 +604,7 @@ class ExternalModules
 		}
 	}
 
+	# converts an IN array clause into SQL
 	private static function getSQLInClause($columnName, $array)
 	{
 		if(!is_array($array)){
@@ -599,8 +642,11 @@ class ExternalModules
 		}
 
 		return "(" . implode(" OR ", $parts) . ")";
-    }
+	}
 
+	# begins the execution of a hook
+	# helper method
+	# should call callHook
 	private static function startHook($prefix, $version, $arguments) {
 		if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
 			// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
@@ -622,6 +668,7 @@ class ExternalModules
 		}
 	}
 
+	# calls a hooke via startHook
 	static function callHook($name, $arguments)
 	{
 		if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS])){
@@ -671,6 +718,9 @@ class ExternalModules
 			self::startHook($prefix, $version, $arguments);
 		}
 
+		# runs delayed modules
+		# terminates if queue is 0 or if it is the same as in the previous iteration
+		# (i.e., no modules completing)
 		$prevNumDelayed = count($versionsByPrefix) + 1;
 		while (($prevNumDelayed > count(self::$delayed[self::$hookBeingExecuted])) && (count(self::$delayed[self::$hookBeingExecuted]) > 0)) {
 			$prevDelayed = self::$delayed[self::$hookBeingExecuted];
@@ -691,6 +741,7 @@ class ExternalModules
 		self::$versionBeingExecuted = "";
 	}
 
+	# places module in delaying queue to be executed after all others are executed
 	public static function delayModuleExecution() {
 		self::$delayed[self::$hookBeingExecuted][self::$activeModulePrefix] = self::$versionBeingExecuted;
 	}
@@ -707,6 +758,7 @@ class ExternalModules
 		require_once $path;
 	}
 
+	# this is where a module has its code loaded
 	private static function getModuleInstance($prefix, $version)
 	{
 		self::setActiveModulePrefix($prefix);
@@ -737,6 +789,12 @@ class ExternalModules
 		return $instance;
 	}
 
+	# parses the prefix and turns it into a class name
+	# convention is [institution]_[module]_v[X].[Y]
+	# module is converted into camelCase, has its first letter capitalized, and is appended with "ExternalModule"
+	# note well that if [module] contains an underscore (_), only the first chain link will be dealt with
+	# E.g., vanderbilt_example_v1.0 yields a class name of "ExampleExternalModule"
+	# vanderbilt_pdf_modify_v1.2 yields a class name of "PdfExternalModule"
 	private static function getMainClassName($prefix)
 	{
 		$parts = explode('_', $prefix);
@@ -752,9 +810,9 @@ class ExternalModules
 		return $className;
 	}
 
-	// Accepts a project id as the first parameter.
-	// If the project id is null, all globally enabled module instances are returned.
-	// Otherwise, only instances enabled for the current project id are returned.
+	# Accepts a project id as the first parameter.
+	# If the project id is null, all globally enabled module instances are returned.
+	# Otherwise, only instances enabled for the current project id are returned.
 	static function getEnabledModules($pid = null)
 	{
 		if($pid == null){
@@ -765,6 +823,7 @@ class ExternalModules
 		}
 	}
 
+	# returns all enabled versions that are enabled system-wide
 	private static function getGloballyEnabledVersions()
 	{
 		if(!isset(self::$globallyEnabledVersions)){
@@ -792,6 +851,7 @@ class ExternalModules
 		return self::$projectEnabledOverrides;
 	}
 
+	# get all versions enabled for a given project
 	private static function getEnabledModuleVersionsForProject($pid)
 	{
 		$projectEnabledOverrides = self::getProjectEnabledOverrides();
@@ -841,6 +901,7 @@ class ExternalModules
 		return PHP_SAPI == 'cli' && strpos($_SERVER['argv'][0], 'phpunit') !== FALSE;
 	}
 
+	# calling this method stores a local cache of all releavant data from the database
 	private static function cacheAllEnableData()
 	{
 		$globallyEnabledVersions = array();
@@ -883,12 +944,14 @@ class ExternalModules
 		self::$projectEnabledOverrides = $projectEnabledOverrides;
 	}
 
+	# tests whether External Modules has been initially configured
 	static function areTablesPresent()
 	{
 		$result = self::query("SHOW TABLES LIKE 'redcap_external_module%'");
 		return db_num_rows($result) > 0;
 	}
 
+	# tests whether another database upgrade has taken place
 	static function isTypePresentInTable()
 	{
 		global $db;
@@ -928,6 +991,7 @@ class ExternalModules
 		return implode("\n", $sqlToReturn);
 	}
 
+	# calls a private method in the ExternalModules class
         private function callPrivateMethod($methodName)
         {
                 $args = func_get_args();
@@ -946,6 +1010,7 @@ class ExternalModules
         }
 
 
+	# echo's HTML for adding an approriate resource; also prepends appropriate directory structure
 	static function addResource($path)
 	{
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
@@ -973,6 +1038,7 @@ class ExternalModules
 		}
 	}
 
+	# returns an array of links requested by the config.json
 	static function getLinks(){
 		$pid = self::getPID();
 
@@ -1017,11 +1083,13 @@ class ExternalModules
 		return $links;
 	}
 
+	# returns the pid from the $_GET array
 	private static function getPID()
 	{
 		return @$_GET['pid'];
 	}
 
+	# for an internal request for a project URL, transforms the request into a URL
 	private static function getUrl($prefix, $page)
 	{
 		$id = self::getIdForPrefix($prefix);
@@ -1029,6 +1097,7 @@ class ExternalModules
 		return self::$BASE_URL . "?id=$id&page=$page";
 	}
 
+	# returns the configs for disabled modules
 	static function getDisabledModuleConfigs($enabledModules)
 	{
 		$dirs = scandir(self::$MODULES_PATH);
@@ -1059,6 +1128,8 @@ class ExternalModules
 		return $disabledModuleVersions;
 	}
 
+	# Parses [institution]_[module]_v[X].[Y] into [ [institution]_[module], v[X].[Y] ]
+	# e.g., vanderbilt_example_v1.0 becomes [ "vanderbilt_example", "v1.0" ]
 	static function getParseModuleDirectoryPrefixAndVersion($directoryName){
 		$parts = explode('_', $directoryName);
 
@@ -1068,6 +1139,7 @@ class ExternalModules
 		return array($prefix, $version);
 	}
 
+	# returns the config.json for a given module
 	static function getConfig($prefix, $version = null, $pid = null)
 	{
 		if($version == null){
@@ -1105,6 +1177,7 @@ class ExternalModules
 		return $config;
 	}
 
+	# specialty field lists include: user-role-list, user-list, dag-list, field-list, and form-list
 	public static function getAdditionalFieldChoices($configRow,$pid) {
                 if ($configRow['type'] == 'user-role-list') {
                         $choices = [];
@@ -1191,12 +1264,14 @@ class ExternalModules
 		return $configRow;
 	}
 
+	# gets the version of a module
 	public static function getEnabledVersion($prefix)
 	{
 		$versionsByPrefix = self::getGloballyEnabledVersions();
 		return @$versionsByPrefix[$prefix];
 	}
 
+	# adds the RESERVED_SETTINGS (above) to the config
 	private static function addReservedSettings($config)
 	{
 		$globalSettings = $config['global-settings'];
@@ -1229,6 +1304,7 @@ class ExternalModules
 		return $config;
 	}
 
+	# formats directory name from $prefix and $version
 	static function getModuleDirectoryName($prefix, $version){
 		return $prefix . '_' . $version;
 	}
@@ -1270,6 +1346,7 @@ class ExternalModules
 		return false;
 	}
 
+	# returns boolean if design rights are given by REDCap for current user
 	static function hasDesignRights()
 	{
 		if(SUPER_USER){
