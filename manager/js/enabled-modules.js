@@ -1,14 +1,14 @@
 $(function(){
 		// Merged from updated enabled-modules, may need to reconfigure
-		//var configsByPrefix = <?=$configsByPrefixJSON?>;
-		//var versionsByPrefix = <?=$versionsByPrefixJSON?>;
-		//var pidString = pid;
+		var configsByPrefix = ExternalModules.configsByPrefixJSON;
+		var versionsByPrefix = ExternalModules.versionsByPrefixJSON;
+		var pidString = pid;
 		//if(pid == null){
 		//	pidString = '';
 		//}
 	var configureModal = $('#external-modules-configure-modal');
 		// may need to reconfigure
-		//var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
+		var isSuperUser = (ExternalModules.SUPER_USER == 1);
 
 	var getSelectElement = function(name, choices, selectedValue, selectAttributes){
 		if(!selectAttributes){
@@ -233,12 +233,12 @@ $(function(){
 			var overrideChoices = [
 				{ value: '', name: 'Superusers Only' },
 				// Will need to clean up because can't use PHP constants in .js file
-				{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Admins' },
+				{ value: ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS, name: 'Project Admins' },
 			];
 
 			var selectAttributes = '';
 			// Will need to clean up because can't use PHP constants in .js file
-				if(setting.key == '<?=ExternalModules::KEY_ENABLED?>'){
+				if(setting.key == ExternalModules.KEY_ENABLED){
 				// For now, we've decided that only super users can enable modules on projects.
 				// To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
 				selectAttributes = 'disabled'
@@ -347,7 +347,7 @@ $(function(){
 				setting.systemValue = saved.system_value;
 			}
 		// Will need to clean up because can't use PHP constants in .js file
-                setting.overrideLevelKey = setting.key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
+                setting.overrideLevelKey = setting.key + ExternalModules.OVERRIDE_PERMISSION_LEVEL_SUFFIX;
 			var overrideLevel = savedSettings[setting.overrideLevelKey];
 			if(overrideLevel){
 				setting.overrideLevelValue = overrideLevel.value
