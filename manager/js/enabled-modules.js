@@ -1,5 +1,14 @@
 $(function(){
+		// Merged from updated enabled-modules, may need to reconfigure
+		//var configsByPrefix = <?=$configsByPrefixJSON?>;
+		//var versionsByPrefix = <?=$versionsByPrefixJSON?>;
+		//var pidString = pid;
+		//if(pid == null){
+		//	pidString = '';
+		//}
 	var configureModal = $('#external-modules-configure-modal');
+		// may need to reconfigure
+		//var isSuperUser = <?=json_encode(SUPER_USER == 1)?>;
 
 	var getSelectElement = function(name, choices, selectedValue, selectAttributes){
 		if(!selectAttributes){
@@ -7,6 +16,7 @@ $(function(){
 		}
 
 		var optionsHtml = '';
+			optionsHtml += '<option value=""></option>';
 		for(var i in choices ){
 			var choice = choices[i];
 			var value = choice.value;
@@ -73,13 +83,11 @@ $(function(){
 	var getFileFieldElement = function(name, value, inputAttributes, pidString) {
 		var type = "file";
 		if ((typeof value != "undefined") && (value !== "")) {
-			var htmlInputElement = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
-			var html = htmlInputElement + '<span class="external-modules-edoc-file"></span>';
+				var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
+                                html += '<span class="external-modules-edoc-file"></span>';
+                                html += '<button class="external-modules-delete-file" '+inputAttributes+'>Delete File</button>';
 			$.post('ajax/get-edoc-name.php?' + pidString, { edoc : value }, function(data) {
-				var htmlNew = "<b>" + data.doc_name + "</b><br>";
-				htmlNew += '<button class="external-modules-delete-file" '+inputAttributes+'>Delete File</button>';
-				var row = $("[name='"+name+"']").closest("tr");
-				row.find(".external-modules-edoc-file").html(htmlNew);
+                                        $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
 			});
 			return html;
 		} else {
@@ -121,6 +129,15 @@ $(function(){
 		else if(type == 'form-list'){
 			inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 		}
+			else if(type == 'user-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'user-role-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'dag-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
 		else if(type == 'project-id'){
 			inputAttributes += ' class="project_id_textbox" id="test-id"';
 			inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, inputAttributes) + "</div>";
@@ -167,17 +184,6 @@ $(function(){
 			var removeButtonStyle = " style='display: none;'";
 			var originalTagStyle = " style='display: none;'";
 
-			if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
-				addButtonStyle = "";
-			}
-
-			if ((typeof instance != "undefined") && (instance > 0)) {
-				removeButtonStyle = "";
-			}
-
-			if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
-				originalTagStyle = "";
-			}
 
 			if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
 				addButtonStyle = "";
@@ -226,11 +232,13 @@ $(function(){
 		if(setting['allow-project-overrides']){
 			var overrideChoices = [
 				{ value: '', name: 'Superusers Only' },
-				{ value: override, name: 'Project Admins' },
+				// Will need to clean up because can't use PHP constants in .js file
+				{ value: '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>', name: 'Project Admins' },
 			];
 
 			var selectAttributes = '';
-			if(setting.key == enabled){
+			// Will need to clean up because can't use PHP constants in .js file
+				if(setting.key == '<?=ExternalModules::KEY_ENABLED?>'){
 				// For now, we've decided that only super users can enable modules on projects.
 				// To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
 				selectAttributes = 'disabled'
@@ -338,8 +346,8 @@ $(function(){
 				setting.value = saved.value;
 				setting.systemValue = saved.system_value;
 			}
-
-			setting.overrideLevelKey = setting.key + overrideSuffix;
+		// Will need to clean up because can't use PHP constants in .js file
+                setting.overrideLevelKey = setting.key + '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
 			var overrideLevel = savedSettings[setting.overrideLevelKey];
 			if(overrideLevel){
 				setting.overrideLevelValue = overrideLevel.value
@@ -353,8 +361,10 @@ $(function(){
 				var rowTitleSubSetHtml = '';
 				// SUB_SETTING
 				if (setting.sub_settings) {
-					if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]') && (indexSubSet == 0)) {
-						rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
+					if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]')) {
+						if(indexSubSet == 0) {
+							rowsHtml += '<tr>' + getProjectSettingColumns(setting, system) + '</tr>';
+						}
 					}
 					for (var instance = 0; instance < indexSubSet; instance++) {
 						//we add the sub_settings header
@@ -366,7 +376,7 @@ $(function(){
 						}
 
 						setting.sub_settings.forEach(function (subSetting) {
-							rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, system, instance) + '</tr>';
+                                rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, global, instance) + '</tr>';
 						});
 					}
 				} else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
@@ -634,13 +644,12 @@ $(function(){
 		}
 
 		$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) { 
-			alert(JSON.stringify(data));
 			if (data.status == "success") {
 				var inputAttributes = "";
 				if (disabled) {
 					inputAttributes = "disabled";
 				}
-				row.find(".external-modules-input-td").html(getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
+					row.find(".external-modules-edoc-file").html(getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
 				input.remove();
 			} else {		// failure
 				alert("The file was not able to be deleted. "+JSON.stringify(data));
@@ -660,60 +669,22 @@ $(function(){
 		deleteFile($(this));
 	});
 
-	var resetSaveButton = function(val) {
-		if ((typeof val != "undefined") && (val != "")) {
-			$(".save").html("Save and Upload");
-		}
-		var allEmpty = true;
-		$("input[type=file]").each(function() {
-			if ($(this).val() !== "") {
-				allEmpty = false;
+		var resetSaveButton = function() {
+			if ($(this).val() != "") {
+				$(".save").html("Save and Upload");
 			}
-		});
-		if (allEmpty) {
-			$(".save").html("Save");
-		}
-	};
-
-	configureModal.on('click', '.external-modules-use-system-setting', function(){
-		var overrideButton = $(this);
-		var systemValue = overrideButton.data('system-value');
-		var row = overrideButton.closest('tr');
-		var inputs = row.find('td:nth-child(2)').find('input, select');
-
-		var type = inputs[0].type;
-		if(type == 'radio'){
-			inputs.filter('[value=' + systemValue + ']').click();
-		}
-		else if(type == 'checkbox'){
-			inputs.prop('checked', systemValue);
-		}
-		else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
-			deleteFile($(this));
-			resetSaveButton("");
- 			}
-		else if(type == 'file') {
-			// if a real value
-			if (!isNaN(systemValue)) {
-				var edocLine = row.find(".external-modules-input-td");
-				if (edocLine) {
-					var inputAttributes = "";
-					if (inputs.prop("disabled")) {
-						inputAttributes = "disabled";
-					}
-					edocLine.html(getSystemFileFieldElement(inputs.attr('name'), systemValue, inputAttributes));
-					resetSaveButton(systemValue);
-					row.find(".external-modules-delete-file").show();
+			var allEmpty = true;
+			$("input[type=file]").each(function() {
+				if ($(this).val() !== "") {
+					allEmpty = false;
 				}
+			});
+			if (allEmpty) {
+				$(".save").html("Save");
 			}
 		}
-		else{ // text or select
-			inputs.val(systemValue);
-		}
-		overrideButton.hide();
-	});
 
-	configureModal.on('change', 'input[type=file]', function() { resetSaveButton($(this).val()); });
+		configureModal.on('change', 'input[type=file]', resetSaveButton);
 
 	// helper method for saving
 	var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
