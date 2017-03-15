@@ -354,7 +354,7 @@ class ExternalModules
 						AND `key` = '$key'";
 		} else {
 			$value = db_real_escape_string($value);
-			if($oldValue == null) {
+			if($oldValue === null) {
 				$event = "INSERT";
 				$sql = "INSERT INTO redcap_external_module_settings
 							(

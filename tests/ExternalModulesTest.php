@@ -117,6 +117,19 @@ class ExternalModulesTest extends BaseTest
 		// the other values set by cacheAllEnableData() are tested via testGetEnabledModuleVersionsForProject()
 	}
 
+        function testOverwriteBlankSetting()
+        {
+                $m = $this->getInstance();
+
+                $str = 'abc';
+                $m->setProjectSetting(ExternalModules::KEY_ENABLED, true, TEST_SETTING_PID);
+                ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, '');
+                ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $str);
+
+                $array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+                $this->assertEquals($str, $array[TEST_SETTING_KEY]['value']);
+        }
+
 	function testGetEnabledModules()
 	{
 		$this->cacheAllEnableData();
