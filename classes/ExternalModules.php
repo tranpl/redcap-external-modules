@@ -342,7 +342,11 @@ class ExternalModules
 		if (gettype($oldValue) == "boolean") {
 			$oldValue = ($oldValue) ? 'true' : 'false';
 		}
-		if((string) $value === (string) $oldValue){
+		$oldValueStr = (string) $oldValue;
+		if (gettype($oldValue) == "array") {
+			$oldValueStr = json_encode($oldValue);
+		}
+		if((string) $value === $oldValueStr){
 			// We don't need to do anything.
 			return;
 		} else if($value === null){
