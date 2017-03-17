@@ -1424,6 +1424,13 @@ class ExternalModules
 			$json[$instance] = "";
 		}
 
+		# fill in remainder if extant
+		if (gettype($oldValue) == "array") {
+			for ($i = $instance + 1; $i < count($oldValue); $i++) {
+				$json[$i] = $oldValue[$i];
+			}
+		}
+
 		#single-element JSONs are simply data values
 		if (count($json) == 1) {
 			self::setSetting($prefix, $projectId, $key, $json[0]);
