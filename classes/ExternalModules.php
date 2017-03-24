@@ -1094,7 +1094,7 @@ class ExternalModules
 	}
 
 	# for an internal request for a project URL, transforms the request into a URL
-	private static function getUrl($prefix, $page)
+	static function getUrl($prefix, $page)
 	{
 		$id = self::getIdForPrefix($prefix);
 		$page = preg_replace('/\.php$/', '', $page); // remove .php extension if it exists
