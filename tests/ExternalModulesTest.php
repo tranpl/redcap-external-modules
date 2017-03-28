@@ -117,6 +117,19 @@ class ExternalModulesTest extends BaseTest
 		// the other values set by cacheAllEnableData() are tested via testGetEnabledModuleVersionsForProject()
 	}
 
+        function testOverwriteBlankSetting()
+        {
+                $m = $this->getInstance();
+
+                $str = 'abc';
+                $m->setProjectSetting(ExternalModules::KEY_ENABLED, true, TEST_SETTING_PID);
+                ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, '');
+                ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $str);
+
+                $array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
+                $this->assertEquals($str, $array[TEST_SETTING_KEY]['value']);
+        }
+
 	function testGetEnabledModules()
 	{
 		$this->cacheAllEnableData();
@@ -450,7 +463,7 @@ class ExternalModulesTest extends BaseTest
 		$this->assertEquals($value3, $array[TEST_SETTING_KEY]['value'][2]);
 		$this->assertEquals($value4, $array[TEST_SETTING_KEY]['value'][3]);
 
-		ExternalModules::setProjectSetting($value1);
+		ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $value1);
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 1, $value2);
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 2, $value3);
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 3, $value4);

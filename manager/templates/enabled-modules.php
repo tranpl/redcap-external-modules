@@ -2,9 +2,10 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 
-if(!ExternalModules::areTablesPresent()){
-	echo 'Before using External Modules, you must run the following sql to create the appropriate tables:<br><br>';
-	echo '<textarea style="width: 100%; height: 300px">' . htmlspecialchars(file_get_contents(__DIR__ . '/../../sql/create tables.sql')) . '</textarea>';
+$sql = ExternalModules::getSqlToRunIfDBOutdated();
+if($sql !== ""){
+	echo '<p>Your current database table structure does not match REDCap\'s expected table structure for External Modules, which means that database tables and/or parts of tables are missing. Copy the SQL in the box below and execute it in the MySQL database named '.$db.' where the REDCap database tables are stored. Once the SQL has been executed, reload this page to run this check again.</p>';
+	echo '<textarea style="width: 100%; height: 300px" onclick="this.focus();this.select()" readonly="readonly">' . $sql . '</textarea>';
 	return;
 }
 
@@ -77,6 +78,7 @@ if($versionsByPrefixJSON == null){
 			}
 
 			var optionsHtml = '';
+			optionsHtml += '<option value=""></option>';
 			for(var i in choices ){
 				var choice = choices[i];
 				var value = choice.value;
@@ -187,6 +189,15 @@ if($versionsByPrefixJSON == null){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 			}
 			else if(type == 'form-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'user-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'user-role-list'){
+				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			}
+			else if(type == 'dag-list'){
 				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
 			}
 			else if(type == 'project-id'){
