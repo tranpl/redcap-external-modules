@@ -207,8 +207,8 @@ class ExternalModules
 	}
 
 	# enables a module system-wide
-	static function enable($moduleDirectoryPrefix, $version)
-//	static function enableForProject($moduleDirectoryPrefix, $version, $project_id)
+//	static function enable($moduleDirectoryPrefix, $version)
+	static function enableForProject($moduleDirectoryPrefix, $version, $project_id)
 	{
 		# Attempt to create an instance of the module before enabling it system wide.
 		# This should catch problems like syntax errors in module code.
@@ -222,10 +222,10 @@ class ExternalModules
 		}
 	}
 
-//	static function enable($moduleDirectoryPrefix, $version)
-//	{
-//		self::enableForProject($moduleDirectoryPrefix, $version, null);
-//	}
+	static function enable($moduleDirectoryPrefix, $version)
+	{
+		self::enableForProject($moduleDirectoryPrefix, $version, null);
+	}
 
 	# initializes the global/system settings
 	static function initializeSettingDefaults($moduleInstance)
@@ -864,7 +864,7 @@ class ExternalModules
 	}
 
 	# Accepts a project id as the first parameter.
-	# If the project id is null, all globally enabled module instances are returned.
+	# If the project id is null, all system-wide enabled module instances are returned.
 	# Otherwise, only instances enabled for the current project id are returned.
 	static function getEnabledModules($pid = null)
 	{
