@@ -393,14 +393,17 @@ class ExternalModules
 		$affectedRows = db_affected_rows();
 
 		$description = ucfirst(strtolower($event)) . ' External Module setting';
+		$logevent = "MANAGE";
 
-		if(class_exists('Logging')){
-			// REDCap v6.18.3 or later
-			\Logging::logEvent($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
-		}
-		else{
-			// REDCap prior to v6.18.3
-			log_event($sql, 'redcap_external_module_settings', $event, $key, $value, $description, "", "", $projectId);
+		if ($value === "") {
+			if(class_exists('Logging')){
+				// REDCap v6.18.3 or later
+				\Logging::logEvent($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
+			}
+			else{
+				// REDCap prior to v6.18.3
+				log_event($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
+			}
 		}
 
 		if($affectedRows != 1){
