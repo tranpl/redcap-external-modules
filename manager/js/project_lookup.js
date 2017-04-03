@@ -10,7 +10,7 @@ ExternalModules.configureSettings = function(configSettings, savedSettings) {
 			var saved = savedSettings[setting.key];
 			if(saved){
 				setting.value = saved.value;
-				setting.globalValue = saved.global_value;
+				setting.systemValue = saved.system_value;
 			}
 
 			if(setting.value != '' && setting.value != null) {
@@ -19,6 +19,7 @@ ExternalModules.configureSettings = function(configSettings, savedSettings) {
 					url: 'ajax/get-project-list.php',
 					dataType: 'json'
 				}).done(function(data) {
+					var selectHtml = "";
 					for(var key in data.results) {
 						if(data.results[key]['id'] == setting.value) {
 							selectHtml = "<option value='" + setting.value + "'>" + data.results[key]['text'] + "</option>";

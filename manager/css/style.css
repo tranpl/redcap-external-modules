@@ -1,4 +1,4 @@
-#externa-modunes-enabled{
+#external-modules-enabled{
 	max-width: 700px;
 }
 
@@ -61,6 +61,10 @@
 	max-width: 275px;
 }
 
+.external-modules-use-system-setting {
+	font-size: 10px;
+}
+
 .external-modules-add-remove-column {
 	 width: 40px;
 	 text-align: center;
@@ -76,6 +80,10 @@
 
 .external-modules-original-instance, .external-modules-original-instance-subsettings {
 	 font-size: 10px;
+}
+
+.modal-content{
+	width: 700px;
 }
 
 .external-modules-title {
