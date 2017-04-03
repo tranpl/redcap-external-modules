@@ -9,8 +9,6 @@ if(!ExternalModules::hasDesignRights()){
 }
 
 ExternalModules::addResource('css/style.css');
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.js');
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 ?>
 
 <h4 style="margin-top: 0;">
@@ -20,6 +18,7 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 
 <?php
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 ?>
 
 <style>

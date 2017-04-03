@@ -1,7 +1,7 @@
 $(function(){
 		// Merged from updated enabled-modules, may need to reconfigure
-		var configsByPrefix = ExternalModules.configsByPrefixJSON;
-		var versionsByPrefix = ExternalModules.versionsByPrefixJSON;
+		ExternalModules.configsByPrefix = ExternalModules.configsByPrefixJSON;
+		ExternalModules.versionsByPrefix = ExternalModules.versionsByPrefixJSON;
 		var pidString = pid;
 		//if(pid == null){
 		//	pidString = '';
@@ -606,7 +606,7 @@ $(function(){
 		var moduleDirectoryPrefix = $(this).closest('tr').data('module');
 		configureModal.data('module', moduleDirectoryPrefix);
 
-		var config = configsByPrefix[moduleDirectoryPrefix];
+		var config = ExternalModules.configsByPrefix[moduleDirectoryPrefix];
 		configureModal.find('.module-name').html(config.name);
 		var tbody = configureModal.find('tbody');
 		tbody.html('');
@@ -669,22 +669,60 @@ $(function(){
 		deleteFile($(this));
 	});
 
-		var resetSaveButton = function() {
-			if ($(this).val() != "") {
-				$(".save").html("Save and Upload");
+	var resetSaveButton = function() {
+		if ($(this).val() != "") {
+			$(".save").html("Save and Upload");
+		}
+		var allEmpty = true;
+		$("input[type=file]").each(function() {
+			if ($(this).val() !== "") {
+				allEmpty = false;
 			}
-			var allEmpty = true;
-			$("input[type=file]").each(function() {
-				if ($(this).val() !== "") {
-					allEmpty = false;
+		});
+		if (allEmpty) {
+			$(".save").html("Save");
+		}
+	}
+
+	configureModal.on('change', 'input[type=file]', resetSaveButton);
+
+	configureModal.on('click', '.external-modules-use-system-setting', function(){
+		var overrideButton = $(this);
+		var systemValue = overrideButton.data('system-value');
+		var row = overrideButton.closest('tr');
+		var inputs = row.find('td:nth-child(2)').find('input, select');
+
+		var type = inputs[0].type;
+		if(type == 'radio'){
+			inputs.filter('[value=' + systemValue + ']').click();
+		}
+		else if(type == 'checkbox'){
+			inputs.prop('checked', systemValue);
+		}
+		else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
+			deleteFile($(this));
+			resetSaveButton("");
+		}
+		else if(type == 'file') {
+			// if a real value
+			if (!isNaN(systemValue)) {
+				var edocLine = row.find(".external-modules-input-td");
+				if (edocLine) {
+					var inputAttributes = "";
+					if (inputs.prop("disabled")) {
+						inputAttributes = "disabled";
+					}
+					edocLine.html(getSystemFileFieldElement(inputs.attr('name'), systemValue, inputAttributes));
+					resetSaveButton(systemValue);
+					row.find(".external-modules-delete-file").show();
 				}
-			});
-			if (allEmpty) {
-				$(".save").html("Save");
 			}
 		}
-
-		configureModal.on('change', 'input[type=file]', resetSaveButton);
+		else{ // text or select
+			inputs.val(systemValue);
+		}
+		overrideButton.hide();
+	});
 
 	// helper method for saving
 	var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
@@ -739,7 +777,7 @@ $(function(){
 	configureModal.on('click', 'button.save', function(){
 		configureModal.hide();
 		var moduleDirectoryPrefix = configureModal.data('module');
-		var version = versionsByPrefix[moduleDirectoryPrefix];
+		var version = ExternalModules.versionsByPrefix[moduleDirectoryPrefix];
 
 		var data = {};
 		var files = {};

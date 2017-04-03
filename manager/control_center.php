@@ -7,8 +7,6 @@ ExternalModules::addResource('css/style.css');
 
 ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
 ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.js');
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 
 ?>
 
@@ -17,7 +15,10 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 	Module Management
 </h4>
 
-<?php ExternalModules::safeRequireOnce('templates/enabled-modules.php'); ?>
+<?php
+ExternalModules::safeRequireOnce('templates/enabled-modules.php');
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
+?>
 
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
