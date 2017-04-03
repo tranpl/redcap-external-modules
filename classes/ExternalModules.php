@@ -395,7 +395,7 @@ class ExternalModules
 		$description = ucfirst(strtolower($event)) . ' External Module setting';
 		$logevent = "MANAGE";
 
-		if ($value === "") {
+		if (($value === "") || ($value === null)) {
 			if(class_exists('Logging')){
 				// REDCap v6.18.3 or later
 				\Logging::logEvent($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
