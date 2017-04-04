@@ -331,8 +331,8 @@ class ExternalModulesTest extends BaseTest
 	function testCallHook_delay()
 	{
 		$m = $this->getInstance();
-		$m->setGlobalSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
-		$m->setGlobalSetting(ExternalModules::KEY_ENABLED, true);
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, true);
 		$this->cacheAllEnableData();
 
 		$this->setConfig(['permissions' => ['hook_test_delay']]);
