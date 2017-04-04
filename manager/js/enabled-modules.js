@@ -339,9 +339,10 @@ $(function(){
 						if(subSetting.value && Array.isArray(subSetting.value)){
 							indexSubSet = subSetting.value.length;
 						}
-						i++;
 					}
+					i++;
 				});
+				console.log(setting);
 			} else if(saved){
 				setting.value = saved.value;
 				setting.systemValue = saved.system_value;
@@ -376,7 +377,7 @@ $(function(){
 						}
 
 						setting.sub_settings.forEach(function (subSetting) {
-                                rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, global, instance) + '</tr>';
+                                rowsHtml += '<tr class = "subsettings-table">' + getProjectSettingColumns(subSetting, system, instance) + '</tr>';
 						});
 					}
 				} else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {

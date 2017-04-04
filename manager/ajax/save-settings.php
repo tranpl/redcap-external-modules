@@ -4,6 +4,7 @@ require_once '../../classes/ExternalModules.php';
 
 $pid = @$_GET['pid'];
 $moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
+$version = $_GET['moduleDirectoryVersion'];
 
 # for screening out files below
 $config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
