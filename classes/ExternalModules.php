@@ -46,6 +46,7 @@ class ExternalModules
 	public static $MODULES_URL;
 
 	# path for the modules directory
+	public static $MODULES_BASE_PATH;
 	public static $MODULES_PATH;
 
 	# index is hook $name, then $prefix, then $version
@@ -104,6 +105,7 @@ class ExternalModules
 			error_reporting(E_ALL);
 		}
 
+		$modulesDirectories = ['/modules/','/external_modules/example_modules/'];
 		$modulesDirectoryName = '/modules/';
 
 		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
@@ -112,7 +114,8 @@ class ExternalModules
 
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
-		self::$MODULES_PATH = __DIR__ . "/../.." . $modulesDirectoryName;
+		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
+		self::$MODULES_PATH = $modulesDirectories;
 
 		if(!self::isLocalhost()){
 			register_shutdown_function(function(){
@@ -819,7 +822,12 @@ class ExternalModules
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$instance = @self::$instanceCache[$moduleDirectoryName];
 		if(!isset($instance)){
-			$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
+			foreach(self::$MODULES_PATH as $pathDir) {
+				$modulePath = ExternalModules::$MODULES_BASE_PATH . $pathDir . $moduleDirectoryName;
+				if(is_dir($modulePath)) {
+					break;
+				}
+			}
 			$className = self::getMainClassName($prefix);
 			$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
 
@@ -1158,7 +1166,10 @@ class ExternalModules
 	# returns the configs for disabled modules
 	static function getDisabledModuleConfigs($enabledModules)
 	{
-		$dirs = scandir(self::$MODULES_PATH);
+		$dirs = [];
+		foreach(self::$MODULES_PATH as $path) {
+			$dirs = array_merge($dirs,scandir(self::$MODULES_BASE_PATH.$path));
+		}
 
 		$disabledModuleVersions = array();
 		foreach ($dirs as $dir) {
@@ -1207,7 +1218,12 @@ class ExternalModules
 		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
 		$config = @self::$configs[$moduleDirectoryName];
 		if($config === null){
-			$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
+			foreach(self::$MODULES_PATH as $path) {
+				$configFilePath = self::$MODULES_BASE_PATH . $path . "$moduleDirectoryName/config.json";
+				if(is_file($configFilePath)) {
+					break;
+				}
+			}
 			$config = json_decode(file_get_contents($configFilePath), true);
 
 			if($config == null){
