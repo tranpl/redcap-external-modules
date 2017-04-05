@@ -12,7 +12,7 @@ $(function(){
 
 	var getSelectElement = function(name, choices, selectedValue, selectAttributes){
 		if(!selectAttributes){
-			selectAttributes = '';
+			selectAttributes = [];
 		}
 
 		var optionsHtml = '';
@@ -29,7 +29,10 @@ $(function(){
 			optionsHtml += '<option value="' + getAttributeValueHtml(value) + '" ' + optionAttributes + '>' + choice.name + '</option>';
 		}
 
-		return '<select class="external-modules-input-element" name="' + name + '" ' + selectAttributes + '>' + optionsHtml + '</select>';
+		var defaultAttributes = {"class" : "external-modules-input-element"};
+		var attributeString = getElementAttributes(defaultAttributes,selectAttributes);
+
+		return '<select ' + attributeString + ' name="' + name + '" ' + selectAttributes + '>' + optionsHtml + '</select>';
 	};
 
 	var getInputElement = function(type, name, value, inputAttributes){
@@ -43,7 +46,7 @@ $(function(){
 				return getSystemFileFieldElement(name, value, inputAttributes);
 			}
 		} else {
-			return '<input class="external-modules-input-element" type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + getElementAttributes({"class":"external-modules-input-element"},inputAttributes) + '>';
 		}
 	};
 
@@ -52,7 +55,7 @@ $(function(){
 			value = "";
 		}
 
-		return '<textarea name="' + name + '" ' + inputAttributes + '>'+getAttributeValueHtml(value)+'</textarea>';
+		return '<textarea name="' + name + '" ' + getElementAttributes([],inputAttributes) + '>'+getAttributeValueHtml(value)+'</textarea>';
 
 	};
 
@@ -63,7 +66,7 @@ $(function(){
 
 		var html = '';
 		for(var i=0; i<value.length;i++){
-			html += '<tr class = "subsettings-table">'+getSettingColumns(value[i], '')+'<td></td></tr>';
+			html += '<tr class = "subsettings-table">'+getSettingColumns(value[i])+'<td></td></tr>';
 		}
 		return html;
 	};
@@ -81,21 +84,44 @@ $(function(){
 
 	// abstracted because file fields need to be reset in multiple places
 	var getFileFieldElement = function(name, value, inputAttributes, pidString) {
+		var attributeString = getElementAttributes([],inputAttributes);
 		var type = "file";
 		if ((typeof value != "undefined") && (value !== "")) {
-				var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
-                                html += '<span class="external-modules-edoc-file"></span>';
-                                html += '<button class="external-modules-delete-file" '+inputAttributes+'>Delete File</button>';
+			var html = '<input type="hidden" name="' + name + '" value="' + getAttributeValueHtml(value) + '" >';
+                    html += '<span class="external-modules-edoc-file"></span>';
+                    html += '<button class="external-modules-delete-file" '+attributeString+'>Delete File</button>';
 			$.post('ajax/get-edoc-name.php?' + pidString, { edoc : value }, function(data) {
-                                        $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
+                $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
 			});
 			return html;
 		} else {
-			return '<input class="external-modules-input-element" type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + inputAttributes + '>';
+			attributeString = getElementAttributes({"class":"external-modules-input-element"},inputAttributes);
+			return '<input type="' + type + '" name="' + name + '" value="' + getAttributeValueHtml(value) + '" ' + attributeString + '>';
 		}
 	}
 
-	var getSettingColumns = function(setting, inputAttributes, instance, header){
+	// Shared function for combining 2 arrays to produce an attribute string for an HTML object
+	var getElementAttributes = function(defaultAttributes, additionalAttributes) {
+		var attributeString = "";
+
+		for (var tag in additionalAttributes) {
+			if(defaultAttributes[tag]) {
+				attributeString += tag + '="' + defaultAttributes[tag] + ' ' + additionalAttributes[tag] + '" ';
+				delete defaultAttributes[tag];
+			}
+			else {
+				attributeString += tag + '="' + additionalAttributes[tag] + '" ';
+			}
+		}
+
+		for (var tag in defaultAttributes) {
+			attributeString += tag + '="' + defaultAttributes[tag] + '" ';
+		}
+
+		return attributeString;
+	}
+
+	var getSettingColumns = function(setting, instance, header){
 		var type = setting.type;
 		var key = setting.key
 		var value = setting.value
@@ -121,30 +147,28 @@ $(function(){
 
 		var inputHtml;
 		if(type == 'dropdown'){
-			inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			inputHtml = getSelectElement(key, setting.choices, value, []);
 		}
 		else if(type == 'field-list'){
-			inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			inputHtml = getSelectElement(key, setting.choices, value, []);
 		}
 		else if(type == 'form-list'){
-			inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
+			inputHtml = getSelectElement(key, setting.choices, value, []);
 		}
-			else if(type == 'user-list'){
-				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
-			}
-			else if(type == 'user-role-list'){
-				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
-			}
-			else if(type == 'dag-list'){
-				inputHtml = getSelectElement(key, setting.choices, value, inputAttributes);
-			}
+		else if(type == 'user-list'){
+			inputHtml = getSelectElement(key, setting.choices, value, []);
+		}
+		else if(type == 'user-role-list'){
+			inputHtml = getSelectElement(key, setting.choices, value, []);
+		}
+		else if(type == 'dag-list'){
+			inputHtml = getSelectElement(key, setting.choices, value, []);
+		}
 		else if(type == 'project-id'){
-			inputAttributes += ' class="project_id_textbox" id="test-id"';
-			inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, inputAttributes) + "</div>";
+			inputHtml = "<div style='width:200px'>" + getSelectElement(key, setting.choices, value, {"class":"project_id_textbox"}) + "</div>";
 		}
 		else if(type == 'textarea'){
-			inputAttributes += ' rows = "6" cols="45"';
-			inputHtml = getTextareaElement(key, value, inputAttributes);
+			inputHtml = getTextareaElement(key, value, {"rows" : "6","cols" : "45"});
 		}
 		else if(type == 'sub_settings'){
 			inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label>";
@@ -154,21 +178,22 @@ $(function(){
 			for(var i in setting.choices ){
 				var choice = setting.choices[i];
 
-				var checked = ''
+				var inputAttributes = [];
 				if(choice.value == value) {
-					checked += ' checked';
+					inputAttributes["checked"] = "true";
 				}
 
-				inputHtml += getInputElement(type, key, choice.value, inputAttributes + checked) + '<label>' + choice.name + '</label><br>';
+				inputHtml += getInputElement(type, key, choice.value, inputAttributes) + '<label>' + choice.name + '</label><br>';
 			}
 		} else {
+			var inputAttributes = [];
 			if(type == 'checkbox' && value == 1){
-				inputAttributes += ' checked';
+				inputAttributes['checked'] = 'checked';
 			}
 			// TODO Is this only triggered when a project is overriding the system value, but now allow-project-overrides is disabled?
 			var alreadyOverridden = setting.value != setting.systemValue;
 			if ((type == 'file') && (!setting['allow-project-overrides'] && alreadyOverridden)) {
-				inputAttributes += "disabled";
+				inputAttributes['disabled'] = "disabled";
 			}
 
 			inputHtml = getInputElement(type, key, value, inputAttributes);
@@ -227,7 +252,7 @@ $(function(){
 	};
 
 	var getSystemSettingColumns = function(setting){
-		var columns = getSettingColumns(setting, '');
+		var columns = getSettingColumns(setting);
 
 		if(setting['allow-project-overrides']){
 			var overrideChoices = [
@@ -273,7 +298,6 @@ $(function(){
 			setting.name = projectName;
 		}
 
-		var inputAttributes = '';
 		var overrideButtonAttributes = 'data-system-value="' + getAttributeValueHtml(setting.systemValue) + '"';
 
 		if(system && (setting.type == "checkbox")) {
@@ -288,11 +312,7 @@ $(function(){
 			overrideButtonAttributes += " style='display: none;'";
 		}
 
-		if (((setting.value == "true") || (setting.value == 1)) && (setting.type == "checkbox")) {
-			inputAttributes += " checked";
-		}
-
-		var columns = getSettingColumns(setting, inputAttributes, instance, header);
+		var columns = getSettingColumns(setting, instance, header);
 
 		if(system){
 			columns += "<td style='width: 50px'><div style='min-height: 50px;'><button "+overrideButtonAttributes+" class='external-modules-use-system-setting'>Use<br>System<br>Setting</button></div></td>";
@@ -629,7 +649,12 @@ $(function(){
 
 			tbody.html(settingsHtml);
 
-			ExternalModules.configureSettings(config['system-settings'], savedSettings);
+			if(pid) {
+				ExternalModules.configureSettings(config['project-settings'], savedSettings);
+			}
+			else {
+				ExternalModules.configureSettings(config['system-settings'], savedSettings);
+			}
 		});
 	});
 
