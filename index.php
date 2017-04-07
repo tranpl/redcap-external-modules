@@ -27,9 +27,9 @@ if (preg_match("/^https:\/\//", $page) || preg_match("/^http:\/\//", $page)) {
 	header( 'Location: '.$page ) ;
 }
 
-$pagePath = ExternalModules::$MODULES_PATH . ExternalModules::getModuleDirectoryName($prefix, $version) . "/$page.php";
+$pagePath = ExternalModules::getModuleDirectoryPath($prefix, $version) . "/$page.php";
 if(!file_exists($pagePath)){
-	die("The specified page does not exist for this module.");
+	die("The specified page does not exist for this module. $pagePath");
 }
 
 require_once $pagePath;

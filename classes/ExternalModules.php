@@ -819,15 +819,9 @@ class ExternalModules
 	{
 		self::setActiveModulePrefix($prefix);
 
-		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$instance = @self::$instanceCache[$moduleDirectoryName];
+		$modulePath = self::getModuleDirectoryPath($prefix, $version);
+		$instance = @self::$instanceCache[$prefix][$version];
 		if(!isset($instance)){
-			foreach(self::$MODULES_PATH as $pathDir) {
-				$modulePath = ExternalModules::$MODULES_BASE_PATH . $pathDir . $moduleDirectoryName;
-				if(is_dir($modulePath)) {
-					break;
-				}
-			}
 			$className = self::getMainClassName($prefix);
 			$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
 
@@ -842,7 +836,7 @@ class ExternalModules
 			}
 
 			$instance = new $classNameWithNamespace();
-			self::$instanceCache[$moduleDirectoryName] = $instance;
+			self::$instanceCache[$prefix][$version] = $instance;
 		}
 
 		self::setActiveModulePrefix(null);
@@ -1215,15 +1209,9 @@ class ExternalModules
 			$version = self::getEnabledVersion($prefix);
 		}
 
-		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$config = @self::$configs[$moduleDirectoryName];
+		$configFilePath = self::getModuleDirectoryPath($prefix, $version)."/config.json";
+		$config = @self::$configs[$prefix][$version];
 		if($config === null){
-			foreach(self::$MODULES_PATH as $path) {
-				$configFilePath = self::$MODULES_BASE_PATH . $path . "$moduleDirectoryName/config.json";
-				if(is_file($configFilePath)) {
-					break;
-				}
-			}
 			$config = json_decode(file_get_contents($configFilePath), true);
 
 			if($config == null){
@@ -1235,7 +1223,7 @@ class ExternalModules
 				$config['system-settings'] = $config['global-settings'];
 			}
 
-			$configs[$moduleDirectoryName] = $config;
+			$configs[$prefix][$version] = $config;
 		}
 
 		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
@@ -1384,8 +1372,15 @@ class ExternalModules
 	}
 
 	# formats directory name from $prefix and $version
-	static function getModuleDirectoryName($prefix, $version){
-		return $prefix . '_' . $version;
+	static function getModuleDirectoryPath($prefix, $version){
+		$directoryToFind = $prefix . '_' . $version;
+		foreach(self::$MODULES_PATH as $pathDir) {
+			$modulePath = ExternalModules::$MODULES_BASE_PATH . $pathDir . $directoryToFind;
+			if(is_dir($modulePath)) {
+				break;
+			}
+		}
+		return $modulePath;
 	}
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
