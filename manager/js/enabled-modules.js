@@ -123,8 +123,8 @@ $(function(){
 
 	var getSettingColumns = function(setting, instance, header){
 		var type = setting.type;
-		var key = setting.key
-		var value = setting.value
+		var key = setting.key;
+		var value = setting.value;
 
 		var instanceLabel = "";
 		if (typeof instance != "undefined") {
@@ -185,7 +185,15 @@ $(function(){
 
 				inputHtml += getInputElement(type, key, choice.value, inputAttributes) + '<label>' + choice.name + '</label><br>';
 			}
-		} else {
+		}
+		else if(type == 'custom') {
+			var source = setting.source;
+			var functionName = setting.functionName;
+
+			inputHtml = getInputElement(type, key, value, inputAttributes);
+			inputHtml += "<script src='" + source + "'></script><script type='text/javascript'>var fn = window['" + functionName + "'];fn($('input[\"name=" + key + "\"]'));</script>";
+		}
+		else {
 			var inputAttributes = [];
 			if(type == 'checkbox' && value == 1){
 				inputAttributes['checked'] = 'checked';
