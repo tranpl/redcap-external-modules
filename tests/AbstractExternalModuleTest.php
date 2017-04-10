@@ -197,4 +197,16 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->setConfig($config);
 		$this->assertTrue($m->hasPermission($testPermission));
 	}
+
+	function testGetUrl()
+	{
+		$m = $this->getInstance();
+
+		$filePath = 'images/foo.png';
+
+		$expected = ExternalModules::getModuleDirectoryUrl($m->PREFIX, $m->VERSION) . '/' . $filePath;
+		$actual = $m->getUrl($filePath);
+
+		$this->assertEquals($expected, $actual);
+	}
 }
