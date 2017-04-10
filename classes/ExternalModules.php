@@ -49,6 +49,8 @@ class ExternalModules
 	public static $MODULES_BASE_PATH;
 	public static $MODULES_PATH;
 
+	private static $INCLUDED_RESOURCES;
+
 	# index is hook $name, then $prefix, then $version
 	private static $delayed;
 
@@ -112,6 +114,7 @@ class ExternalModules
 			die('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
+		self::$INCLUDED_RESOURCES = [];
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
@@ -1087,6 +1090,8 @@ class ExternalModules
 			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
 		}
 
+		if(in_array($url, self::$INCLUDED_RESOURCES)) return;
+
 		if ($extension == 'css') {
 			echo "<link rel='stylesheet' type='text/css' href='" . $url . "'>";
 		}
@@ -1096,6 +1101,8 @@ class ExternalModules
 		else {
 			throw new Exception('Unsupported resource added: ' . $path);
 		}
+
+		self::$INCLUDED_RESOURCES[] = $url;
 	}
 
 	# returns an array of links requested by the config.json
@@ -1253,52 +1260,52 @@ class ExternalModules
 
 	# specialty field lists include: user-role-list, user-list, dag-list, field-list, and form-list
 	public static function getAdditionalFieldChoices($configRow,$pid) {
-                if ($configRow['type'] == 'user-role-list') {
-                        $choices = [];
+		if ($configRow['type'] == 'user-role-list') {
+			$choices = [];
 
-                        $sql = "SELECT role_id,role_name
-                                        FROM redcap_user_roles
-                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
-                                        ORDER BY role_id";
-                        $result = self::query($sql);
+			$sql = "SELECT role_id,role_name
+					FROM redcap_user_roles
+					WHERE project_id = '" . db_real_escape_string($pid) . "'
+					ORDER BY role_id";
+			$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
-                        }
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
+			}
 
-                        $configRow['choices'] = $choices;
-                }
-                else if ($configRow['type'] == 'user-list') {
-                        $choices = [];
+			$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'user-list') {
+			$choices = [];
 
-                        $sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
-                                        FROM redcap_user_rights ur, redcap_user_information ui
-                                        WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
-                                                AND ui.username = ur.username
-                                        ORDER BY ui.ui_id";
-                        $result = self::query($sql);
+			$sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
+					FROM redcap_user_rights ur, redcap_user_information ui
+					WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
+						AND ui.username = ur.username
+					ORDER BY ui.ui_id";
+			$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
-                        }
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
+			}
 
-                        $configRow['choices'] = $choices;
-                }
-                else if ($configRow['type'] == 'dag-list') {
-                        $choices = [];
+			$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'dag-list') {
+			$choices = [];
 
-                        $sql = "SELECT group_id,group_name
-                                        FROM redcap_data_access_groups
-                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
-                                        ORDER BY group_id";
-                        $result = self::query($sql);
+			$sql = "SELECT group_id,group_name
+					FROM redcap_data_access_groups
+					WHERE project_id = '" . db_real_escape_string($pid) . "'
+					ORDER BY group_id";
+			$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
-                        }
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
+			}
 
-                        $configRow['choices'] = $choices;
-                }
+			$configRow['choices'] = $choices;
+		}
 		else if ($configRow['type'] == 'field-list') {
 			$choices = [];
 
