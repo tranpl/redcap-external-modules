@@ -1372,6 +1372,11 @@ class ExternalModules
 		return $prefix . '_' . $version;
 	}
 
+	static function getModuleDirectoryUrl($prefix, $version)
+	{
+		return ExternalModules::$MODULES_URL . ExternalModules::getModuleDirectoryName($prefix, $version);
+	}
+
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
 	{
 		if(self::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
