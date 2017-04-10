@@ -211,6 +211,18 @@ class AbstractExternalModule
 		ExternalModules::removeProjectSetting($this->PREFIX, $pid, $key);
 	}
 
+	function getUrl($path)
+	{
+		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		if($extension != 'php'){
+			// This must be a resource, like an image or css/js file.
+			// Go ahead and return the version specific url.
+			return ExternalModules::getModuleDirectoryUrl($this->PREFIX, $this->VERSION) . '/' . $path;
+		}
+
+		return ExternalModules::getUrl($this->PREFIX, $path);
+	}
+
 	# function to enforce that a pid is required for a particular function
 	private function requireProjectId($pid)
 	{
