@@ -1194,6 +1194,8 @@ class ExternalModules
 	# Parses [institution]_[module]_v[X].[Y] into [ [institution]_[module], v[X].[Y] ]
 	# e.g., vanderbilt_example_v1.0 becomes [ "vanderbilt_example", "v1.0" ]
 	static function getParseModuleDirectoryPrefixAndVersion($directoryName){
+		$directoryName = basename($directoryName);
+
 		$parts = explode('_', $directoryName);
 
 		$version = array_pop($parts);

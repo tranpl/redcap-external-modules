@@ -141,7 +141,7 @@ class BaseTestExternalModule extends AbstractExternalModule {
 		parent::__construct();
 	}
 
-	function getModuleDirectoryPath()
+	function getModuleDirectoryName()
 	{
 		return ExternalModules::getModuleDirectoryPath($this->PREFIX, $this->VERSION);
 	}
