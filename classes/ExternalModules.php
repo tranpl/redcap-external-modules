@@ -1208,7 +1208,12 @@ class ExternalModules
 		$config = @self::$configs[$moduleDirectoryName];
 		if($config === null){
 			$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
-			$config = json_decode(file_get_contents($configFilePath), true);
+			$fileTesting = file_get_contents($configFilePath);
+			$config = json_decode($fileTesting, true);
+
+			if($fileTesting == "") {
+				return [];
+			}
 
 			if($config == null){
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
