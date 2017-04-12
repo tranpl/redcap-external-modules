@@ -94,7 +94,24 @@ if (isset($_GET['pid'])) {
 			if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div></td>
+					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div><div class='external-modules-byline'><?php
+        if ($config['authors']) {
+                $names = array();
+                foreach ($config['authors'] as $author) {
+                        $name = $author['name'];
+                        if ($name) {
+                                if ($author['email']) {
+                                        $names[] = "<a href='mailto:".$author['email']."'>".$name."</a>";
+                                } else {
+                                        $names[] == $name;
+                                }
+                        }
+                }
+                if (count($names) > 0) {
+                        echo "by ".implode($names, ", ");
+                }
+        }
+?></div></td>
 					<td class="external-modules-action-buttons">
 						<button class='external-modules-configure-button'>Configure</button>
 						<button class='external-modules-disable-button'>Disable</button>
