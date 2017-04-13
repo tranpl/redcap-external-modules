@@ -1,0 +1,118 @@
+{
+	"name": "Configuration Example",
+
+	"description": "Example module to show off all the options available",
+
+	"permissions": [
+		""
+	],
+
+	"links": {
+		"project": [
+			{
+				"name": "Configuration Page",
+				"icon": "report",
+				"url": "configure.php"
+			}
+		]
+	},
+
+	"global-settings": [
+		{
+			"key": "global-file",
+			"name": "Global Upload",
+			"required": false,
+			"type": "file",
+			"repeatable": false,
+			"allow-project-overrides": true
+		},
+		{
+			"key": "global-checkbox",
+			"name": "Global Checkbox",
+			"required": false,
+			"type": "checkbox",
+			"repeatable": false,
+			"allow-project-overrides": true
+		},
+		{
+			"key": "global-project",
+			"name": "Project",
+			"required": false,
+			"type": "project-id",
+			"repeatable": false
+		}
+	],
+
+	"project-settings": [
+		{
+			"key": "test-list",
+			"name": "List of Sub Settings",
+			"required": true,
+			"type": "sub_settings",
+			"repeatable":true,
+			"sub_settings":[
+				{
+				"key": "form-name",
+				"name": "Form name",
+				"required": true,
+				"type": "form-list"
+				},
+				{
+				"key": "test-text",
+				"name": "Text Field",
+				"required": true,
+				"type": "text"
+				}
+			]
+		},
+		{
+			"key": "text-area",
+			"name": "Text Area",
+			"required": true,
+			"type": "textarea",
+			"repeatable": true
+		},
+		{
+			"key": "dag",
+			"name": "Data Access Group",
+			"required": false,
+			"type": "dag-list",
+			"repeatable": false
+		},
+		{
+			"key": "user",
+			"name": "Users",
+			"required": false,
+			"type": "user-list",
+			"repeatable": false
+		},
+		{
+			"key": "user-role",
+			"name": "User Role",
+			"required": false,
+			"type": "user-role-list",
+			"repeatable": false
+		},
+		{
+			"key": "file",
+			"name": "File Upload",
+			"required": false,
+			"type": "file",
+			"repeatable": false
+		},
+		{
+			"key": "checkbox",
+			"name": "Test Checkbox",
+			"required": false,
+			"type": "checkbox",
+			"repeatable": false
+		},
+		{
+			"key": "project",
+			"name": "Other Project",
+			"required": false,
+			"type": "project-id",
+			"repeatable": false
+		}
+	]
+}

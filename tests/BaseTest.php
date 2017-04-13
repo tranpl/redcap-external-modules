@@ -86,8 +86,7 @@ abstract class BaseTest extends TestCase
 	{
 		if($this->testModuleInstance == null){
 			$instance = new BaseTestExternalModule();
-			$moduleDirectoryName = ExternalModules::getModuleDirectoryName(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
-			$this->setExternalModulesProperty('instanceCache', [$moduleDirectoryName => $instance]);
+			$this->setExternalModulesProperty('instanceCache', [TEST_MODULE_PREFIX => [TEST_MODULE_VERSION => $instance]]);
 
 			$this->testModuleInstance = $instance;
 		}
@@ -97,8 +96,7 @@ abstract class BaseTest extends TestCase
 
 	protected function setConfig($config)
 	{
-		$moduleDirectoryName = ExternalModules::getModuleDirectoryName(TEST_MODULE_PREFIX, TEST_MODULE_VERSION);
-		$this->setExternalModulesProperty('configs', [$moduleDirectoryName => $config]);
+		$this->setExternalModulesProperty('configs', [TEST_MODULE_PREFIX => [TEST_MODULE_VERSION => $config]]);
 	}
 
 	private function setExternalModulesProperty($name, $value)
@@ -145,7 +143,7 @@ class BaseTestExternalModule extends AbstractExternalModule {
 
 	function getModuleDirectoryName()
 	{
-		return ExternalModules::getModuleDirectoryName($this->PREFIX, $this->VERSION);
+		return ExternalModules::getModuleDirectoryPath($this->PREFIX, $this->VERSION);
 	}
 
 	function __call($name, $arguments)

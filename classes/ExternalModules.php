@@ -46,6 +46,7 @@ class ExternalModules
 	public static $MODULES_URL;
 
 	# path for the modules directory
+	public static $MODULES_BASE_PATH;
 	public static $MODULES_PATH;
 
 	# index is hook $name, then $prefix, then $version
@@ -104,6 +105,7 @@ class ExternalModules
 			error_reporting(E_ALL);
 		}
 
+		$modulesDirectories = ['/modules/','/external_modules/example_modules/'];
 		$modulesDirectoryName = '/modules/';
 
 		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
@@ -112,7 +114,8 @@ class ExternalModules
 
 		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
-		self::$MODULES_PATH = __DIR__ . "/../.." . $modulesDirectoryName;
+		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
+		self::$MODULES_PATH = $modulesDirectories;
 
 		if(!self::isLocalhost()){
 			register_shutdown_function(function(){
@@ -816,10 +819,9 @@ class ExternalModules
 	{
 		self::setActiveModulePrefix($prefix);
 
-		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$instance = @self::$instanceCache[$moduleDirectoryName];
+		$modulePath = self::getModuleDirectoryPath($prefix, $version);
+		$instance = @self::$instanceCache[$prefix][$version];
 		if(!isset($instance)){
-			$modulePath = ExternalModules::$MODULES_PATH . $moduleDirectoryName;
 			$className = self::getMainClassName($prefix);
 			$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
 
@@ -834,7 +836,7 @@ class ExternalModules
 			}
 
 			$instance = new $classNameWithNamespace();
-			self::$instanceCache[$moduleDirectoryName] = $instance;
+			self::$instanceCache[$prefix][$version] = $instance;
 		}
 
 		self::setActiveModulePrefix(null);
@@ -1158,7 +1160,10 @@ class ExternalModules
 	# returns the configs for disabled modules
 	static function getDisabledModuleConfigs($enabledModules)
 	{
-		$dirs = scandir(self::$MODULES_PATH);
+		$dirs = [];
+		foreach(self::$MODULES_PATH as $path) {
+			$dirs = array_merge($dirs,scandir(self::$MODULES_BASE_PATH.$path));
+		}
 
 		$disabledModuleVersions = array();
 		foreach ($dirs as $dir) {
@@ -1189,6 +1194,8 @@ class ExternalModules
 	# Parses [institution]_[module]_v[X].[Y] into [ [institution]_[module], v[X].[Y] ]
 	# e.g., vanderbilt_example_v1.0 becomes [ "vanderbilt_example", "v1.0" ]
 	static function getParseModuleDirectoryPrefixAndVersion($directoryName){
+		$directoryName = basename($directoryName);
+
 		$parts = explode('_', $directoryName);
 
 		$version = array_pop($parts);
@@ -1204,10 +1211,9 @@ class ExternalModules
 			$version = self::getEnabledVersion($prefix);
 		}
 
-		$moduleDirectoryName = self::getModuleDirectoryName($prefix, $version);
-		$config = @self::$configs[$moduleDirectoryName];
+		$configFilePath = self::getModuleDirectoryPath($prefix, $version)."/config.json";
+		$config = @self::$configs[$prefix][$version];
 		if($config === null){
-			$configFilePath = self::$MODULES_PATH . "$moduleDirectoryName/config.json";
 			$fileTesting = file_get_contents($configFilePath);
 			$config = json_decode($fileTesting, true);
 
@@ -1224,7 +1230,7 @@ class ExternalModules
 				$config['system-settings'] = $config['global-settings'];
 			}
 
-			$configs[$moduleDirectoryName] = $config;
+			$configs[$prefix][$version] = $config;
 		}
 
 		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
@@ -1373,8 +1379,15 @@ class ExternalModules
 	}
 
 	# formats directory name from $prefix and $version
-	static function getModuleDirectoryName($prefix, $version){
-		return $prefix . '_' . $version;
+	static function getModuleDirectoryPath($prefix, $version){
+		$directoryToFind = $prefix . '_' . $version;
+		foreach(self::$MODULES_PATH as $pathDir) {
+			$modulePath = ExternalModules::$MODULES_BASE_PATH . $pathDir . $directoryToFind;
+			if(is_dir($modulePath)) {
+				break;
+			}
+		}
+		return $modulePath;
 	}
 
 	static function getModuleDirectoryUrl($prefix, $version)
