@@ -62,7 +62,7 @@ require_once '../../classes/ExternalModules.php';
 				if ($author['email']) {
 					$names[] = "<a href='mailto:".$author['email']."'>".$name."</a>";
 				} else {
-					$names[] == $name;
+					$names[] = $name;
 				}
 			}
 		}

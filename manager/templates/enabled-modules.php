@@ -103,7 +103,7 @@ if (isset($_GET['pid'])) {
                                 if ($author['email']) {
                                         $names[] = "<a href='mailto:".$author['email']."'>".$name."</a>";
                                 } else {
-                                        $names[] == $name;
+                                        $names[] = $name;
                                 }
                         }
                 }
