@@ -1392,7 +1392,7 @@ class ExternalModules
 
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
-		return ExternalModules::$MODULES_URL . ExternalModules::getModuleDirectoryName($prefix, $version);
+		return ExternalModules::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix, $version));
 	}
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
