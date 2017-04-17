@@ -86,6 +86,23 @@ if (isset($_GET['pid'])) {
 			} else {
 				$config = ExternalModules::getConfig($prefix, $version);
 			}
+
+			foreach(array_merge($config['project-settings'],$config['system-settings']) as $configRow) {
+				if($configRow['source']) {
+					$sources = explode(",",$configRow['source']);
+					foreach($sources as $sourceLocation) {
+						if(is_file(ExternalModules::getModuleDirectoryPath($prefix,$version)."/".$sourceLocation)) {
+							// include file from module directory
+							ExternalModules::addResource(ExternalModules::getModuleDirectoryUrl($prefix,$version).$sourceLocation);
+						}
+						else if(is_file(dirname(__DIR__)."/js/".$sourceLocation)) {
+							// include file from external_modules directory
+							ExternalModules::addResource("js/".$sourceLocation);
+						}
+					}
+				}
+			}
+
 			$configsByPrefix[$prefix] = $config;
 			$enabled = false;
 			if (isset($_GET['pid'])) {

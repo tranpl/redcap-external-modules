@@ -187,11 +187,10 @@ $(function(){
 			}
 		}
 		else if(type == 'custom') {
-			var source = setting.source;
 			var functionName = setting.functionName;
 
 			inputHtml = getInputElement(type, key, value, inputAttributes);
-			inputHtml += "<script src='" + source + "'></script><script type='text/javascript'>var fn = window['" + functionName + "'];fn($('input[\"name=" + key + "\"]'));</script>";
+			inputHtml += "<script type='text/javascript'>" + functionName + "($('input[name=\"" + key + "\"]'));</script>";
 		}
 		else {
 			var inputAttributes = [];
@@ -370,7 +369,6 @@ $(function(){
 					}
 					i++;
 				});
-				console.log(setting);
 			} else if(saved){
 				setting.value = saved.value;
 				setting.systemValue = saved.system_value;

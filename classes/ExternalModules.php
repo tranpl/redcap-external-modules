@@ -1078,7 +1078,7 @@ class ExternalModules
 	{
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
-		if(substr($path,0,8) == "https://") {
+		if(substr($path,0,8) == "https://" || substr($path,0,7) == "http://") {
 			$url = $path;
 		}
 		else {
@@ -1086,7 +1086,7 @@ class ExternalModules
 			$fullLocalPath = __DIR__ . "/../$path";
 
 			// Add the filemtime to the url for cache busting.
-                        clearstatcache(true, $path);
+			clearstatcache(true, $path);
 			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
 		}
 
@@ -1339,6 +1339,10 @@ class ExternalModules
 		else if($configRow['type'] == 'sub_settings') {
 			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
 				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);
+				if(!isset($configRow['source']) && $configRow['sub_settings'][$subConfigKey]['source']) {
+					$configRow['source'] = "";
+				}
+				$configRow["source"] .= ($configRow["source"] == "" ? "" : ",").$configRow['sub_settings'][$subConfigKey]['source'];
 			}
 		}
 
@@ -1399,7 +1403,11 @@ class ExternalModules
 
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
-		return ExternalModules::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix, $version));
+		$filePath = ExternalModules::getModuleDirectoryPath($prefix, $version);
+
+		$url = APP_PATH_WEBROOT_FULL.substr($filePath,strlen(dirname(dirname(__DIR__))."/"))."/";
+
+		return $url;
 	}
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
