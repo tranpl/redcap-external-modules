@@ -36,6 +36,7 @@ $(function(){
 
 				$.post('ajax/enable-module.php', {prefix: prefix, version: version}, function (data) {
 					jsonAjax = jQuery.parseJSON(data);
+					console.log("Message: "+jsonAjax['error_message']);
 					if (jsonAjax['error_message'] != "") {
 						$('#external-modules-enable-modal-error').show();
 						$('#external-modules-enable-modal-error').html(jsonAjax['error_message']);
