@@ -52,6 +52,7 @@ $(function(){
 					}
 				});
 			});
+			enableButton.show();
 			enableModal.modal('show');
 			return false;
 		} else {   // pid
