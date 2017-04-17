@@ -74,7 +74,7 @@ require_once '../../classes/ExternalModules.php';
 ?>
 </div></td>
 					<td style='vertical-align: middle;' class="external-modules-action-buttons">
-						<button class='enable-button'>Enable</button>					
+						<button class='enable-button'>Enable</button>
 					</td>
 				</tr>
 			<?php

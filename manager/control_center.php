@@ -39,15 +39,16 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<button type="button" class="close close-button" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title">Enable Module: <span class="module-name"></span></h4>
 			</div>
 			<div class="modal-body">
+				<div id="external-modules-enable-modal-error" style="display:none;color:red;font-weight: bold"></div>
 				<p>This module requests the following permissions:</p>
 				<ul></ul>
 			</div>
 			<div class="modal-footer">
-				<button data-dismiss="modal">Cancel</button>
+				<button class="close-button" data-dismiss="modal">Cancel</button>
 				<button class="enable-button"></button>
 			</div>
 		</div>
