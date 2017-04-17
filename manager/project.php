@@ -3,17 +3,25 @@ namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once ExternalModules::getProjectHeaderPath();
 
+ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
+ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
+
 if(!ExternalModules::hasDesignRights()){
 	echo "You don't have permission to manage external modules on this project.";
 	return;
 }
 
 ExternalModules::addResource('css/style.css');
-ExternalModules::addResource('js/globals.js');
-ExternalModules::addResource('js/project_lookup.js');
+?>
 
+<h4 style="margin-top: 0;">
+	<img src="<?= '../images/puzzle_medium.png' ?>">
+	Module Management for Your Project
+</h4>
+
+<?php
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
-
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 ?>
 
 <style>
@@ -34,8 +42,10 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 				<table class="table table-no-top-row-border">
 					<thead>
 						<tr>
-							<th colspan="3">Project Settings</th>
-							<th>Override Global Setting</th>
+							<th>Project Settings</th>
+							<th style='text-align: center;'>Value</th>
+							<th style='min-width: 75px; text-align: center;'></th>
+							<th style='min-width: 70px;'></th>
 						</tr>
 					</thead>
 					<tbody></tbody>
@@ -48,6 +58,13 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 		</div>
 	</div>
 </div>
+
+<script>
+	var pid = <?=$_GET['pid']?>;
+	var keyEnabled = '<?= ExternalModules::KEY_ENABLED ?>';
+</script>
+
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/project.js'); ?>
 
 <?php
 

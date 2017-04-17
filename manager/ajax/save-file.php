@@ -7,17 +7,17 @@ $pid = @$_GET['pid'];
 $moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
 $version = $_GET['moduleDirectoryVersion'];
 
-if(empty($pid) && !ExternalModules\ExternalModules::hasGlobalSettingsSavePermission($moduleDirectoryPrefix)){
-//	die("You don't have permission to save global settings!");
+if(empty($pid) && !ExternalModules\ExternalModules::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
+//	die("You don't have permission to save system settings!");
 	header('Content-type: application/json');
 	echo json_encode(array(
-		'status' => 'You do not have permission to save global settings!'
+		'status' => 'You do not have permission to save system settings!'
 	));
 }
 
 $config = ExternalModules\ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
 $files = array();
-foreach(['global-settings', 'project-settings'] as $settingsKey){
+foreach(['system-settings', 'project-settings'] as $settingsKey){
 	 foreach($config[$settingsKey] as $row) {
 		  if ($row['type'] && ($row['type'] == "file")) {
 			   $files[] = $row['key'];

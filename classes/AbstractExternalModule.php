@@ -28,23 +28,23 @@ class AbstractExternalModule
 	protected function checkSettings()
 	{
 		$config = $this->getConfig();
-		$globalSettings = $config['global-settings'];
+		$systemSettings = $config['system-settings'];
 		$projectSettings = $config['project-settings'];
 
 		$handleDuplicate = function($key, $type){
 			throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" $type setting multiple times!");
 		};
 
-		$globalSettingKeys = array();
-		foreach($globalSettings as $details){
+		$systemSettingKeys = array();
+		foreach($systemSettings as $details){
 			$key = $details['key'];
 			self::checkSettingKey($key);
 
-			if(isset($globalSettingKeys[$key])){
-				$handleDuplicate($key, 'global');
+			if(isset($systemSettingKeys[$key])){
+				$handleDuplicate($key, 'system');
 			}
 			else{
-				$globalSettingKeys[$key] = true;
+				$systemSettingKeys[$key] = true;
 			}
 		}
 
@@ -53,12 +53,12 @@ class AbstractExternalModule
 			$key = $details['key'];
 			self::checkSettingKey($key);
 
-			if(array_key_exists($key, $globalSettingKeys)){
-				throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting on both the global and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the global setting configuration instead.  If you want this setting to have a different name on the project management page, specify a 'project-name' under the global setting.");
+			if(array_key_exists($key, $systemSettingKeys)){
+				throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting on both the system and project levels.  If you want to allow this setting to be overridden on the project level, please remove the project setting configuration and set 'allow-project-overrides' to true in the system setting configuration instead.  If you want this setting to have a different name on the project management page, specify a 'project-name' under the system setting.");
 			}
 
 			if(array_key_exists('default', $details)){
-				throw new Exception("The \"" . $this->PREFIX . "\" module defines a default value for the the \"$key\" project setting.  Default values are only allowed on global settings.");
+				throw new Exception("The \"" . $this->PREFIX . "\" module defines a default value for the the \"$key\" project setting.  Default values are only allowed on system settings.");
 			}
 
 			if(isset($projectSettingKeys[$key])){
@@ -155,21 +155,21 @@ class AbstractExternalModule
 
 	# Set the setting specified by the key to the specified value
 	# globally/systemwide (shared by all projects).
-	function setGlobalSetting($key, $value)
+	function setSystemSetting($key, $value)
 	{
-		ExternalModules::setGlobalSetting($this->PREFIX, $key, $value);
+		ExternalModules::setSystemSetting($this->PREFIX, $key, $value);
 	}
 
 	# Get the value stored globally/systemwide for the specified key.
-	function getGlobalSetting($key)
+	function getSystemSetting($key)
 	{
-		return ExternalModules::getGlobalSetting($this->PREFIX, $key);
+		return ExternalModules::getSystemSetting($this->PREFIX, $key);
 	}
 
 	# Remove the value stored globally/systemwide for the specified key.
-	function removeGlobalSetting($key)
+	function removeSystemSetting($key)
 	{
-		ExternalModules::removeGlobalSetting($this->PREFIX, $key);
+		ExternalModules::removeSystemSetting($this->PREFIX, $key);
 	}
 
 	# Set the setting specified by the key to the specified value for
@@ -209,6 +209,18 @@ class AbstractExternalModule
 	{
 		$pid = self::requireProjectId($pid);
 		ExternalModules::removeProjectSetting($this->PREFIX, $pid, $key);
+	}
+
+	function getUrl($path)
+	{
+		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		if($extension != 'php'){
+			// This must be a resource, like an image or css/js file.
+			// Go ahead and return the version specific url.
+			return ExternalModules::getModuleDirectoryUrl($this->PREFIX, $this->VERSION) . '/' . $path;
+		}
+
+		return ExternalModules::getUrl($this->PREFIX, $path);
 	}
 
 	# function to enforce that a pid is required for a particular function

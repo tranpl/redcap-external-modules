@@ -9,7 +9,7 @@ $version = $_GET['moduleDirectoryVersion'];
 # for screening out files below
 $config = ExternalModules::getConfig($moduleDirectoryPrefix, $version, $pid);
 $files = array();
-foreach(['global-settings', 'project-settings'] as $settingsKey){
+foreach(['system-settings', 'project-settings'] as $settingsKey){
 	foreach($config[$settingsKey] as $row) {
 		if ($row['type'] && ($row['type'] == "file")) {
 			$files[] = $row['key'];
@@ -33,13 +33,12 @@ function isExternalModuleFile($key, $fileKeys) {
 	return false;
 }
 
-$saved = array();
 # store everything BUT files and multiple instances (after the first one)
 foreach($_POST as $key=>$value){
 	# files are stored in a separate $.ajax call
 	# numeric value signifies a file present
-	# empty strings signify non-existent files (globalValues or empty)
-	if (!isExternalModuleFile($key, $files) || !is_numeric($value)) {
+	# empty strings signify non-existent files (systemValues or empty)
+	if (!isExternalModuleFile($key, $files) || !is_numeric($value)) { 
 		if($value == '') {
 			$value = null;
 		}
@@ -75,14 +74,8 @@ foreach($instances as $key => $value) {
 
 	# do not put in database if last and value is blank
 //	if (!$last || $value != "") {
-	    $saved[$shortKey."____".$n] = $value;
 		$data = ExternalModules::setInstance($moduleDirectoryPrefix, $pid, $shortKey, (int) $n, $value);
 //	}
-
 }
 header('Content-type: application/json');
-echo json_encode(array(
-	'status' => 'success',
-    'instances' => json_encode($instances),
-    'saved' => json_encode($saved)
-));
+echo json_encode(array('status' => 'success'));

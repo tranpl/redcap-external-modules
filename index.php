@@ -11,9 +11,9 @@ if(empty($prefix)){
 	die("A module with id $id could not be found!");
 }
 
-$version = ExternalModules::getGlobalSetting($prefix, ExternalModules::KEY_VERSION);
+$version = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_VERSION);
 if(empty($version)){
-	die("The requested module is currently disabled globally.");
+	die("The requested module is currently disabled systemwide.");
 }
 
 if($pid != null){
@@ -27,9 +27,9 @@ if (preg_match("/^https:\/\//", $page) || preg_match("/^http:\/\//", $page)) {
 	header( 'Location: '.$page ) ;
 }
 
-$pagePath = ExternalModules::$MODULES_PATH . ExternalModules::getModuleDirectoryName($prefix, $version) . "/$page.php";
+$pagePath = ExternalModules::getModuleDirectoryPath($prefix, $version) . "/$page.php";
 if(!file_exists($pagePath)){
-	die("The specified page does not exist for this module.");
+	die("The specified page does not exist for this module. $pagePath");
 }
 
 require_once $pagePath;
