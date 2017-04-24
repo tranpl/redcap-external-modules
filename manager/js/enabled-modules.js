@@ -138,7 +138,11 @@ $(function(){
 		if (typeof instance != "undefined") {
 			// for looping for repeatable elements
 			if( (header < 1 || typeof header == "undefined")){
-				value = value[instance];
+				if (typeof value == "undefined") {
+					value = "";
+				} else {
+					value = value[instance];
+				}
 			}
 			if (instance > 0) {
 				key = key + "____" + instance;

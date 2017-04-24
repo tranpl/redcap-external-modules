@@ -57,10 +57,11 @@ $(function(){
 			enableModal.modal('show');
 			return false;
 		} else {   // pid
+			var enableButton = enableModal.find('.enable-button');
 			$.post('ajax/enable-module.php?pid=' + pid, {prefix: prefix, version: version}, function(data){
 				jsonAjax = jQuery.parseJSON(data);
 				$('#external-modules-enable-modal-error').hide();
-				if (jsonAjax['error_message'] != "") {
+				if ((typeof jsonAjax['error_message'] != "undefined") && (jsonAjax['error_message'] != "")) {
 					$('#external-modules-enable-modal-error').show();
 					$('#external-modules-enable-modal-error').html(jsonAjax['error_message']);
 					$('.close-button').attr('disabled', false);
