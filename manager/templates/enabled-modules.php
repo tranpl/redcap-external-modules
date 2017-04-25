@@ -126,6 +126,17 @@ if (isset($_GET['pid'])) {
 
 	?>
 </table>
+<script>
+	(function(){
+		var enabledModulesTable = $('#external-modules-enabled')
+		enabledModulesTable.find('tr').sort(function(a, b){
+			a = $(a).find('.external-modules-title').text()
+			b = $(b).find('.external-modules-title').text()
+
+			return a.localeCompare(b)
+		}).appendTo(enabledModulesTable)
+	})()
+</script>
 
 <?php
 global $configsByPrefixJSON,$versionsByPrefixJSON;
