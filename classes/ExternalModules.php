@@ -153,7 +153,7 @@ class ExternalModules
 							}
 						};
 
-						request.open("POST", "<?=self::$BASE_URL?>/manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
+						request.open("POST", "<?=self::$BASE_URL?>manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
 						request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 						request.send("module=<?=$activeModulePrefix?>");
 					</script>

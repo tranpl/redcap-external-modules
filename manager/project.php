@@ -64,7 +64,7 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 	var keyEnabled = '<?= ExternalModules::KEY_ENABLED ?>';
 </script>
 
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/project.js'); ?>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project.js'); ?>
 
 <?php
 

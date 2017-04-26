@@ -68,7 +68,7 @@ if (isset($_GET['pid'])) {
 ?>
 </script>
 <?php
-	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-preface.js');
+	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules-preface.js');
 ?>
 
 <table id='external-modules-enabled' class="table">
@@ -155,5 +155,5 @@ else if($versionsByPrefixJSON == "") {
 
 <?php
 include_once(dirname(__DIR__)."/js/globals.php");
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules.js');
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules.js');
 ?>

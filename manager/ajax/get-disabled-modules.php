@@ -98,4 +98,4 @@ require_once '../../classes/ExternalModules.php';
 	}
 ?>
 </script>
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/get-disabled-modules.js'); ?>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'get-disabled-modules.js'); ?>
