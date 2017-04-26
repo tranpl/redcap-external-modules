@@ -2,16 +2,13 @@
 namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once ExternalModules::getProjectHeaderPath();
-
-ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
-ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
+require_once 'templates/shared-header.php';
 
 if(!ExternalModules::hasDesignRights()){
 	echo "You don't have permission to manage external modules on this project.";
 	return;
 }
 
-ExternalModules::addResource('css/style.css');
 ?>
 
 <h4 style="margin-top: 0;">
