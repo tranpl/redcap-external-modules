@@ -1329,6 +1329,37 @@ class ExternalModules
 
 			$configRow['choices'] = $choices;
 		}
+		else if ($configRow['type'] == 'arm-list') {
+			$choices = [];
+
+			$sql = "SELECT a.arm_id, a.arm_name
+					FROM redcap_events_arms a
+					WHERE a.project_id = '" . db_real_escape_string($pid) . "'
+					ORDER BY a.arm_id";
+			$result = self::query($sql);
+
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['arm_id'], 'name' => $row['arm_name']];
+			}
+
+			$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'event-list') {
+			$choices = [];
+
+			$sql = "SELECT e.event_id, e.descrip
+					FROM redcap_events_metadata e, redcap_events_arms a
+					WHERE a.project_id = '" . db_real_escape_string($pid) . "'
+						AND e.arm_id = a.arm_id
+					ORDER BY e.event_id";
+			$result = self::query($sql);
+
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['event_id'], 'name' => $row['descrip']];
+			}
+
+			$configRow['choices'] = $choices;
+		}
 		else if($configRow['type'] == 'sub_settings') {
 			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
 				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);

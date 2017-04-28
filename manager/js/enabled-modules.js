@@ -155,6 +155,12 @@ $(function(){
 		else if(type == 'form-list'){
 			inputHtml = getSelectElement(key, setting.choices, value, []);
 		}
+		else if(type == 'event-list'){
+			inputHtml = getSelectElement(key, setting.choices, value, []);
+		}
+		else if(type == 'arm-list'){
+			inputHtml = getSelectElement(key, setting.choices, value, []);
+		}
 		else if(type == 'user-list'){
 			inputHtml = getSelectElement(key, setting.choices, value, []);
 		}
