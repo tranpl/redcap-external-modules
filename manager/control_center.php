@@ -2,11 +2,7 @@
 namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
-
-ExternalModules::addResource('css/style.css');
-
-ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
-ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
+require_once 'templates/shared-header.php';
 
 ?>
 
@@ -81,10 +77,8 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 	</div>
 </div>
 
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"
-		integrity="sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg=" crossorigin="anonymous"></script>
-
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/control_center.js'); ?>
+<?php ExternalModules::addResource('spin.js/spin.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js', 'sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg='); ?>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'control_center.js'); ?>
 
 <?php
 

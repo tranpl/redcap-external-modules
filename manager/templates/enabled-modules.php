@@ -68,7 +68,7 @@ if (isset($_GET['pid'])) {
 ?>
 </script>
 <?php
-	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules-preface.js');
+	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules-preface.js');
 ?>
 
 <table id='external-modules-enabled' class="table">
@@ -126,6 +126,17 @@ if (isset($_GET['pid'])) {
 
 	?>
 </table>
+<script>
+	(function(){
+		var enabledModulesTable = $('#external-modules-enabled')
+		enabledModulesTable.find('tr').sort(function(a, b){
+			a = $(a).find('.external-modules-title').text()
+			b = $(b).find('.external-modules-title').text()
+
+			return a.localeCompare(b)
+		}).appendTo(enabledModulesTable)
+	})()
+</script>
 
 <?php
 global $configsByPrefixJSON,$versionsByPrefixJSON;
@@ -155,5 +166,5 @@ else if($versionsByPrefixJSON == "") {
 
 <?php
 include_once(dirname(__DIR__)."/js/globals.php");
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/enabled-modules.js');
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules.js');
 ?>

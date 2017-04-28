@@ -153,7 +153,7 @@ class ExternalModules
 							}
 						};
 
-						request.open("POST", "<?=self::$BASE_URL?>/manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
+						request.open("POST", "<?=self::$BASE_URL?>manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
 						request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 						request.send("module=<?=$activeModulePrefix?>");
 					</script>
@@ -1071,7 +1071,7 @@ class ExternalModules
 
 
 	# echo's HTML for adding an approriate resource; also prepends appropriate directory structure
-	static function addResource($path)
+	static function addResource($path, $cdnUrl = null, $integrity = null)
 	{
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
@@ -1079,19 +1079,42 @@ class ExternalModules
 			$url = $path;
 		}
 		else {
-			$path = "manager/$path";
-			$fullLocalPath = __DIR__ . "/../$path";
+			$localFile = true;
+			if(empty($cdnUrl)){
+				// This is a local resource.
+				$path = "manager/$path";
+				$fullLocalPath = __DIR__ . "/../$path";
+			}
+			else{
+				// This is a third party resource.  We check for the node module, then fall back to the CDN url if it doesn't exist.
+				// These local Yarn (node_module) dependencies were added only for PMI (which doesn't allow CDNs).
+				// Running 'yarn install' is currently only required prior to deploying to the PMI REDCap instance.
+				$path = "node_modules/$path";
+				$fullLocalPath = __DIR__ . "/../$path";
 
-			// Add the filemtime to the url for cache busting.
-                        clearstatcache(true, $path);
-			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+				if(!file_exists($fullLocalPath)){
+					$localFile = false;
+					$url = $cdnUrl;
+				}
+			}
+
+			if($localFile){
+				// Add the filemtime to the url for cache busting.
+				clearstatcache(true, $fullLocalPath);
+				$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+			}
+		}
+
+		$integrityAttributes = '';
+		if(!empty($integrity)){
+			$integrityAttributes = "integrity='$integrity' crossorigin='anonymous'";
 		}
 
 		if ($extension == 'css') {
-			echo "<link rel='stylesheet' type='text/css' href='" . $url . "'>";
+			echo "<link rel='stylesheet' type='text/css' href='" . $url . "' $integrityAttributes>";
 		}
 		else if ($extension == 'js') {
-			echo "<script src='" . $url . "'></script>";
+			echo "<script src='" . $url . "' $integrityAttributes></script>";
 		}
 		else {
 			throw new Exception('Unsupported resource added: ' . $path);
