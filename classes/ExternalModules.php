@@ -124,7 +124,6 @@ class ExternalModules
 					$error = error_get_last();
 					$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 					$message .= 'Error Message: ' . $error['message'] . "\n";
-					$message .= 'Server: ' . gethostname() . "\n";
 					$message .= 'File: ' . $error['file'] . "\n";
 					$message .= 'Line: ' . $error['line'] . "\n";
 
@@ -180,10 +179,11 @@ class ExternalModules
 		global $project_contact_email;
 
 		$message = str_replace('<br>', "\n", $message);
+		$message .= "\n\nServer: " . gethostname() . "\n";
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu');
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,scott.j.pearson@vanderbilt.edu');
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
@@ -472,6 +472,10 @@ class ExternalModules
 	#	$ary['key3'][2] = 3;
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
+		if (!$projectId) {
+			throw new Exception("The Project Id cannot be null!");
+		}
+
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
@@ -580,6 +584,10 @@ class ExternalModules
 
 	static function getProjectSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
+		if (!$projectId) {
+			throw new Exception("The Project Id cannot be null!");
+		}
+
 		$value = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
 		if($value === null){
