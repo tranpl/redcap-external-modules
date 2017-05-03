@@ -183,7 +183,7 @@ class ExternalModules
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,scott.j.pearson@vanderbilt.edu');
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,scott.j.pearson@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
