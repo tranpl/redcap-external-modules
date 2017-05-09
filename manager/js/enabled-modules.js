@@ -330,6 +330,12 @@ $(function(){
 			return true;
 		}
 
+		if(setting.key == enabled){
+			// Hide the 'enabled' setting on projects, since we have buttons for enabling/disabling now.
+			// Also, leaving this setting in place caused the enabled flag to be changed from a boolean to a string (which could cause unexpected behavior).
+			return false;
+		}
+
 		if(setting.overrideLevelValue == null && !isSuperUser){
 			// Hide this setting since the override level will prevent the non-superuser from actually saving it.
 			return false;
