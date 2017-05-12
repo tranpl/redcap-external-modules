@@ -53,7 +53,8 @@ require_once '../../classes/ExternalModules.php';
 			if (!$enabled) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-					<td><div class='external-modules-title'><?= $config['name'] ?> <?= $version ?><input type='hidden' name='version' value='<?= $version ?>'></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : '';?></div><div class='external-modules-byline'><?php
+					<td><div class='external-modules-title'><?= $config['name'] ?> <?= $version ?><input type='hidden' name='version' value='<?= $version ?>'></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : '';?></div><div class='external-modules-byline'>
+<?php
 	if ($config['authors']) {
 		$names = array();
 		foreach ($config['authors'] as $author) {
@@ -62,7 +63,7 @@ require_once '../../classes/ExternalModules.php';
 				if ($author['email']) {
 					$names[] = "<a href='mailto:".$author['email']."'>".$name."</a>";
 				} else {
-					$names[] == $name;
+					$names[] = $name;
 				}
 			}
 		}
@@ -70,9 +71,10 @@ require_once '../../classes/ExternalModules.php';
 			echo "by ".implode($names, ", ");
 		}
 	}
-?></div></td>
+?>
+</div></td>
 					<td style='vertical-align: middle;' class="external-modules-action-buttons">
-						<button class='enable-button'>Enable</button>					
+						<button class='enable-button'>Enable</button>
 					</td>
 				</tr>
 			<?php
@@ -96,4 +98,4 @@ require_once '../../classes/ExternalModules.php';
 	}
 ?>
 </script>
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/get-disabled-modules.js'); ?>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'get-disabled-modules.js'); ?>

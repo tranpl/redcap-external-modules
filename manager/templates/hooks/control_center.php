@@ -11,8 +11,8 @@ require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 		foreach(ExternalModules::getLinks() as $name=>$link){
 			?>
 			span.append('<img src="<?php
-				if (file_exists(ExternalModules::$BASE_PATH . '/images/' . $link['icon'] . '.png')) {
-					echo ExternalModules::$BASE_URL . '/images/' . $link['icon'] . ".png";
+				if (file_exists(ExternalModules::$BASE_PATH . 'images/' . $link['icon'] . '.png')) {
+					echo ExternalModules::$BASE_URL . 'images/' . $link['icon'] . ".png";
 				} else {
 					echo APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] . ".png"; 
 				}

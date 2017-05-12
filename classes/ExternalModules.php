@@ -127,7 +127,6 @@ class ExternalModules
 					$error = error_get_last();
 					$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 					$message .= 'Error Message: ' . $error['message'] . "\n";
-					$message .= 'Server: ' . gethostname() . "\n";
 					$message .= 'File: ' . $error['file'] . "\n";
 					$message .= 'Line: ' . $error['line'] . "\n";
 
@@ -156,7 +155,7 @@ class ExternalModules
 							}
 						};
 
-						request.open("POST", "<?=self::$BASE_URL?>/manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
+						request.open("POST", "<?=self::$BASE_URL?>manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
 						request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 						request.send("module=<?=$activeModulePrefix?>");
 					</script>
@@ -183,10 +182,11 @@ class ExternalModules
 		global $project_contact_email;
 
 		$message = str_replace('<br>', "\n", $message);
+		$message .= "\n\nServer: " . gethostname() . "\n";
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu');
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,scott.j.pearson@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
@@ -475,6 +475,10 @@ class ExternalModules
 	#	$ary['key3'][2] = 3;
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
+		if (!$projectId) {
+			throw new Exception("The Project Id cannot be null!");
+		}
+
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 
 		$settings = array();
@@ -538,7 +542,7 @@ class ExternalModules
 		$value = $row['value'];
 
 		if ($type == "json") {
-			if ($json = json_decode($value)) {
+			if ($json = json_decode($value,true)) {
 				$value = $json;
 			}
 		}
@@ -583,6 +587,10 @@ class ExternalModules
 
 	static function getProjectSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
+		if (!$projectId) {
+			throw new Exception("The Project Id cannot be null!");
+		}
+
 		$value = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
 		if($value === null){
@@ -1074,7 +1082,7 @@ class ExternalModules
 
 
 	# echo's HTML for adding an approriate resource; also prepends appropriate directory structure
-	static function addResource($path)
+	static function addResource($path, $cdnUrl = null, $integrity = null)
 	{
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
@@ -1082,21 +1090,44 @@ class ExternalModules
 			$url = $path;
 		}
 		else {
-			$path = "manager/$path";
-			$fullLocalPath = __DIR__ . "/../$path";
+			$localFile = true;
+			if(empty($cdnUrl)){
+				// This is a local resource.
+				$path = "manager/$path";
+				$fullLocalPath = __DIR__ . "/../$path";
+			}
+			else{
+				// This is a third party resource.  We check for the node module, then fall back to the CDN url if it doesn't exist.
+				// These local Yarn (node_module) dependencies were added only for PMI (which doesn't allow CDNs).
+				// Running 'yarn install' is currently only required prior to deploying to the PMI REDCap instance.
+				$path = "node_modules/$path";
+				$fullLocalPath = __DIR__ . "/../$path";
 
-			// Add the filemtime to the url for cache busting.
-			clearstatcache(true, $path);
-			$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+				if(!file_exists($fullLocalPath)){
+					$localFile = false;
+					$url = $cdnUrl;
+				}
+			}
+
+			if($localFile){
+				// Add the filemtime to the url for cache busting.
+				clearstatcache(true, $fullLocalPath);
+				$url = ExternalModules::$BASE_URL . $path . '?' . filemtime($fullLocalPath);
+			}
 		}
 
 		if(in_array($url, self::$INCLUDED_RESOURCES)) return;
 
+		$integrityAttributes = '';
+		if(!empty($integrity)){
+			$integrityAttributes = "integrity='$integrity' crossorigin='anonymous'";
+		}
+
 		if ($extension == 'css') {
-			echo "<link rel='stylesheet' type='text/css' href='" . $url . "'>";
+			echo "<link rel='stylesheet' type='text/css' href='" . $url . "' $integrityAttributes>";
 		}
 		else if ($extension == 'js') {
-			echo "<script src='" . $url . "'></script>";
+			echo "<script src='" . $url . "' $integrityAttributes></script>";
 		}
 		else {
 			throw new Exception('Unsupported resource added: ' . $path);
@@ -1332,6 +1363,37 @@ class ExternalModules
 
 			while ($row = db_fetch_assoc($result)) {
 				$choices[] = ['value' => $row['form_name'], 'name' => $row['form_name']];
+			}
+
+			$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'arm-list') {
+			$choices = [];
+
+			$sql = "SELECT a.arm_id, a.arm_name
+					FROM redcap_events_arms a
+					WHERE a.project_id = '" . db_real_escape_string($pid) . "'
+					ORDER BY a.arm_id";
+			$result = self::query($sql);
+
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['arm_id'], 'name' => $row['arm_name']];
+			}
+
+			$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'event-list') {
+			$choices = [];
+
+			$sql = "SELECT e.event_id, e.descrip, a.arm_id, a.arm_name
+					FROM redcap_events_metadata e, redcap_events_arms a
+					WHERE a.project_id = '" . db_real_escape_string($pid) . "'
+						AND e.arm_id = a.arm_id
+					ORDER BY e.event_id";
+			$result = self::query($sql);
+
+			while ($row = db_fetch_assoc($result)) {
+				$choices[] = ['value' => $row['event_id'], 'name' => "Arm: ".$row['arm_name']." - Event: ".$row['descrip']];
 			}
 
 			$configRow['choices'] = $choices;

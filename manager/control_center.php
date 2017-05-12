@@ -2,6 +2,7 @@
 namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
+require_once 'templates/shared-header.php';
 
 ExternalModules::addResource('css/style.css');
 
@@ -40,15 +41,16 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<button type="button" class="close close-button" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title">Enable Module: <span class="module-name"></span></h4>
 			</div>
 			<div class="modal-body">
+				<div id="external-modules-enable-modal-error" style="display:none;color:red;font-weight: bold"></div>
 				<p>This module requests the following permissions:</p>
 				<ul></ul>
 			</div>
 			<div class="modal-footer">
-				<button data-dismiss="modal">Cancel</button>
+				<button class="close-button" data-dismiss="modal">Cancel</button>
 				<button class="enable-button"></button>
 			</div>
 		</div>
@@ -81,10 +83,8 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 	</div>
 </div>
 
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"
-		integrity="sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg=" crossorigin="anonymous"></script>
-
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/control_center.js'); ?>
+<?php ExternalModules::addResource('spin.js/spin.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js', 'sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg='); ?>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'control_center.js'); ?>
 
 <?php
 

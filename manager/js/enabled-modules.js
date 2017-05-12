@@ -138,7 +138,11 @@ $(function(){
 		if (typeof instance != "undefined") {
 			// for looping for repeatable elements
 			if( (header < 1 || typeof header == "undefined")){
-				value = value[instance];
+				if (typeof value == "undefined") {
+					value = "";
+				} else {
+					value = value[instance];
+				}
 			}
 			if (instance > 0) {
 				key = key + "____" + instance;
@@ -153,6 +157,12 @@ $(function(){
 			inputHtml = getSelectElement(key, setting.choices, value, []);
 		}
 		else if(type == 'form-list'){
+			inputHtml = getSelectElement(key, setting.choices, value, []);
+		}
+		else if(type == 'event-list'){
+			inputHtml = getSelectElement(key, setting.choices, value, []);
+		}
+		else if(type == 'arm-list'){
 			inputHtml = getSelectElement(key, setting.choices, value, []);
 		}
 		else if(type == 'user-list'){
@@ -335,6 +345,12 @@ $(function(){
 		if(!system){
 			// Always show project level settings.
 			return true;
+		}
+
+		if(setting.key == enabled){
+			// Hide the 'enabled' setting on projects, since we have buttons for enabling/disabling now.
+			// Also, leaving this setting in place caused the enabled flag to be changed from a boolean to a string (which could cause unexpected behavior).
+			return false;
 		}
 
 		if(setting.overrideLevelValue == null && !isSuperUser){

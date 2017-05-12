@@ -93,6 +93,18 @@
 				"type": "form-list"
 				},
 				{
+					"key": "arm-name",
+					"name": "Arm name",
+					"required": true,
+					"type": "arm-list"
+				},
+				{
+					"key": "event-name",
+					"name": "Event name",
+					"required": true,
+					"type": "event-list"
+				},
+				{
 				"key": "test-text",
 				"name": "Text Field",
 				"required": true,
