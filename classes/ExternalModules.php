@@ -1482,8 +1482,7 @@ class ExternalModules
 
 	static function isSystemSetting($moduleDirectoryPrefix, $key)
 	{
-		$version = self::getSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
-		$config = self::getConfig($moduleDirectoryPrefix, $version);
+		$config = self::getConfig($moduleDirectoryPrefix);
 
 		foreach($config['system-settings'] as $details){
 			if($details['key'] == $key){
@@ -1492,6 +1491,23 @@ class ExternalModules
 		}
 
 		return false;
+	}
+
+	static function getSettingDetails($prefix, $key)
+	{
+		$config = self::getConfig($prefix);
+
+		$settingsTypes = [$config['system-settings'], $config['project-settings']];
+
+		foreach($settingsTypes as $type){
+			foreach($type as $details){
+				if($details['key'] == $key){
+					return $details;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	# returns boolean if design rights are given by REDCap for current user

@@ -97,6 +97,7 @@ abstract class BaseTest extends TestCase
 	protected function setConfig($config)
 	{
 		$this->setExternalModulesProperty('configs', [TEST_MODULE_PREFIX => [TEST_MODULE_VERSION => $config]]);
+		$this->setExternalModulesProperty('systemwideEnabledVersions', [TEST_MODULE_PREFIX => TEST_MODULE_VERSION]);
 	}
 
 	private function setExternalModulesProperty($name, $value)
