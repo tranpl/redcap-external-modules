@@ -548,7 +548,7 @@ class ExternalModules
 		$value = $row['value'];
 
 		if ($type == "json") {
-			if ($json = json_decode($value)) {
+			if ($json = json_decode($value,true)) {
 				$value = $json;
 			}
 		}
@@ -1387,7 +1387,7 @@ class ExternalModules
 		else if ($configRow['type'] == 'event-list') {
 			$choices = [];
 
-			$sql = "SELECT e.event_id, e.descrip
+			$sql = "SELECT e.event_id, e.descrip, a.arm_id, a.arm_name
 					FROM redcap_events_metadata e, redcap_events_arms a
 					WHERE a.project_id = '" . db_real_escape_string($pid) . "'
 						AND e.arm_id = a.arm_id
@@ -1395,7 +1395,7 @@ class ExternalModules
 			$result = self::query($sql);
 
 			while ($row = db_fetch_assoc($result)) {
-				$choices[] = ['value' => $row['event_id'], 'name' => $row['descrip']];
+				$choices[] = ['value' => $row['event_id'], 'name' => "Arm: ".$row['arm_name']." - Event: ".$row['descrip']];
 			}
 
 			$configRow['choices'] = $choices;
@@ -1491,8 +1491,7 @@ class ExternalModules
 
 	static function isSystemSetting($moduleDirectoryPrefix, $key)
 	{
-		$version = self::getSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
-		$config = self::getConfig($moduleDirectoryPrefix, $version);
+		$config = self::getConfig($moduleDirectoryPrefix);
 
 		foreach($config['system-settings'] as $details){
 			if($details['key'] == $key){
@@ -1501,6 +1500,23 @@ class ExternalModules
 		}
 
 		return false;
+	}
+
+	static function getSettingDetails($prefix, $key)
+	{
+		$config = self::getConfig($prefix);
+
+		$settingsTypes = [$config['system-settings'], $config['project-settings']];
+
+		foreach($settingsTypes as $type){
+			foreach($type as $details){
+				if($details['key'] == $key){
+					return $details;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	# returns boolean if design rights are given by REDCap for current user

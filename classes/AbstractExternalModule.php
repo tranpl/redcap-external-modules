@@ -229,6 +229,11 @@ class AbstractExternalModule
 		return $url;
 	}
 
+	public function getModuleName()
+	{
+		return $this->getConfig()['name'];
+	}
+
 	# function to enforce that a pid is required for a particular function
 	private function requireProjectId($pid)
 	{
