@@ -19,7 +19,13 @@ $config = ExternalModules\ExternalModules::getConfig($moduleDirectoryPrefix, $ve
 $files = array();
 foreach(['system-settings', 'project-settings'] as $settingsKey){
 	 foreach($config[$settingsKey] as $row) {
-		  if ($row['type'] && ($row['type'] == "file")) {
+         if($row['type'] && ($row['type'] == "sub_settings") && $row['sub_settings']){
+             foreach ($row['sub_settings'] as $r){
+                 if ($r['type'] && ($r['type'] == "file")) {
+                     $files[] = $r['key'];
+                 }
+             }
+         }else if ($row['type'] && ($row['type'] == "file")) {
 			   $files[] = $row['key'];
 		  }
 	 }
@@ -48,7 +54,7 @@ $edoc = null;
 $myfiles = array();
 foreach($_FILES as $key=>$value){
 	$myfiles[] = $key;
-	if (isExternalModuleFile($key, $files) && $value) { 
+	if (isExternalModuleFile($key, $files) && $value) {
 		# use REDCap's uploadFile
 		$edoc = Files::uploadFile($_FILES[$key]);
 

@@ -115,7 +115,9 @@ if (isset($_GET['pid'])) {
 ?>
 </div></td>
 					<td class="external-modules-action-buttons">
+						<?php if(!empty($config['project-settings'])){?>
 						<button class='external-modules-configure-button'>Configure</button>
+						<?php } ?>
 						<button class='external-modules-disable-button'>Disable</button>
 					</td>
 				</tr>
