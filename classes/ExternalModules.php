@@ -472,25 +472,16 @@ class ExternalModules
 	#	$ary['key3'][2] = 3;
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
-//		if (!$projectId) {
-//			throw new Exception("The Project Id cannot be null!");
-//		}
+		if (!$projectId) {
+			throw new Exception("The Project Id cannot be null!");
+		}
 
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
-
-		$reservedKeys = [];
-		foreach(self::$RESERVED_SETTINGS as $reservedSetting){
-			$reservedKeys[$reservedSetting['key']] = true;
-		}
 
 		$settings = array();
 		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 			$key = $row['key'];
 			$value = $row['value'];
-
-			if(@$reservedKeys[$key] != null){
-				continue;
-			}
 
 			$setting =& $settings[$key];
 			if(!isset($setting)){
