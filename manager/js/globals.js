@@ -1,5 +1,4 @@
 var ExternalModules = {};
-var customConfigClass;
 
 ExternalModules.Settings = function(){}
 
@@ -196,7 +195,11 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
     if (typeof instance != "undefined") {
         // for looping for repeatable elements
         if (header < 1 || typeof header == "undefined") {
-            value = value[instance];
+            if (typeof value == "undefined") {
+                value = "";
+            }else{
+                value = value[instance];
+            }
         }
         key = this.getInstanceName(key, instance);
     }
@@ -425,10 +428,10 @@ ExternalModules.Settings.prototype.getElementAttributes = function(defaultAttrib
 }
 
 ExternalModules.Settings.prototype.getCustomConfigClass = function(){
-    return customConfigClass;
+    return this.customConfigClass;
 }
 ExternalModules.Settings.prototype.setCustomConfigClass = function(newcustomClass){
-    customConfigClass = newcustomClass;
+    this.customConfigClass = newcustomClass;
 }
 
 ExternalModules.Settings.prototype.getInstanceName = function(name,instance){
