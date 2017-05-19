@@ -1,5 +1,5 @@
-var customClass;
 var ExternalModules = {};
+var customConfigClass;
 
 ExternalModules.Settings = function(){}
 
@@ -94,9 +94,9 @@ ExternalModules.Settings.prototype.getSystemSettingColumns = function(setting){
     return columns;
 };
 
-ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, system, indexSubSet, rowsHtml, customClass){
-    if(customClass != undefined){
-        this.setCustomClass(customClass);
+ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, system, indexSubSet, rowsHtml, customConfigClass){
+    if(customConfigClass != undefined){
+        this.setCustomConfigClass(customConfigClass);
     }
     var rowTitleSubSetHtml = '';
     // SUB_SETTING
@@ -104,7 +104,7 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
         if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]')) {
 
             if(indexSubSet == 0) {
-                rowsHtml += '<tr class="'+customClass+'">' + this.getProjectSettingColumns(setting, system,'','') + '</tr>';
+                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
             }
         }
 
@@ -112,23 +112,23 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
             //we add the sub_settings header
             if(indexSubSet == 0){
                 //if values empty NEW form
-                rowsHtml += '<tr class="'+customClass+'">' + this.getProjectSettingColumns(setting, system,'','') + '</tr>';
+                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
             }else{
-                rowsHtml += '<tr class="'+customClass+'">' + this.getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
+                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
             }
 
             var settingsObject = this;
             setting.sub_settings.forEach(function (subSetting) {
                 subSetting.sub_setting = true;
-                rowsHtml += '<tr class = "subsettings-table '+ customClass+'">' + settingsObject.getProjectSettingColumns(subSetting, system, instance,'') + '</tr>';
+                rowsHtml += '<tr class = "subsettings-table '+ customConfigClass+'">' + settingsObject.getProjectSettingColumns(subSetting, system, instance) + '</tr>';
             });
         }
     } else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
         for (var instance=0; instance < setting.value.length; instance++) {
-            rowsHtml += '<tr class="'+customClass+'">' + this.getProjectSettingColumns(setting, system, instance,'') + '</tr>';
+            rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance) + '</tr>';
         }
     } else {
-        rowsHtml += '<tr class="'+customClass+'">' + this.getProjectSettingColumns(setting, system,'','') + '</tr>';
+        rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
     }
 
     return rowsHtml;
@@ -192,19 +192,13 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
     if(type != 'sub_settings') {
         html = "<td><span class='external-modules-instance-label'>" + instanceLabel + "</span><label>" + setting.name + ":</label></td>";
     }
-    if (typeof instance != "undefined" && instance != "") {
+
+    if (typeof instance != "undefined") {
         // for looping for repeatable elements
-        if(header < 1 || typeof header == "undefined"){
-            if (typeof value == "undefined") {
-                value = "";
-            } else {
-                value = value[instance];
-            }
+        if (header < 1 || typeof header == "undefined") {
+            value = value[instance];
         }
         key = this.getInstanceName(key, instance);
-    }else if((setting.repeatable==true || setting.sub_setting) && (instance != "" || instance != "undefined") && (Object.prototype.toString.call(value) === '[object Array]')){
-        //looping repeatable or sub_setting elements
-        value = value[instance];
     }
 
     var inputHtml;
@@ -411,7 +405,7 @@ ExternalModules.Settings.prototype.getTextareaElement = function(name, value, in
         value = "";
     }
 
-    return '<textarea  id="' + name + '" contenteditable="true" name="' + name + '" ' + this.getElementAttributes([],inputAttributes) + '>'+this.getAttributeValueHtml(value)+'</textarea>';
+    return '<textarea contenteditable="true" name="' + name + '" ' + this.getElementAttributes([],inputAttributes) + '>'+this.getAttributeValueHtml(value)+'</textarea>';
 
 }
 
@@ -435,11 +429,11 @@ ExternalModules.Settings.prototype.getElementAttributes = function(defaultAttrib
     return attributeString;
 }
 
-ExternalModules.Settings.prototype.getCustomClass = function(){
-    return customClass;
+ExternalModules.Settings.prototype.getCustomConfigClass = function(){
+    return customConfigClass;
 }
-ExternalModules.Settings.prototype.setCustomClass = function(newcustomClass){
-    customClass = newcustomClass;
+ExternalModules.Settings.prototype.setCustomConfigClass = function(newcustomClass){
+    customConfigClass = newcustomClass;
 }
 
 ExternalModules.Settings.prototype.getInstanceName = function(name,instance){
@@ -556,7 +550,7 @@ $(function(){
                 $newInstance.closest("tr").find('span.external-modules-instance-label').html((idx + 1) + ". ");
                 $(this).closest("tr").find('span.external-modules-instance-label').html((idx) + ". ");
 
-                newInstanceTotal += '<tr class = "subsettings-table '+getSettings().getCustomClass()+'">' + $newInstance.html() + '</tr>';
+                newInstanceTotal += '<tr class = "subsettings-table '+getSettings().getCustomConfigClass()+'">' + $newInstance.html() + '</tr>';
             });
             oldName = $(this).closest('tr').find('label').attr('name');
             newclass = "-subsettings";
@@ -584,7 +578,7 @@ $(function(){
 
         //We add the whole new block at the end
         if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').last().after("<tr class = '"+getSettings().getCustomClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
+            $(this).closest('tr').nextAll('tr.subsettings-table').last().after("<tr class = '"+getSettings().getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
         }else if($(this).hasClass('external-modules-add-instance')) {
             $newInstanceTitle.insertAfter($(this).closest('tr'));
         }

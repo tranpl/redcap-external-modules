@@ -472,9 +472,9 @@ class ExternalModules
 	#	$ary['key3'][2] = 3;
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
-//		if (!$projectId) {
-//			throw new Exception("The Project Id cannot be null!");
-//		}
+		if (!$projectId) {
+			throw new Exception("The Project Id cannot be null!");
+		}
 
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 
@@ -1625,5 +1625,32 @@ class ExternalModules
 	public static function getGlobalJSURL()
 	{
 		return self::$BASE_URL . '/manager/js/globals.js';
+	}
+
+	public static function isProjectSettingsConfigOverwrittenBySystem($config)
+	{
+		if(!empty($config)){
+			$systemSettings = $config['system-settings'];
+			if(empty($systemSettings) && !empty($config['global-settings'])){
+				$systemSettings = $config['global-settings'];
+			}else if(empty($systemSettings) && empty($config['global-settings'])){
+				return false;
+			}
+
+			$reservedKeys = [];
+			foreach(self::$RESERVED_SETTINGS as $reservedSetting){
+				$reservedKeys[$reservedSetting['key']] = true;
+			}
+
+			foreach ($systemSettings as $setting){
+				$key = $setting['key'];
+				if(@$reservedKeys[$key] == null){
+					if(array_key_exists("allow-project-overrides",$setting) && $setting["allow-project-overrides"] == true){
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 }

@@ -115,8 +115,8 @@ if (isset($_GET['pid'])) {
 ?>
 </div></td>
 					<td class="external-modules-action-buttons">
-						<?php if(!empty($config['project-settings'])){?>
-						<button class='external-modules-configure-button'>Configure</button>
+						<?php if(ExternalModules::isProjectSettingsConfigOverwrittenBySystem($config) || !empty($config['project-settings'])){?>
+							<button class='external-modules-configure-button'>Configure</button>
 						<?php } ?>
 						<button class='external-modules-disable-button'>Disable</button>
 					</td>
@@ -128,6 +128,7 @@ if (isset($_GET['pid'])) {
 
 	?>
 </table>
+
 <script>
 	(function(){
 		var enabledModulesTable = $('#external-modules-enabled')
