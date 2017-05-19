@@ -9,22 +9,18 @@ ExternalModules.Settings.prototype.shouldShowSettingOnProjectManagementPage = fu
         // Always show project level settings.
         return true;
     }
-
     if(setting.key == enabled){
         // Hide the 'enabled' setting on projects, since we have buttons for enabling/disabling now.
         // Also, leaving this setting in place caused the enabled flag to be changed from a boolean to a string (which could cause unexpected behavior).
         return false;
     }
-
-    if(setting.overrideLevelValue == null && !isSuperUser){
+    if(setting.overrideLevelValue == null && !ExternalModules.SUPER_USER){
         // Hide this setting since the override level will prevent the non-superuser from actually saving it.
         return false;
     }
-
     // Checking whether a system setting is actually overridden is necessary for the UI to reflect when
     // settings are overridden prior to allow-project-overrides being set to false.
     var alreadyOverridden = setting.value != setting.systemValue;
-
     return setting['allow-project-overrides'] || alreadyOverridden;
 }
 
@@ -55,23 +51,48 @@ ExternalModules.Settings.prototype.getSettingRows = function(system, configSetti
         // Will need to clean up because can't use PHP constants in .js file
         setting.overrideLevelKey = setting.key + ExternalModules.OVERRIDE_PERMISSION_LEVEL_SUFFIX;
         var overrideLevel = savedSettings[setting.overrideLevelKey];
+
         if(overrideLevel){
             setting.overrideLevelValue = overrideLevel.value
         }
 
-
         if(!pid){
-            rowsHtml += '<tr>' + getSystemSettingColumns(setting) + '</tr>';
+            rowsHtml += '<tr>' + settingsObject.getSystemSettingColumns(setting) + '</tr>';
         }
         else if(settingsObject.shouldShowSettingOnProjectManagementPage(setting, system)){
-            rowsHtml += settingsObject.getProjectSettingHTML(setting,system, indexSubSet,rowsHtml, '');
+            rowsHtml += settingsObject.getProjectSettingHTML(setting,system, indexSubSet,'', '');
         }
     });
 
     return rowsHtml;
 }
 
+ExternalModules.Settings.prototype.getSystemSettingColumns = function(setting){
+    var columns = this.getSettingColumns(setting);
 
+    if(setting['allow-project-overrides']){
+        var overrideChoices = [
+            { value: '', name: 'Superusers Only' },
+            // Will need to clean up because can't use PHP constants in .js file
+            { value: ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS, name: 'Project Admins' },
+        ];
+
+        var selectAttributes = '';
+        // Will need to clean up because can't use PHP constants in .js file
+        if(setting.key == ExternalModules.KEY_ENABLED){
+            // For now, we've decided that only super users can enable modules on projects.
+            // To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
+            selectAttributes = 'disabled'
+        }
+
+        columns += '<td>' + this.getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue, selectAttributes) + '</td>';
+    }
+    else{
+        columns += '<td></td>';
+    }
+
+    return columns;
+};
 
 ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, system, indexSubSet, rowsHtml, customClass){
     if(customClass != undefined){
@@ -81,10 +102,12 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
     // SUB_SETTING
     if (setting.sub_settings) {
         if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]')) {
+
             if(indexSubSet == 0) {
                 rowsHtml += '<tr class="'+customClass+'">' + this.getProjectSettingColumns(setting, system,'','') + '</tr>';
             }
         }
+
         for (var instance = 0; instance < indexSubSet; instance++) {
             //we add the sub_settings header
             if(indexSubSet == 0){
@@ -96,6 +119,7 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
 
             var settingsObject = this;
             setting.sub_settings.forEach(function (subSetting) {
+                subSetting.sub_setting = true;
                 rowsHtml += '<tr class = "subsettings-table '+ customClass+'">' + settingsObject.getProjectSettingColumns(subSetting, system, instance,'') + '</tr>';
             });
         }
@@ -116,7 +140,6 @@ ExternalModules.Settings.prototype.getProjectSettingColumns = function(setting, 
     if(projectName){
         setting.name = projectName;
     }
-
     var overrideButtonAttributes = 'data-system-value="' + this.getAttributeValueHtml(setting.systemValue) + '"';
 
     if(system && (setting.type == "checkbox")) {
@@ -158,8 +181,8 @@ ExternalModules.Settings.prototype.getAttributeValueHtml = function(s){
 
 ExternalModules.Settings.prototype.getSettingColumns = function(setting, instance, header){
     var type = setting.type;
-    var key = setting.key
-    var value = setting.value
+    var key = setting.key;
+    var value = setting.value;
 
     var instanceLabel = "";
     if (typeof instance != "undefined") {
@@ -169,10 +192,9 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
     if(type != 'sub_settings') {
         html = "<td><span class='external-modules-instance-label'>" + instanceLabel + "</span><label>" + setting.name + ":</label></td>";
     }
-
-    if (typeof instance != "undefined") {
+    if (typeof instance != "undefined" && instance != "") {
         // for looping for repeatable elements
-        if( (header < 1 || typeof header == "undefined")){
+        if(header < 1 || typeof header == "undefined"){
             if (typeof value == "undefined") {
                 value = "";
             } else {
@@ -180,6 +202,9 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
             }
         }
         key = this.getInstanceName(key, instance);
+    }else if((setting.repeatable==true || setting.sub_setting) && (instance != "" || instance != "undefined") && (Object.prototype.toString.call(value) === '[object Array]')){
+        //looping repeatable or sub_setting elements
+        value = value[instance];
     }
 
     var inputHtml;
@@ -245,6 +270,7 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
     html += "<td class='external-modules-input-td'>" + inputHtml + "</td>";
 
     html += this.addRepeatableButtons(setting, instance, header, type, key);
+
     return html;
 }
 
@@ -642,122 +668,4 @@ $(function(){
 
         $(this).closest('tr').remove();
     });
-
-
-
-
-
-
-
-
-
-
-    //
-    //
-    // $('#external-modules-configure-modal').on('click','button.save', function(){
-    //     // var moduleDirectoryPrefix = configureModal.data('module');
-    //     // var version = ExternalModules.versionsByPrefix[moduleDirectoryPrefix];
-    //     var moduleDirectoryPrefix = "vanderbilt_emailTrigger";
-    //     var version = "v1.0";
-    //
-    //     var data = {};
-    //     var files = {};
-    //
-    //     $('#external-modules-configure-modal').find('input, select, textarea').each(function(index, element){
-    //
-    //         var element = $(element);
-    //         var systemValue = element.closest('tr').find('.override-system-setting').data('system-value');
-    //         var name = element.attr('name');
-    //         var type = element[0].type;
-    //
-    //         if(!name || (type == 'radio' && !element.is(':checked'))){
-    //             return;
-    //         }
-    //
-    //         if (type == 'file') {
-    //             // only store one file per variable - the first file
-    //             jQuery.each(element[0].files, function(i, file) {
-    //                 if (typeof files[name] == "undefined") {
-    //                     files[name] = file;
-    //                 }
-    //             });
-    //         } else {
-    //             var value;
-    //             if(type == 'checkbox'){
-    //                 if(element.prop('checked')){
-    //                     value = '1';
-    //                 }
-    //                 else{
-    //                     value = '0';
-    //                 }
-    //             }
-    //             else{
-    //                 value = element.val();
-    //             }
-    //
-    //             if(value == systemValue){
-    //                 value = '';
-    //             }
-    //
-    //             data[name] = value;
-    //         }
-    //     });
-    //
-    //     var url = '/external_modules/manager/ajax/save-file.php?pid=' + pid +
-    //         '&moduleDirectoryPrefix=' + moduleDirectoryPrefix +
-    //         '&moduleDirectoryVersion=' + version;
-    //     saveFilesIfTheyExist(url, files, function() {
-    //         saveSettings(pid, moduleDirectoryPrefix, version, data);
-    //     });
-    // });
-    //
-    // var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
-    //     var lengthOfFiles = 0;
-    //     var formData = new FormData();
-    //     for (var name in files) {
-    //         lengthOfFiles++;
-    //         formData.append(name, files[name]);   // filename agnostic
-    //     }
-    //     if (lengthOfFiles > 0) {
-    //         // AJAX rather than $.post
-    //         $.ajax({
-    //             url: url,
-    //             data: formData,
-    //             processData: false,
-    //             contentType: false,
-    //             async: false,
-    //             type: 'POST',
-    //             success: function(returnData) {
-    //                 if (returnData.status != 'success') {
-    //                     alert("One or more of the files could not be saved. "+JSON.stringify(returnData));
-    //                 }
-    //
-    //                 // proceed anyways to save data
-    //                 callbackWithNoArgs();
-    //             },
-    //             error: function(e) {
-    //                 alert("One or more of the files could not be saved. "+JSON.stringify(e));
-    //                 callbackWithNoArgs();
-    //             }
-    //         });
-    //     } else {
-    //         callbackWithNoArgs();
-    //     }
-    // }
-    //
-    // var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
-    //     $.post('/external_modules/manager/ajax/save-settings.php?pid=' + pid + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(returnData){
-    //         if(returnData.status != 'success'){
-    //             console.log('An error occurred while saving settings: ' + returnData);
-    //             // configureModal.show();
-    //             return;
-    //         }
-    //
-    //         // Reload the page reload after saving settings,
-    //         // in case a settings affects some page behavior (like which menu items are visible).
-    //         location.reload();
-    //     });
-    // }
-
-
 });

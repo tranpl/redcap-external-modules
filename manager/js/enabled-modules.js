@@ -2,6 +2,7 @@ $(function(){
 		// Merged from updated enabled-modules, may need to reconfigure
 		ExternalModules.configsByPrefix = ExternalModules.configsByPrefixJSON;
 		ExternalModules.versionsByPrefix = ExternalModules.versionsByPrefixJSON;
+
 		var pidString = pid;
 		//if(pid == null){
 		//	pidString = '';
@@ -13,36 +14,6 @@ $(function(){
 	var settings = new ExternalModules.Settings();
 
 	// Shared function for combining 2 arrays to produce an attribute string for an HTML object
-
-
-
-
-	var getSystemSettingColumns = function(setting){
-		var columns = settings.getSettingColumns(setting);
-
-		if(setting['allow-project-overrides']){
-			var overrideChoices = [
-				{ value: '', name: 'Superusers Only' },
-				// Will need to clean up because can't use PHP constants in .js file
-				{ value: ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS, name: 'Project Admins' },
-			];
-
-			var selectAttributes = '';
-			// Will need to clean up because can't use PHP constants in .js file
-				if(setting.key == ExternalModules.KEY_ENABLED){
-				// For now, we've decided that only super users can enable modules on projects.
-				// To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
-				selectAttributes = 'disabled'
-			}
-
-			columns += '<td>' + getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue, selectAttributes) + '</td>';
-		}
-		else{
-			columns += '<td></td>';
-		}
-
-		return columns;
-	};
 
 
 	$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
@@ -61,7 +32,6 @@ $(function(){
 			}
 
 			var savedSettings = data.settings;
-
 			var settingsHtml = "";
 			settingsHtml += settings.getSettingRows(true, config['system-settings'], savedSettings);
 
@@ -91,13 +61,13 @@ $(function(){
 			deleteFileButton.hide();
 		}
 
-		$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) { 
+		$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) {
 			if (data.status == "success") {
 				var inputAttributes = "";
 				if (disabled) {
 					inputAttributes = "disabled";
 				}
-					row.find(".external-modules-edoc-file").html(getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
+					row.find(".external-modules-edoc-file").html(settings.getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
 				input.remove();
 			} else {		// failure
 				alert("The file was not able to be deleted. "+JSON.stringify(data));

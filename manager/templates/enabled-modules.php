@@ -164,9 +164,17 @@ if($versionsByPrefixJSON == null){
 else if($versionsByPrefixJSON == "") {
 	$versionsByPrefixJSON = "''";
 }
-?>
 
-<?php
-include_once(dirname(__DIR__)."/js/globals.php");
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules.js');
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.js');
 ?>
+<script>
+	ExternalModules.SUPER_USER = <?=SUPER_USER?>;
+	ExternalModules.KEY_ENABLED = <?=json_encode(ExternalModules::KEY_ENABLED)?>;
+	ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = <?=json_encode(ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS)?>;
+	ExternalModules.OVERRIDE_PERMISSION_LEVEL_SUFFIX = <?=json_encode(ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX)?>;
+	ExternalModules.configsByPrefixJSON = <?=$configsByPrefixJSON?>;
+	ExternalModules.versionsByPrefixJSON = <?=$versionsByPrefixJSON?>;
+</script>
+<?php
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules.js');
+

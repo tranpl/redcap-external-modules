@@ -472,9 +472,9 @@ class ExternalModules
 	#	$ary['key3'][2] = 3;
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
-		if (!$projectId) {
-			throw new Exception("The Project Id cannot be null!");
-		}
+//		if (!$projectId) {
+//			throw new Exception("The Project Id cannot be null!");
+//		}
 
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 
@@ -1591,7 +1591,7 @@ class ExternalModules
 			}
 		}
 
-		# do not set null values for current instance; always set to empty string 
+		# do not set null values for current instance; always set to empty string
 		if ($value !== null) {
 			$json[$instance] = $value;
 		} else {
