@@ -252,11 +252,6 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
         if(type == 'checkbox' && value == 1){
             inputAttributes['checked'] = 'checked';
         }
-        // TODO Is this only triggered when a project is overriding the system value, but now allow-project-overrides is disabled?
-        var alreadyOverridden = setting.value != setting.systemValue;
-        if ((type == 'file') && (!setting['allow-project-overrides'] && alreadyOverridden) && setting['allow-project-overrides'] != undefined) {
-            inputAttributes['disabled'] = "disabled";
-        }
 
         inputHtml = this.getInputElement(type, key, value, inputAttributes);
     }
