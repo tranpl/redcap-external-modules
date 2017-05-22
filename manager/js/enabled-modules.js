@@ -200,6 +200,7 @@ $(function(){
 		var data = {};
 		var files = {};
 
+		var richTextIndex = 0;
 		configureModal.find('input, select, textarea').each(function(index, element){
 			var element = $(element);
 			var systemValue = element.closest('tr').find('.override-system-setting').data('system-value');
@@ -226,6 +227,10 @@ $(function(){
 					else{
 						value = '0';
 					}
+				}
+				else if(element.hasClass('external-modules-rich-text-field')){
+					value = tinyMCE.get(richTextIndex).getContent()
+					richTextIndex++
 				}
 				else{
 					value = element.val();

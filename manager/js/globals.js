@@ -233,8 +233,11 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
         inputHtml = "<div style='width:200px'>" + this.getSelectElement(key, setting.choices, value, {"class":"project_id_textbox"}) + "</div>";
     }
     else if(type == 'textarea'){
-        inputHtml = this.getTextareaElement(key, value, {"rows" : "6","cols" : "45"});
+        inputHtml = this.getTextareaElement(key, value, {"rows" : "6"});
     }
+	else if(type == 'rich-text') {
+		inputHtml = this.getRichTextElement(key, value);
+	}
     else if(type == 'sub_settings'){
         inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label>";
     }
@@ -406,6 +409,14 @@ ExternalModules.Settings.prototype.getTextareaElement = function(name, value, in
     return '<textarea contenteditable="true" name="' + name + '" ' + this.getElementAttributes([],inputAttributes) + '>'+this.getAttributeValueHtml(value)+'</textarea>';
 
 }
+
+ExternalModules.Settings.prototype.getRichTextElement = function(name, value) {
+	if (!value) {
+		value = '';
+	}
+
+	return '<textarea class="external-modules-rich-text-field" name="' + name + '">' + value + '</textarea>';
+};
 
 ExternalModules.Settings.prototype.getElementAttributes = function(defaultAttributes, additionalAttributes) {
     var attributeString = "";
