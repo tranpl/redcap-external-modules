@@ -167,6 +167,7 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.j
 	ExternalModules.KEY_ENABLED = <?=json_encode(ExternalModules::KEY_ENABLED)?>;
 	ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = <?=json_encode(ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS)?>;
 	ExternalModules.OVERRIDE_PERMISSION_LEVEL_SUFFIX = <?=json_encode(ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX)?>;
+	ExternalModules.BASE_URL = <?=json_encode(ExternalModules::$BASE_URL)?>;
 	ExternalModules.configsByPrefixJSON = <?=$configsByPrefixJSON?>;
 	ExternalModules.versionsByPrefixJSON = <?=$versionsByPrefixJSON?>;
 

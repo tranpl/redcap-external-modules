@@ -67,6 +67,21 @@ ExternalModules.configureSettings = function(configSettings, savedSettings) {
 			plugins: ['autolink lists link image charmap hr anchor pagebreak searchreplace code fullscreen insertdatetime media nonbreaking table contextmenu directionality textcolor colorpicker imagetools help'],
 			toolbar1: 'undo redo | insert | styleselect | bold italic | alignleft aligncenter alignright alignjustify | outdent indent',
 			toolbar2: 'bullist numlist | link image | media | forecolor backcolor | searchreplace fullscreen code | help',
+			relative_urls : false, // force image urls to be absolute
+			file_picker_callback: function(callback, value, meta){
+				var prefix = $('#external-modules-configure-modal').data('module')
+				tinyMCE.activeEditor.windowManager.open({
+					url: 'rich-text/get-uploaded-file-list.php?prefix=' + prefix + '&pid=' + pid,
+					width: 500,
+					height: 300,
+					title: 'Files'
+				});
+
+				ExternalModules.currentFilePickerCallback = function(url){
+					tinymce.activeEditor.windowManager.close()
+					callback(url)
+				}
+			}
 		});
 	})
 }

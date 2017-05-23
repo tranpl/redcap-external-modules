@@ -34,6 +34,7 @@ class ExternalModules
 	const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
 
 	const DISABLE_EXTERNAL_MODULE_HOOKS = 'disable-external-module-hooks';
+	const RICH_TEXT_UPLOADED_FILE_LIST = 'rich-text-uploaded-file-list';
 
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
@@ -112,7 +113,7 @@ class ExternalModules
 			die('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
-		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
+		self::$BASE_URL = '/external_modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
 		self::$MODULES_PATH = $modulesDirectories;
@@ -1466,7 +1467,7 @@ class ExternalModules
 		return ExternalModules::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix, $version));
 	}
 
-	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
+	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key = null)
 	{
 		if(self::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
 			return true;
@@ -1652,5 +1653,21 @@ class ExternalModules
 			}
 		}
 		return false;
+	}
+
+	public static function deleteEDoc($edocId){
+		// Prevent SQL injection
+		$edocId = intval($edocId);
+
+		if(!$edocId){
+			throw new Exception("The EDoc ID specified is not valid: $edocId");
+		}
+
+		# flag for deletion in the edocs database
+		$sql = "UPDATE `redcap_edocs_metadata`
+				SET `delete_date` = NOW()
+				WHERE doc_id = $edocId";
+
+		self::query($sql);
 	}
 }
