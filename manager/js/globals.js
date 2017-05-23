@@ -55,7 +55,7 @@ ExternalModules.Settings.prototype.getSettingRows = function(system, configSetti
             setting.overrideLevelValue = overrideLevel.value
         }
 
-        if(!pid){
+        if(!ExternalModules.PID){
             rowsHtml += '<tr>' + settingsObject.getSystemSettingColumns(setting) + '</tr>';
         }
         else if(settingsObject.shouldShowSettingOnProjectManagementPage(setting, system)){
@@ -363,7 +363,7 @@ ExternalModules.Settings.prototype.getInputElement = function(type, name, value,
         value = "";
     }
     if (type == "file") {
-        if (pid) {
+        if (ExternalModules.PID) {
             return this.getProjectFileFieldElement(name, value, inputAttributes);
         } else {
             return this.getSystemFileFieldElement(name, value, inputAttributes);
@@ -380,7 +380,7 @@ ExternalModules.Settings.prototype.getSystemFileFieldElement = function(name, va
 
 // abstracted because file fields need to be reset in multiple places
 ExternalModules.Settings.prototype.getProjectFileFieldElement = function(name, value, inputAttributes) {
-    return this.getFileFieldElement(name, value, inputAttributes, "pid=" + pid);
+    return this.getFileFieldElement(name, value, inputAttributes, "pid=" + ExternalModules.PID);
 }
 
 // abstracted because file fields need to be reset in multiple places

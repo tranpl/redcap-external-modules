@@ -3,6 +3,7 @@ $(function(){
 		ExternalModules.configsByPrefix = ExternalModules.configsByPrefixJSON;
 		ExternalModules.versionsByPrefix = ExternalModules.versionsByPrefixJSON;
 
+		var pid = ExternalModules.PID;
 		var pidString = pid;
 		//if(pid == null){
 		//	pidString = '';
