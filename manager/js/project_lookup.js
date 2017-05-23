@@ -64,9 +64,9 @@ ExternalModules.configureSettings = function(configSettings, savedSettings) {
 			menubar: false,
 			branding: false,
 			elementpath: false, // Hide this, since it oddly renders below the textarea.
-			plugins: ['autolink lists link image charmap hr anchor pagebreak searchreplace code fullscreen insertdatetime media nonbreaking table contextmenu directionality textcolor colorpicker imagetools help'],
-			toolbar1: 'undo redo | insert | styleselect | bold italic | alignleft aligncenter alignright alignjustify | outdent indent',
-			toolbar2: 'bullist numlist | link image | media | forecolor backcolor | searchreplace fullscreen code | help',
+			plugins: ['autolink lists link image charmap hr anchor pagebreak searchreplace code fullscreen insertdatetime media nonbreaking table contextmenu directionality textcolor colorpicker imagetools'],
+			toolbar1: 'undo redo | insert | styleselect | bold italic | alignleft aligncenter alignright alignjustify',
+			toolbar2: 'outdent indent | bullist numlist | table | forecolor backcolor | searchreplace fullscreen code',
 			relative_urls : false, // force image urls to be absolute
 			file_picker_callback: function(callback, value, meta){
 				var prefix = $('#external-modules-configure-modal').data('module')
