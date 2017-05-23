@@ -114,6 +114,7 @@ class ExternalModules
 		}
 
 		self::$BASE_URL = '/external_modules/';
+		self::$MODULES_URL = '/modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
 		self::$MODULES_PATH = $modulesDirectories;
