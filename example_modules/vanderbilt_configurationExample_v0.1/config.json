@@ -92,6 +92,11 @@
 			"repeatable": true
 		},
 		{
+			"key": "rich-text-area",
+			"name": "Rich Text Area",
+			"type": "rich-text"
+		},
+		{
 			"key": "dag",
 			"name": "Data Access Group",
 			"required": false,

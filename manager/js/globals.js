@@ -55,7 +55,7 @@ ExternalModules.Settings.prototype.getSettingRows = function(system, configSetti
             setting.overrideLevelValue = overrideLevel.value
         }
 
-        if(!pid){
+        if(!ExternalModules.PID){
             rowsHtml += '<tr>' + settingsObject.getSystemSettingColumns(setting) + '</tr>';
         }
         else if(settingsObject.shouldShowSettingOnProjectManagementPage(setting, system)){
@@ -233,8 +233,11 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
         inputHtml = "<div style='width:200px'>" + this.getSelectElement(key, setting.choices, value, {"class":"project_id_textbox"}) + "</div>";
     }
     else if(type == 'textarea'){
-        inputHtml = this.getTextareaElement(key, value, {"rows" : "6","cols" : "45"});
+        inputHtml = this.getTextareaElement(key, value, {"rows" : "6"});
     }
+	else if(type == 'rich-text') {
+		inputHtml = this.getRichTextElement(key, value);
+	}
     else if(type == 'sub_settings'){
         inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label>";
     }
@@ -360,7 +363,7 @@ ExternalModules.Settings.prototype.getInputElement = function(type, name, value,
         value = "";
     }
     if (type == "file") {
-        if (pid) {
+        if (ExternalModules.PID) {
             return this.getProjectFileFieldElement(name, value, inputAttributes);
         } else {
             return this.getSystemFileFieldElement(name, value, inputAttributes);
@@ -377,7 +380,7 @@ ExternalModules.Settings.prototype.getSystemFileFieldElement = function(name, va
 
 // abstracted because file fields need to be reset in multiple places
 ExternalModules.Settings.prototype.getProjectFileFieldElement = function(name, value, inputAttributes) {
-    return this.getFileFieldElement(name, value, inputAttributes, "pid=" + pid);
+    return this.getFileFieldElement(name, value, inputAttributes, "pid=" + ExternalModules.PID);
 }
 
 // abstracted because file fields need to be reset in multiple places
@@ -406,6 +409,14 @@ ExternalModules.Settings.prototype.getTextareaElement = function(name, value, in
     return '<textarea contenteditable="true" name="' + name + '" ' + this.getElementAttributes([],inputAttributes) + '>'+this.getAttributeValueHtml(value)+'</textarea>';
 
 }
+
+ExternalModules.Settings.prototype.getRichTextElement = function(name, value) {
+	if (!value) {
+		value = '';
+	}
+
+	return '<textarea class="external-modules-rich-text-field" name="' + name + '">' + value + '</textarea>';
+};
 
 ExternalModules.Settings.prototype.getElementAttributes = function(defaultAttributes, additionalAttributes) {
     var attributeString = "";

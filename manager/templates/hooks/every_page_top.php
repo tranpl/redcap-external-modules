@@ -36,7 +36,7 @@ $links = ExternalModules::getLinks();
 					var collapse = 0;
 				}
 				// Send ajax request to save cookie
-				$.post(app_path_webroot+'ProjectGeneral/project_menu_collapse.php?pid='+pid, { menu_id: $(this).prop('id'), collapse: collapse });
+				$.post(app_path_webroot+'ProjectGeneral/project_menu_collapse.php?pid='+ExternalModules.PID, { menu_id: $(this).prop('id'), collapse: collapse });
 			});
 
 			var menubox = newPanel.find('.x-panel-body .menubox .menubox')

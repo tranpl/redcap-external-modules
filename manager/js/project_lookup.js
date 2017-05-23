@@ -55,4 +55,18 @@ ExternalModules.configureSettings = function(configSettings, savedSettings) {
 			cache: true
 		}
 	});
+
+	$(function(){
+		tinyMCE.init({
+			mode: 'specific_textareas',
+			editor_selector: 'external-modules-rich-text-field',
+			height: 200,
+			menubar: false,
+			branding: false,
+			elementpath: false, // Hide this, since it oddly renders below the textarea.
+			plugins: ['autolink lists link image charmap hr anchor pagebreak searchreplace code fullscreen insertdatetime media nonbreaking table contextmenu directionality textcolor colorpicker imagetools help'],
+			toolbar1: 'undo redo | insert | styleselect | bold italic | alignleft aligncenter alignright alignjustify | outdent indent',
+			toolbar2: 'bullist numlist | link image | media | forecolor backcolor | searchreplace fullscreen code | help',
+		});
+	})
 }

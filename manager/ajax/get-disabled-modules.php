@@ -89,7 +89,6 @@ require_once '../../classes/ExternalModules.php';
 <?php
 	if (isset($_GET['pid'])) {
 		echo "var pid = ".json_encode($_GET['pid']).";";
-		echo "var keyEnabled = '".ExternalModules::KEY_ENABLED."';";
 	} else {
 		echo "var pid = null;";
 		if (isset($disabledModuleConfigs)) {
