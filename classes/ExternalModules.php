@@ -550,7 +550,8 @@ class ExternalModules
 		$value = $row['value'];
 
 		if ($type == "json") {
-			if ($json = json_decode($value,true)) {
+			$json = json_decode($value,true);
+			if ($json !== false) {
 				$value = $json;
 			}
 		}

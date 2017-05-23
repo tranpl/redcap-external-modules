@@ -150,6 +150,7 @@ class AbstractExternalModuleTest extends BaseTest
 		$assertReturnedType(1.1, 'double');
 		$assertReturnedType("1", 'string');
 		$assertReturnedType([1], 'array');
+		$assertReturnedType([], 'array');
 		$assertReturnedType(null, 'NULL');
 	}
 
