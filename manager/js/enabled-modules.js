@@ -130,7 +130,7 @@ $(function(){
 					if (inputs.prop("disabled")) {
 						inputAttributes = "disabled";
 					}
-					edocLine.html(getSystemFileFieldElement(inputs.attr('name'), systemValue, inputAttributes));
+					edocLine.html(settings.getSystemFileFieldElement(inputs.attr('name'), systemValue, inputAttributes));
 					resetSaveButton(systemValue);
 					row.find(".external-modules-delete-file").show();
 				}
