@@ -252,4 +252,8 @@ $(function(){
 			saveSettings(pidString, moduleDirectoryPrefix, version, data);
 		});
 	});
+
+	configureModal.on('hidden.bs.modal', function () {
+		tinymce.remove()
+	})
 });
