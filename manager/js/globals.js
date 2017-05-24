@@ -787,7 +787,7 @@ $(function(){
 	if (pid) {
 		params['pid'] = pidString;
 	}
-        $.post('ajax/get-settings.php', {moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
+        $.post('ajax/get-settings.php', params, function(data){
             if(data.status != 'success'){
                 return;
             }

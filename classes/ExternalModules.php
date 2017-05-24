@@ -110,7 +110,7 @@ class ExternalModules
 		$modulesDirectoryName = '/modules/';
 
 		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
-			die('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
+			sendAdminEmail('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
 		self::$BASE_URL = APP_PATH_WEBROOT_FULL.'/external_modules/';
@@ -490,8 +490,11 @@ class ExternalModules
 
 	private static function getSettingsAsArray($moduleDirectoryPrefixes, $projectId = NULL)
 	{
-
-		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
+		if ($projectId === NULL) {
+			$result = self::getSettings($moduleDirectoryPrefixes, self::SYSTEM_SETTING_PROJECT_ID);
+		} else {
+			$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
+		}
 
 		$reservedKeys = [];
 		foreach(self::$RESERVED_SETTINGS as $reservedSetting){
