@@ -511,7 +511,7 @@ ExternalModules.Settings.prototype.configureSettings = function(configSettings, 
     });
 
     $(function(){
-        tinyMCE.init({
+        tinymce.init({
             mode: 'specific_textareas',
             editor_selector: 'external-modules-rich-text-field',
             height: 200,
@@ -524,7 +524,7 @@ ExternalModules.Settings.prototype.configureSettings = function(configSettings, 
             relative_urls : false, // force image urls to be absolute
             file_picker_callback: function(callback, value, meta){
                 var prefix = $('#external-modules-configure-modal').data('module')
-                tinyMCE.activeEditor.windowManager.open({
+				tinymce.activeEditor.windowManager.open({
                     url: ExternalModules.BASE_URL + '/manager/rich-text/get-uploaded-file-list.php?prefix=' + prefix + '&pid=' + pid,
                     width: 500,
                     height: 300,
@@ -991,7 +991,7 @@ $(function(){
                     }
                 }
                 else if(element.hasClass('external-modules-rich-text-field')){
-                    value = tinyMCE.get(richTextIndex).getContent()
+                    value = tinymce.get(richTextIndex).getContent()
                     richTextIndex++
                 }
                 else{
