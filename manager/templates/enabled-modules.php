@@ -2,6 +2,8 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 
+ExternalModules::addResource('css/style.css');
+
 $sql = ExternalModules::getSqlToRunIfDBOutdated();
 if($sql !== ""){
 	echo '<p>Your current database table structure does not match REDCap\'s expected table structure for External Modules, which means that database tables and/or parts of tables are missing. Copy the SQL in the box below and execute it in the MySQL database named '.$db.' where the REDCap database tables are stored. Once the SQL has been executed, reload this page to run this check again.</p>';
@@ -144,60 +146,11 @@ if($configsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
 	die();
 }
-else if($configsByPrefixJSON == "") {
-	$configsByPrefixJSON = "''";
-}
+
 $versionsByPrefixJSON = json_encode($versionsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
 if($versionsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the versions to JSON: ' . json_last_error_msg()) . ');</script>';
 	die();
 }
-else if($versionsByPrefixJSON == "") {
-	$versionsByPrefixJSON = "''";
-}
 
-// The decision to use TinyMCE was not taken lightly.  I actually tried integrating Quill, Trix, and Summernote as well, but they either
-// didn't work as well out of the box when placed inside the configuration model, or were not as flexible/customizable.
-?><script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/4.6.1/tinymce.min.js" integrity="sha256-GnWmLZ0UK0TTmZEj5w4U6SLOnEJlalLnsOLDcUXzYyc=" crossorigin="anonymous"></script><?php
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.js');
-?>
-<script>
-	ExternalModules.PID = <?=json_encode(@$_GET['pid'])?>;
-	ExternalModules.SUPER_USER = <?=SUPER_USER?>;
-	ExternalModules.KEY_ENABLED = <?=json_encode(ExternalModules::KEY_ENABLED)?>;
-	ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = <?=json_encode(ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS)?>;
-	ExternalModules.OVERRIDE_PERMISSION_LEVEL_SUFFIX = <?=json_encode(ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX)?>;
-	ExternalModules.BASE_URL = <?=json_encode(ExternalModules::$BASE_URL)?>;
-	ExternalModules.configsByPrefixJSON = <?=$configsByPrefixJSON?>;
-	ExternalModules.versionsByPrefixJSON = <?=$versionsByPrefixJSON?>;
-
-	$(function () {
-		var disabledModal = $('#external-modules-disabled-modal');
-		$('#external-modules-enable-modules-button').click(function(){
-			var form = disabledModal.find('.modal-body form');
-			var loadingIndicator = $('<div class="loading-indicator"></div>');
-
-			var pid = ExternalModules.PID;
-			if (!pid) {
-				new Spinner().spin(loadingIndicator[0]);
-			}
-			form.html('');
-			form.append(loadingIndicator);
-
-			// This ajax call was originally written thinking the list of available modules would come from a central repo.
-			// It may not be necessary any more.
-			var url = "ajax/get-disabled-modules.php";
-			if (pid) {
-				url += "?pid="+pid;
-			}
-			$.post(url, { }, function (html) {
-				form.html(html);
-			});
-
-			disabledModal.modal('show');
-		});
-	});
-</script>
-<?php
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules.js');
-
+require_once 'globals.php';

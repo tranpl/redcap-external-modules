@@ -2,7 +2,6 @@
 namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once ExternalModules::getProjectHeaderPath();
-require_once 'templates/shared-header.php';
 
 if(!ExternalModules::hasDesignRights()){
 	echo "You don't have permission to manage external modules on this project.";
@@ -18,7 +17,6 @@ if(!ExternalModules::hasDesignRights()){
 
 <?php
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 ?>
 
 <style>
