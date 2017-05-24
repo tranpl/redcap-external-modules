@@ -761,9 +761,9 @@ $(function(){
 
     var pid = ExternalModules.PID;
     var pidString = pid;
-    //if(pid == null){
-    //	pidString = '';
-    //}
+    // if(pid === null){
+    	// pidString = '';
+    // }
     var configureModal = $('#external-modules-configure-modal');
     // may need to reconfigure
     var isSuperUser = (ExternalModules.SUPER_USER == 1);
@@ -783,7 +783,11 @@ $(function(){
         tbody.html('');
         configureModal.modal('show');
 
-        $.post('ajax/get-settings.php', {pid: pidString, moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
+	var params = {moduleDirectoryPrefix: moduleDirectoryPrefix};
+	if (pid) {
+		params['pid'] = pidString;
+	}
+        $.post('ajax/get-settings.php', {moduleDirectoryPrefix: moduleDirectoryPrefix}, function(data){
             if(data.status != 'success'){
                 return;
             }

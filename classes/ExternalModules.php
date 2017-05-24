@@ -462,6 +462,8 @@ class ExternalModules
 		}
 	}
 
+	# getSystemSettingsAsArray and getProjectSettingsAsArray
+
 	# get all the settings as an array instead of one by one
 	# returns an associative array with index of key and value of value
 	# arrays of values (e.g., repeatble) will be returned as arrays
@@ -472,11 +474,22 @@ class ExternalModules
 	#	$ary['key3'][0] = 1;
 	#	$ary['key3'][1] = 'abc';
 	#	$ary['key3'][2] = 3;
+
+	static function getSystemSettingsAsArray($moduleDirectoryPrefixes)
+	{
+		return self::getSettingsAsArray($moduleDirectoryPrefixes);
+	}
+
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
 		if (!$projectId) {
 			throw new Exception("The Project Id cannot be null!");
 		}
+		return self::getSettingsAsArray($moduleDirectoryPrefixes, $projectId);
+	}
+
+	private static function getSettingsAsArray($moduleDirectoryPrefixes, $projectId = NULL)
+	{
 
 		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 

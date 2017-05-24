@@ -377,27 +377,6 @@ class ExternalModulesTest extends BaseTest
 		$this->assertTestHookCalled(false);;
 	}
 
-	function testIsProjectIdNull()
-	{
-		$this->getInstance()->setProjectSetting(ExternalModules::KEY_ENABLED, false, null);
-
-		$pid = null;
-		$errs = array();
-
-		try {
-			ExternalModules::getProjectSetting($this->getInstance()->PREFIX, $pid,  ExternalModules::KEY_ENABLED);
-		} catch(Exception $e) {
-			$errs[] = $e;
-		}
-		try {
-			ExternalModules::getProjectSettingAsArray($this->getInstance()->PREFIX, $pid,  ExternalModules::KEY_ENABLED);
-		} catch(Exception $e) {
-			$errs[] = $e;
-		}
-
-		$this->assertEquals(count($errs), 2);
-	}
-
 	private function assertTestHookCalled($called, $pid = null)
 	{
 		$arguments = [];
