@@ -977,10 +977,14 @@ class ExternalModules
 		return $enabledVersions;
 	}
 
-	private static function shouldExcludeModule($prefix)
+	private static function shouldExcludeModule($prefix, $version)
 	{
+		$modulePath = self::getModuleDirectoryPath($prefix, $version);
+		$doesDirectoryExist = (file_exists($modulePath) && is_dir($modulePath));
+
 		$isTestPrefix = strpos($prefix, self::TEST_MODULE_PREFIX) === 0;
-		if($isTestPrefix && !self::isTesting($prefix)){
+
+		if($doesDirectoryExist && $isTestPrefix && !self::isTesting($prefix)){
 			// This php process is not running unit tests.
 			// Ignore the test prefix so it doesn't interfere with this process.
 			return true;
@@ -1010,7 +1014,7 @@ class ExternalModules
 				$key = $row['key'];
 				$value = $row['value'];
 
-				if(self::shouldExcludeModule($prefix)){
+				if(self::shouldExcludeModule($prefix, self::KEY_VERSION)){
 					continue;
 				}
 
