@@ -8,7 +8,6 @@ $moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
 $version = $_GET['moduleDirectoryVersion'];
 
 if(empty($pid) && !ExternalModules\ExternalModules::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
-//	die("You don't have permission to save system settings!");
 	header('Content-type: application/json');
 	echo json_encode(array(
 		'status' => 'You do not have permission to save system settings!'
@@ -60,7 +59,6 @@ foreach($_FILES as $key=>$value){
 
 		if ($edoc) {
 			if(!empty($pid) && !ExternalModules\ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
-				// die("You don't have permission to save the following project setting: $key");
 				header('Content-type: application/json');
 				echo json_encode(array(
 					'status' => "You don't have permission to save the following project setting: $key!"
@@ -68,11 +66,11 @@ foreach($_FILES as $key=>$value){
 			}
 			ExternalModules\ExternalModules::setFileSetting($moduleDirectoryPrefix, $pidPossiblyWithNullValue, $key, $edoc);
 		} else {
-			die("You could not save a file properly.");
-				header('Content-type: application/json');
-				echo json_encode(array(
-					'status' => "You could not save a file properly."
-				));
+			throw new Exception("You could not save a file properly.");
+			header('Content-type: application/json');
+			echo json_encode(array(
+				'status' => "You could not save a file properly."
+			));
 		}
 	 }
 }

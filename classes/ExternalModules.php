@@ -110,7 +110,7 @@ class ExternalModules
 		$modulesDirectoryName = '/modules/';
 
 		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
-			sendAdminEmail('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
+			ExternalModules::sendAdminEmail('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
 		self::$BASE_URL = APP_PATH_WEBROOT_FULL.'/external_modules/';
@@ -185,7 +185,7 @@ class ExternalModules
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,scott.j.pearson@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
@@ -583,7 +583,7 @@ class ExternalModules
 		}
 		else {
 			if (!settype($value, $type)) {
-				die('Unable to set the type of "' . $value . '" to "' . $type . '"!  This should never happen, as it means unexpected/inconsistent values exist in the database.');
+				throw new Exception('Unable to set the type of "' . $value . '" to "' . $type . '"!  This should never happen, as it means unexpected/inconsistent values exist in the database.');
 			}
 		}
 
@@ -763,74 +763,80 @@ class ExternalModules
 	# calls a hooke via startHook
 	static function callHook($name, $arguments)
 	{
-		if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS])){
-			return;
-		}
-
-		if(!defined('PAGE')){
-			$page = ltrim($_SERVER['REQUEST_URI'], '/');
-			define('PAGE', $page);
-		}
-
-		# We must initialize this static class here, since this method actually gets called before anything else.
-		# We can't initialize sooner than this because we have to wait for REDCap to initialize it's functions and variables we depend on.
-		# This method is actually called many times (once per hook), so we should only initialize once.
-		if(!self::$initialized){
-			self::initialize();
-			self::$initialized = true;
-		}
-
-		$name = str_replace('redcap_', '', $name);
-
-		$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
-		if(file_exists($templatePath)){
-			self::safeRequire($templatePath, $arguments);
-		}
-
-		$pid = null;
-		if(!empty($arguments)){
-			$firstArg = $arguments[0];
-			if((int)$firstArg == $firstArg){
-				// As of REDCap 6.16.8, the above checks allow us to safely assume the first arg is the pid for all hooks.
-				$pid = $arguments[0];
+		try {
+			if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS])){
+				return;
 			}
-		}
 
-		self::$hookBeingExecuted = "hook_$name";
+			if(!defined('PAGE')){
+				$page = ltrim($_SERVER['REQUEST_URI'], '/');
+				define('PAGE', $page);
+			}
 
-		if (!self::$delayed) {
-			self::$delayed = array();
-		}
-		self::$delayed[self::$hookBeingExecuted] = array();
-
-		$versionsByPrefix = self::getEnabledModules($pid);
-		foreach($versionsByPrefix as $prefix=>$version){
-			self::$versionBeingExecuted = $version;
-
-			self::startHook($prefix, $version, $arguments);
-		}
-
-		# runs delayed modules
-		# terminates if queue is 0 or if it is the same as in the previous iteration
-		# (i.e., no modules completing)
-		$prevNumDelayed = count($versionsByPrefix) + 1;
-		while (($prevNumDelayed > count(self::$delayed[self::$hookBeingExecuted])) && (count(self::$delayed[self::$hookBeingExecuted]) > 0)) {
-			$prevDelayed = self::$delayed[self::$hookBeingExecuted];
-			 $prevNumDelayed = count($prevDelayed);
-			self::$delayed[self::$hookBeingExecuted] = array();
-			foreach ($prevDelayed as $prefix=>$version) {
-				self::$versionBeingExecuted = $version;
-
-				if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
-					// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
-					continue;
+			# We must initialize this static class here, since this method actually gets called before anything else.
+			# We can't initialize sooner than this because we have to wait for REDCap to initialize it's functions and variables we depend on.
+			# This method is actually called many times (once per hook), so we should only initialize once.
+			if(!self::$initialized){
+				self::initialize();
+				self::$initialized = true;
+			}
+	
+			$name = str_replace('redcap_', '', $name);
+	
+			$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
+			if(file_exists($templatePath)){
+				self::safeRequire($templatePath, $arguments);
+			}
+	
+			$pid = null;
+			if(!empty($arguments)){
+				$firstArg = $arguments[0];
+				if((int)$firstArg == $firstArg){
+					// As of REDCap 6.16.8, the above checks allow us to safely assume the first arg is the pid for all hooks.
+					$pid = $arguments[0];
 				}
+			}
 
+			self::$hookBeingExecuted = "hook_$name";
+	
+			if (!self::$delayed) {
+				self::$delayed = array();
+			}
+			self::$delayed[self::$hookBeingExecuted] = array();
+	
+			$versionsByPrefix = self::getEnabledModules($pid);
+			foreach($versionsByPrefix as $prefix=>$version){
+				self::$versionBeingExecuted = $version;
+	
 				self::startHook($prefix, $version, $arguments);
 			}
+	
+			# runs delayed modules
+			# terminates if queue is 0 or if it is the same as in the previous iteration
+			# (i.e., no modules completing)
+			$prevNumDelayed = count($versionsByPrefix) + 1;
+			while (($prevNumDelayed > count(self::$delayed[self::$hookBeingExecuted])) && (count(self::$delayed[self::$hookBeingExecuted]) > 0)) {
+				$prevDelayed = self::$delayed[self::$hookBeingExecuted];
+			 	$prevNumDelayed = count($prevDelayed);
+				self::$delayed[self::$hookBeingExecuted] = array();
+				foreach ($prevDelayed as $prefix=>$version) {
+					self::$versionBeingExecuted = $version;
+	
+					if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+						// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+						continue;
+					}
+	
+					self::startHook($prefix, $version, $arguments);
+				}
+			}
+			self::$hookBeingExecuted = "";
+			self::$versionBeingExecuted = "";
+		} catch(Exception $e) {
+			$message = "REDCap External Modules threw the following exception:\n\n" . $e;
+			error_log($message);
+			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message);
 		}
-		self::$hookBeingExecuted = "";
-		self::$versionBeingExecuted = "";
 	}
 
 	# places module in delaying queue to be executed after all others are executed

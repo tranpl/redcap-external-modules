@@ -144,13 +144,13 @@ global $configsByPrefixJSON,$versionsByPrefixJSON;
 $configsByPrefixJSON = json_encode($configsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
 if($configsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
-	die();
+	throw new Exception('An error occurred while converting the configurations to JSON: ' . json_last_error_msg());
 }
 
 $versionsByPrefixJSON = json_encode($versionsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
 if($versionsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the versions to JSON: ' . json_last_error_msg()) . ');</script>';
-	die();
+	throw new Exception("An error occurred while converting the versions to JSON: " . json_last_error_msg());
 }
 
 require_once 'globals.php';

@@ -6,7 +6,7 @@ $prefix = $_GET['prefix'];
 $pid = @$_GET['pid'];
 
 if(!ExternalModules::hasProjectSettingSavePermission($prefix)){
-	die('You do not have permission to get or set rich text files.');
+	throw new Exception('You do not have permission to get or set rich text files.');
 }
 
 $files = ExternalModules::getProjectSetting($prefix, $pid, ExternalModules::RICH_TEXT_UPLOADED_FILE_LIST);

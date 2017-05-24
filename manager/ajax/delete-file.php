@@ -3,7 +3,6 @@ require_once '../../classes/ExternalModules.php';
 require_once APP_PATH_DOCROOT.'Classes/Files.php';
 
 if(empty($pid) && !ExternalModules\ExternalModules::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
-//	die("You don't have permission to save system settings!");
 	header('Content-type: application/json');
 	echo json_encode(array(
 			'status' => 'You do not have permission to save system settings!'
