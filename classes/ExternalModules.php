@@ -113,8 +113,8 @@ class ExternalModules
 			die('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
-		self::$BASE_URL = '/external_modules/';
-		self::$MODULES_URL = '/modules/';
+		self::$BASE_URL = APP_PATH_WEBROOT_FULL.'/external_modules/';
+		self::$MODULES_URL = APP_PATH_WEBROOT_FULL.'/modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
 		self::$MODULES_PATH = $modulesDirectories;
