@@ -457,6 +457,8 @@ ExternalModules.Settings.prototype.getInstanceSymbol = function(){
 }
 
 ExternalModules.Settings.prototype.configureSettings = function(configSettings, savedSettings) {
+    var settings = this
+
     configSettings.forEach(function(setting){
         var setting = $.extend({}, setting);
 
@@ -511,37 +513,57 @@ ExternalModules.Settings.prototype.configureSettings = function(configSettings, 
     });
 
     $(function(){
-        tinymce.init({
-            mode: 'specific_textareas',
-            editor_selector: 'external-modules-rich-text-field',
-            height: 200,
-            menubar: false,
-            branding: false,
-            elementpath: false, // Hide this, since it oddly renders below the textarea.
-            plugins: ['autolink lists link image charmap hr anchor pagebreak searchreplace code fullscreen insertdatetime media nonbreaking table contextmenu directionality textcolor colorpicker imagetools'],
-            toolbar1: 'undo redo | insert | styleselect | bold italic | alignleft aligncenter alignright alignjustify',
-            toolbar2: 'outdent indent | bullist numlist | table | forecolor backcolor | searchreplace fullscreen code',
-            relative_urls : false, // force image urls to be absolute
-            file_picker_callback: function(callback, value, meta){
-                var prefix = $('#external-modules-configure-modal').data('module')
-				tinymce.activeEditor.windowManager.open({
-                    url: ExternalModules.BASE_URL + '/manager/rich-text/get-uploaded-file-list.php?prefix=' + prefix + '&pid=' + pid,
-                    width: 500,
-                    height: 300,
-                    title: 'Files'
-                });
-
-                ExternalModules.currentFilePickerCallback = function(url){
-                    tinymce.activeEditor.windowManager.close()
-                    callback(url)
-                }
-            }
-        });
+		settings.initializeRichTextFields()
     })
 }
 
+ExternalModules.Settings.prototype.initializeRichTextFields = function(){
+	$('.external-modules-rich-text-field').each(function(index, textarea){
+		textarea = $(textarea)
+        var expectedId = 'external-modules-rich-text-field_' + textarea.attr('name')
+        if(expectedId != textarea.attr('id')){
+		    // This textarea must have just been added by clicking the repeatable plus button.
+            // We need to fix it's id.
+			textarea.attr('id', expectedId)
+
+            // Remove the cloned TinyMCE elements (always the previous sibling), so they can be reinitialized.
+            textarea.prev().remove()
+
+			// Show the textarea (so TinyMCE will reinitialize it).
+			textarea.show()
+		}
+	})
+
+	tinymce.init({
+		mode: 'specific_textareas',
+		editor_selector: 'external-modules-rich-text-field',
+		height: 200,
+		menubar: false,
+		branding: false,
+		elementpath: false, // Hide this, since it oddly renders below the textarea.
+		plugins: ['autolink lists link image charmap hr anchor pagebreak searchreplace code fullscreen insertdatetime media nonbreaking table contextmenu directionality textcolor colorpicker imagetools'],
+		toolbar1: 'undo redo | insert | styleselect | bold italic | alignleft aligncenter alignright alignjustify',
+		toolbar2: 'outdent indent | bullist numlist | table | forecolor backcolor | searchreplace fullscreen code',
+		relative_urls : false, // force image urls to be absolute
+		file_picker_callback: function(callback, value, meta){
+			var prefix = $('#external-modules-configure-modal').data('module')
+			tinymce.activeEditor.windowManager.open({
+				url: ExternalModules.BASE_URL + '/manager/rich-text/get-uploaded-file-list.php?prefix=' + prefix + '&pid=' + pid,
+				width: 500,
+				height: 300,
+				title: 'Files'
+			});
+
+			ExternalModules.currentFilePickerCallback = function(url){
+				tinymce.activeEditor.windowManager.close()
+				callback(url)
+			}
+		}
+	});
+}
+
 $(function(){
-    // var getSettings = new ExternalModules.Settings();
+    var settings = new ExternalModules.Settings();
     function getSettings(){
         return new ExternalModules.Settings();
     }
@@ -684,6 +706,9 @@ $(function(){
 
         // show only last +
         $(this).hide();
+
+        // Make sure any new rich text fields get initialized.
+		getSettings().initializeRichTextFields()
     });
     /**
      * Function that given a name returns removes the elements
