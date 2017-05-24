@@ -525,7 +525,7 @@ ExternalModules.Settings.prototype.configureSettings = function(configSettings, 
             file_picker_callback: function(callback, value, meta){
                 var prefix = $('#external-modules-configure-modal').data('module')
                 tinyMCE.activeEditor.windowManager.open({
-                    url: 'rich-text/get-uploaded-file-list.php?prefix=' + prefix + '&pid=' + pid,
+                    url: ExternalModules.BASE_URL + '/manager/rich-text/get-uploaded-file-list.php?prefix=' + prefix + '&pid=' + pid,
                     width: 500,
                     height: 300,
                     title: 'Files'
