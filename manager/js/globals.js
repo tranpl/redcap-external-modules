@@ -775,6 +775,13 @@ $(function(){
         }
 
         $(this).closest('tr').remove();
+
+		tinymce.editors.forEach(function(editor, index){
+			if(!document.contains(editor.getElement())){
+			    // The element for this editor was removed from the DOM.  Destroy the editor.
+                editor.remove()
+            }
+		})
     });
 
     // Merged from updated enabled-modules, may need to reconfigure
