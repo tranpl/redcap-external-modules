@@ -359,6 +359,17 @@ class ExternalModules
 			}
 		}
 
+		$projectId = db_real_escape_string($projectId);
+		$key = db_real_escape_string($key);
+
+		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+
+		// Triple equals includes type checking, and even order checking for complex nested arrays!
+		if($value === $oldValue){
+			// Nothing changed, so we don't need to do anything.
+			return;
+		}
+
 		# if $value is an array, then encode as JSON
 		# else store $value as type specified in gettype(...)
 		if ($type === "") {
@@ -379,12 +390,6 @@ class ExternalModules
 
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
-		$projectId = db_real_escape_string($projectId);
-		$key = db_real_escape_string($key);
-
-		# oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
-		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
-
 		$pidString = $projectId;
 		if (!$projectId) {
 			$pidString = "NULL";
@@ -393,17 +398,8 @@ class ExternalModules
 		if ($type == "boolean") {
 			$value = ($value) ? 'true' : 'false';
 		}
-		if (gettype($oldValue) == "boolean") {
-			$oldValue = ($oldValue) ? 'true' : 'false';
-		}
-		$oldValueStr = (string) $oldValue;
-		if (gettype($oldValue) == "array") {
-			$oldValueStr = json_encode($oldValue);
-		}
-		if((string) $value === $oldValueStr){
-			// We don't need to do anything.
-			return;
-		} else if($value === null){
+
+		if($value === null){
 			$event = "DELETE";
 			$sql = "DELETE FROM redcap_external_module_settings
 					WHERE

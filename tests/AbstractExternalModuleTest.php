@@ -137,21 +137,28 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertEquals($projectValue, $this->getProjectSetting());
 	}
 
+	private function assertReturnedSettingType($value, $expectedType)
+	{
+		$this->setProjectSetting($value);
+		$type = gettype($this->getProjectSetting());
+		$this->assertEquals($expectedType, $type);
+	}
+
 	function testSettingTypeConsistency()
 	{
-		$assertReturnedType = function($value, $expectedType){
-			$this->setProjectSetting($value);
-			$type = gettype($this->getProjectSetting());
-			$this->assertEquals($expectedType, $type);
-		};
+		$this->assertReturnedSettingType(true, 'boolean');
+		$this->assertReturnedSettingType(1, 'integer');
+		$this->assertReturnedSettingType(1.1, 'double');
+		$this->assertReturnedSettingType("1", 'string');
+		$this->assertReturnedSettingType([1], 'array');
+		$this->assertReturnedSettingType([], 'array');
+		$this->assertReturnedSettingType(null, 'NULL');
+	}
 
-		$assertReturnedType(true, 'boolean');
-		$assertReturnedType(1, 'integer');
-		$assertReturnedType(1.1, 'double');
-		$assertReturnedType("1", 'string');
-		$assertReturnedType([1], 'array');
-		$assertReturnedType([], 'array');
-		$assertReturnedType(null, 'NULL');
+	function testSettingTypeChanges()
+	{
+		$this->assertReturnedSettingType('1', 'string');
+		$this->assertReturnedSettingType(1, 'integer');
 	}
 
 	function testRequireProjectId()
