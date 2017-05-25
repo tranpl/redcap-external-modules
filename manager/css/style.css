@@ -111,6 +111,6 @@
 	border: none;
 }
 
-.external-modules-input-td .mce-statusbar .mce-container-body {
-	height: 0px;
+.external-modules-input-td .mce-path {
+	display: none;
 }
