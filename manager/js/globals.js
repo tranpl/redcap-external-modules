@@ -988,8 +988,7 @@ $(function(){
 
         var data = {};
         var files = {};
-
-        var richTextIndex = 0;
+        
         configureModal.find('input, select, textarea').each(function(index, element){
             var element = $(element);
             var systemValue = element.closest('tr').find('.override-system-setting').data('system-value');
@@ -1018,8 +1017,8 @@ $(function(){
                     }
                 }
                 else if(element.hasClass('external-modules-rich-text-field')){
-                    value = tinymce.get(richTextIndex).getContent()
-                    richTextIndex++
+					var id = element.attr('id');
+					value = tinymce.get(id).getContent();
                 }
                 else{
                     value = element.val();
