@@ -1,6 +1,9 @@
 <?php
 namespace ExternalModules;
 
+// Uncomment this line to quickly disable all External Module hooks (for troubleshooting).
+//define('EXTERNAL_MODULES_KILL_SWITCH', '');
+
 if (!defined(__DIR__)){
 	define(__DIR__, dirname(__FILE__));
 }
@@ -764,7 +767,7 @@ class ExternalModules
 	static function callHook($name, $arguments)
 	{
 		try {
-			if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS])){
+			if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS]) || defined('EXTERNAL_MODULES_KILL_SWITCH')){
 				return;
 			}
 
