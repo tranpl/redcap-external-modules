@@ -564,9 +564,6 @@ ExternalModules.Settings.prototype.initializeRichTextFields = function(){
 
 $(function(){
     var settings = new ExternalModules.Settings();
-    function getSettings(){
-        return new ExternalModules.Settings();
-    }
 
     /**
      * Function that given a position, returns the element name
@@ -591,12 +588,12 @@ $(function(){
      */
     function getNewName(oldName){
         var idx = 1;
-        var newName = getSettings().getInstanceName(oldName, idx);  // default: guess that this is the second variable
+        var newName = settings.getInstanceName(oldName, idx);  // default: guess that this is the second variable
         var ary;
-        if (ary = oldName.match(new RegExp(getSettings().getInstanceSymbol()+"(\\d+)$"))) {
+        if (ary = oldName.match(new RegExp(settings.getInstanceSymbol()+"(\\d+)$"))) {
             // transfer number (old + 1)
             idx = Number(ary[1]) + 1;
-            newName = oldName.replace(getSettings().getInstanceSymbol() + ary[1], getSettings().getInstanceSymbol() + idx);
+            newName = oldName.replace(settings.getInstanceSymbol() + ary[1], settings.getInstanceSymbol() + idx);
         }
         setIdx(idx);
         return newName;
@@ -664,7 +661,7 @@ $(function(){
                 $newInstance.closest("tr").find('span.external-modules-instance-label').html((idx + 1) + ". ");
                 $(this).closest("tr").find('span.external-modules-instance-label').html((idx) + ". ");
 
-                newInstanceTotal += '<tr class = "subsettings-table '+getSettings().getCustomConfigClass()+'">' + $newInstance.html() + '</tr>';
+                newInstanceTotal += '<tr class = "subsettings-table '+settings.getCustomConfigClass()+'">' + $newInstance.html() + '</tr>';
             });
             oldName = $(this).closest('tr').find('label').attr('name');
             newclass = "-subsettings";
@@ -673,7 +670,7 @@ $(function(){
         }
 
         // show original sign if previous was first item
-        if (!oldName.match(new RegExp(getSettings().getInstanceSymbol()))) {
+        if (!oldName.match(new RegExp(settings.getInstanceSymbol()))) {
             $("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance"+newclass).show();
         }
 
@@ -692,7 +689,7 @@ $(function(){
 
         //We add the whole new block at the end
         if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').last().after("<tr class = '"+getSettings().getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
+            $(this).closest('tr').nextAll('tr.subsettings-table').last().after("<tr class = '"+settings.getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
         }else if($(this).hasClass('external-modules-add-instance')) {
             $newInstanceTitle.insertAfter($(this).closest('tr'));
         }
@@ -708,7 +705,7 @@ $(function(){
         $(this).hide();
 
         // Make sure any new rich text fields get initialized.
-		getSettings().initializeRichTextFields()
+		settings.initializeRichTextFields()
     });
     /**
      * Function that given a name returns removes the elements
@@ -717,25 +714,25 @@ $(function(){
      * @returns {string}
      */
     function removeElements(newclass,oldName){
-        var oldNameParts = oldName.split(new RegExp(getSettings().getInstanceSymbol()));
+        var oldNameParts = oldName.split(new RegExp(settings.getInstanceSymbol()));
         var baseName = oldNameParts[0];
         var i = 1;
         var j = 1;
-        while ($("[name='" +  getSettings().getInstanceName(baseName,i)+ "']").length) {
+        while ($("[name='" +  settings.getInstanceName(baseName,i)+ "']").length) {
             if (i == oldNameParts[1]) {
                 // remove tr
-                $("[name='" + getSettings().getInstanceName(baseName,i)+ "']").closest('tr').remove();
+                $("[name='" + settings.getInstanceName(baseName,i)+ "']").closest('tr').remove();
             } else {
                 // rename label
-                $("[name='" +  getSettings().getInstanceName(baseName,i) + "']").closest("tr").find('span.external-modules-instance-label').html((j + 1) + ". ");
+                $("[name='" +  settings.getInstanceName(baseName,i) + "']").closest("tr").find('span.external-modules-instance-label').html((j + 1) + ". ");
                 // rename tr: i --> j
-                $("[name='" +  getSettings().getInstanceName(baseName,i)+ "']").attr('name',  getSettings().getInstanceName(baseName,j));
+                $("[name='" +  settings.getInstanceName(baseName,i)+ "']").attr('name',  settings.getInstanceName(baseName,j));
                 j++;
             }
             i++;
         }
         if (j > 1) {
-            $("[name='" + getSettings().getInstanceName(baseName,(j-1))+ "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
+            $("[name='" + settings.getInstanceName(baseName,(j-1))+ "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
         } else {
             $("[name='" + baseName + "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
             $("[name='" + baseName + "']").closest("tr").find(".external-modules-original-instance"+newclass).hide();
@@ -762,11 +759,11 @@ $(function(){
             });
 
             //we remove the 'parent' element
-            var oldNameParts = $(this).closest('tr').find('label').attr('name').split(new RegExp(getSettings().getInstanceSymbol()));
+            var oldNameParts = $(this).closest('tr').find('label').attr('name').split(new RegExp(settings.getInstanceSymbol()));
             var baseName = oldNameParts[0];
             if (index > 1) {
-                $("[name='"+ getSettings().getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
-                $("[name='"+getSettings().getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
+                $("[name='"+ settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
+                $("[name='"+settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
             } else {
                 $("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
                 $("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
@@ -792,8 +789,6 @@ $(function(){
     var configureModal = $('#external-modules-configure-modal');
     // may need to reconfigure
     var isSuperUser = (ExternalModules.SUPER_USER == 1);
-
-    var settings = new ExternalModules.Settings();
 
     // Shared function for combining 2 arrays to produce an attribute string for an HTML object
 
