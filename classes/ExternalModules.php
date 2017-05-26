@@ -116,6 +116,7 @@ class ExternalModules
 			ExternalModules::sendAdminEmail('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
+		// We must use APP_PATH_WEBROOT_FULL here because some REDCap installations are hosted under subdirectories.
 		self::$BASE_URL = APP_PATH_WEBROOT_FULL.'external_modules/';
 		self::$MODULES_URL = APP_PATH_WEBROOT_FULL.'modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
