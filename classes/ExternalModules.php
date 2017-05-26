@@ -594,6 +594,10 @@ class ExternalModules
 
 	private static function getSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
+		if(empty($key)){
+			throw new Exception('The setting key cannot be empty!');
+		}
+
 		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
