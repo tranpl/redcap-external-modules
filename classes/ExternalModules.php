@@ -113,7 +113,7 @@ class ExternalModules
 		$modulesDirectoryName = '/modules/';
 
 		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
-			ExternalModules::sendAdminEmail('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
+			throw new Exception('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
 		// We must use APP_PATH_WEBROOT_FULL here because some REDCap installations are hosted under subdirectories.

@@ -2,6 +2,8 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/classes/ExternalModules.php';
 
+use Exception;
+
 $id = $_GET['id'];
 $page = $_GET['page'];
 $pid = @$_GET['pid'];

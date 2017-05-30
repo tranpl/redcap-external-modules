@@ -2,6 +2,8 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 
+use Exception;
+
 ExternalModules::addResource('css/style.css');
 
 $sql = ExternalModules::getSqlToRunIfDBOutdated();

@@ -66,7 +66,6 @@ foreach($_FILES as $key=>$value){
 			}
 			ExternalModules\ExternalModules::setFileSetting($moduleDirectoryPrefix, $pidPossiblyWithNullValue, $key, $edoc);
 		} else {
-			throw new Exception("You could not save a file properly.");
 			header('Content-type: application/json');
 			echo json_encode(array(
 				'status' => "You could not save a file properly."
