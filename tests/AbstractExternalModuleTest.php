@@ -113,7 +113,7 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		$value = rand();
 		$this->setSystemSetting($value);
-		$this->assertEquals($value, $this->getSystemSetting());
+		$this->assertSame($value, $this->getSystemSetting());
 
 		$this->removeSystemSetting();
 		$this->assertNull($this->getSystemSetting());
@@ -125,32 +125,40 @@ class AbstractExternalModuleTest extends BaseTest
 		$systemValue = rand();
 
 		$this->setProjectSetting($projectValue);
-		$this->assertEquals($projectValue, $this->getProjectSetting());
+		$this->assertSame($projectValue, $this->getProjectSetting());
 
 		$this->removeProjectSetting();
 		$this->assertNull($this->getProjectSetting());
 
 		$this->setSystemSetting($systemValue);
-		$this->assertEquals($systemValue, $this->getProjectSetting());
+		$this->assertSame($systemValue, $this->getProjectSetting());
 
 		$this->setProjectSetting($projectValue);
-		$this->assertEquals($projectValue, $this->getProjectSetting());
+		$this->assertSame($projectValue, $this->getProjectSetting());
+	}
+
+	private function assertReturnedSettingType($value, $expectedType)
+	{
+		$this->setProjectSetting($value);
+		$type = gettype($this->getProjectSetting());
+		$this->assertSame($expectedType, $type);
 	}
 
 	function testSettingTypeConsistency()
 	{
-		$assertReturnedType = function($value, $expectedType){
-			$this->setProjectSetting($value);
-			$type = gettype($this->getProjectSetting());
-			$this->assertEquals($expectedType, $type);
-		};
+		$this->assertReturnedSettingType(true, 'boolean');
+		$this->assertReturnedSettingType(1, 'integer');
+		$this->assertReturnedSettingType(1.1, 'double');
+		$this->assertReturnedSettingType("1", 'string');
+		$this->assertReturnedSettingType([1], 'array');
+		$this->assertReturnedSettingType([], 'array');
+		$this->assertReturnedSettingType(null, 'NULL');
+	}
 
-		$assertReturnedType(true, 'boolean');
-		$assertReturnedType(1, 'integer');
-		$assertReturnedType(1.1, 'double');
-		$assertReturnedType("1", 'string');
-		$assertReturnedType([1], 'array');
-		$assertReturnedType(null, 'NULL');
+	function testSettingTypeChanges()
+	{
+		$this->assertReturnedSettingType('1', 'string');
+		$this->assertReturnedSettingType(1, 'integer');
 	}
 
 	function testRequireProjectId()
@@ -162,10 +170,10 @@ class AbstractExternalModuleTest extends BaseTest
 		}, 'must supply a project id');
 
 		$pid = rand();
-		$this->assertEquals($pid, $m->requireProjectId($pid));
+		$this->assertSame($pid, $m->requireProjectId($pid));
 
 		$_GET['pid'] = $pid;
-		$this->assertEquals($pid, $m->requireProjectId(null));
+		$this->assertSame($pid, $m->requireProjectId(null));
 		unset($_GET['pid']);
 	}
 
@@ -173,13 +181,13 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		$m = $this->getInstance();
 
-		$this->assertEquals(null, $m->detectProjectId(null));
+		$this->assertSame(null, $m->detectProjectId(null));
 
 		$pid = rand();
-		$this->assertEquals($pid, $m->detectProjectId($pid));
+		$this->assertSame($pid, $m->detectProjectId($pid));
 
 		$_GET['pid'] = $pid;
-		$this->assertEquals($pid, $m->detectProjectId(null));
+		$this->assertSame($pid, $m->detectProjectId(null));
 		unset($_GET['pid']);
 	}
 
@@ -207,6 +215,6 @@ class AbstractExternalModuleTest extends BaseTest
 		$expected = ExternalModules::getModuleDirectoryUrl($m->PREFIX, $m->VERSION) . '/' . $filePath;
 		$actual = $m->getUrl($filePath);
 
-		$this->assertEquals($expected, $actual);
+		$this->assertSame($expected, $actual);
 	}
 }

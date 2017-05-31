@@ -23,7 +23,7 @@ class ExternalModulesTest extends BaseTest
 
 		$this->assertNull($this->getSystemSetting());
 		ExternalModules::initializeSettingDefaults($m);
-		$this->assertEquals($defaultValue, $this->getSystemSetting());
+		$this->assertSame($defaultValue, $this->getSystemSetting());
 
 		// Make sure defaults do NOT overwrite any existing settings.
 		$this->setSystemSetting(rand());
@@ -36,8 +36,8 @@ class ExternalModulesTest extends BaseTest
 		$value = rand();
 		$this->setSystemSetting($value);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
-		$this->assertEquals($value, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals($value, $array[TEST_SETTING_KEY]['system_value']);
+		$this->assertSame($value, $array[TEST_SETTING_KEY]['value']);
+		$this->assertSame($value, $array[TEST_SETTING_KEY]['system_value']);
 	}
 
 	function testGetProjectSettingsAsArray_projectOnly()
@@ -45,8 +45,8 @@ class ExternalModulesTest extends BaseTest
 		$value = rand();
 		$this->setProjectSetting($value);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
-		$this->assertEquals($value, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals(null, @$array[TEST_SETTING_KEY]['system_value']);
+		$this->assertSame($value, $array[TEST_SETTING_KEY]['value']);
+		$this->assertSame(null, @$array[TEST_SETTING_KEY]['system_value']);
 	}
 
 	function testGetProjectSettingsAsArray_both()
@@ -57,15 +57,15 @@ class ExternalModulesTest extends BaseTest
 		$this->setSystemSetting($systemValue);
 		$this->setProjectSetting($projectValue);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
-		$this->assertEquals($projectValue, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals($systemValue, $array[TEST_SETTING_KEY]['system_value']);
+		$this->assertSame($projectValue, $array[TEST_SETTING_KEY]['value']);
+		$this->assertSame($systemValue, $array[TEST_SETTING_KEY]['system_value']);
 
 		// Re-test reversing the insert order to make sure it doesn't matter.
 		$this->setProjectSetting($projectValue);
 		$this->setSystemSetting($systemValue);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
-		$this->assertEquals($projectValue, $array[TEST_SETTING_KEY]['value']);
-		$this->assertEquals($systemValue, $array[TEST_SETTING_KEY]['system_value']);
+		$this->assertSame($projectValue, $array[TEST_SETTING_KEY]['value']);
+		$this->assertSame($systemValue, $array[TEST_SETTING_KEY]['system_value']);
 	}
 
 	function testAddReservedSettings()
@@ -97,9 +97,9 @@ class ExternalModulesTest extends BaseTest
 		));
 
 		$systemSettings = $config['system-settings'];
-		$this->assertEquals(2, count($systemSettings));
-		$this->assertEquals(ExternalModules::KEY_ENABLED, $systemSettings[0]['key']);
-		$this->assertEquals($key, $systemSettings[1]['key']);
+		$this->assertSame(2, count($systemSettings));
+		$this->assertSame(ExternalModules::KEY_ENABLED, $systemSettings[0]['key']);
+		$this->assertSame($key, $systemSettings[1]['key']);
 	}
 
 	function testCacheAllEnableData()
@@ -110,7 +110,7 @@ class ExternalModulesTest extends BaseTest
 		$m->setSystemSetting(ExternalModules::KEY_VERSION, $version);
 
 		self::callPrivateMethod('cacheAllEnableData');
-		$this->assertEquals($version, self::callPrivateMethod('getSystemwideEnabledVersions')[TEST_MODULE_PREFIX]);
+		$this->assertSame($version, self::callPrivateMethod('getSystemwideEnabledVersions')[TEST_MODULE_PREFIX]);
 
 		$m->removeSystemSetting(ExternalModules::KEY_VERSION);
 
@@ -127,7 +127,7 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $str);
 
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
-		$this->assertEquals($str, $array[TEST_SETTING_KEY]['value']);
+		$this->assertSame($str, $array[TEST_SETTING_KEY]['value']);
 	}
 
 	function testGetEnabledModules()
@@ -143,7 +143,7 @@ class ExternalModulesTest extends BaseTest
 
 		$this->cacheAllEnableData();
 		$versionsByPrefix = ExternalModules::getEnabledModules();
-		$this->assertEquals(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
+		$this->assertSame(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
 		$versionsByPrefix = ExternalModules::getEnabledModules(TEST_SETTING_PID);
 		$this->assertNull(@$versionsByPrefix[TEST_MODULE_PREFIX]);
 
@@ -151,9 +151,9 @@ class ExternalModulesTest extends BaseTest
 
 		$this->cacheAllEnableData();
 		$versionsByPrefix = ExternalModules::getEnabledModules();
-		$this->assertEquals(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
+		$this->assertSame(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
 		$versionsByPrefix = ExternalModules::getEnabledModules(TEST_SETTING_PID);
-		$this->assertEquals(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
+		$this->assertSame(TEST_MODULE_VERSION, $versionsByPrefix[TEST_MODULE_PREFIX]);
 	}
 
 	function testGetEnabledModuleVersionsForProject_multiplePrefixesAndVersions()
@@ -224,8 +224,8 @@ class ExternalModulesTest extends BaseTest
 	function testGetFileSettings() {
 		$m = self::getInstance();					
 
-		$edocIdSystem = rand();
-		$edocIdProject = rand();
+		$edocIdSystem = (string) rand();
+		$edocIdProject = (string) rand();
 
                 # system
 		ExternalModules::setSystemFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY, $edocIdSystem);
@@ -234,8 +234,8 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::setFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY, $edocIdProject);
 
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
-		$this->assertEquals($edocIdProject, $array[FILE_SETTING_KEY]['value']);
-		$this->assertEquals($edocIdSystem, $array[FILE_SETTING_KEY]['system_value']);
+		$this->assertSame($edocIdProject, $array[FILE_SETTING_KEY]['value']);
+		$this->assertSame($edocIdSystem, $array[FILE_SETTING_KEY]['system_value']);
 
 		ExternalModules::removeFileSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, FILE_SETTING_KEY);
 		ExternalModules::removeSystemFileSetting($this->getInstance()->PREFIX, FILE_SETTING_KEY);
@@ -282,7 +282,7 @@ class ExternalModulesTest extends BaseTest
 			$method->setAccessible(true);
 			$expected = $method->invoke(null, TEST_MODULE_PREFIX, $pageExpected);
 
-			$this->assertEquals($expected, $actual);
+			$this->assertSame($expected, $actual);
 		};
 
 		$links = $this->getLinks();
@@ -341,11 +341,11 @@ class ExternalModulesTest extends BaseTest
 		$argTwo = rand();
 		$argThree = 'q';
 		ExternalModules::callHook('redcap_test_delay', [$numExecutions, $argTwo, $argThree]);
-		$this->assertEquals(2, $m->executionNumber);  // 2 iterations
-		$this->assertEquals(10, $m->doneMarker);
-		$this->assertEquals($numExecutions, $m->testHookArguments[0]);
-		$this->assertEquals($argTwo, $m->testHookArguments[1]);
-		$this->assertEquals($argThree, $m->testHookArguments[2]);
+		$this->assertSame(2, $m->executionNumber);  // 2 iterations
+		$this->assertSame(10, $m->doneMarker);
+		$this->assertSame($numExecutions, $m->testHookArguments[0]);
+		$this->assertSame($argTwo, $m->testHookArguments[1]);
+		$this->assertSame($argThree, $m->testHookArguments[2]);
 	}
 
 	function testCallHook_arguments()
@@ -360,8 +360,8 @@ class ExternalModulesTest extends BaseTest
 		$argOne = 1;
 		$argTwo = 'a';
 		ExternalModules::callHook('redcap_test', [$argOne, $argTwo]);
-		$this->assertEquals($argOne, $m->testHookArguments[0]);
-		$this->assertEquals($argTwo, $m->testHookArguments[1]);
+		$this->assertSame($argOne, $m->testHookArguments[0]);
+		$this->assertSame($argTwo, $m->testHookArguments[1]);
 	}
 
 	function testCallHook_permissions()
@@ -450,7 +450,7 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 0, $value1);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertNotNull(json_encode($array));
-		$this->assertEquals($value1, $array[TEST_SETTING_KEY]['value']);
+		$this->assertSame($value1, $array[TEST_SETTING_KEY]['value']);
 
 		ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $value1);
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 1, $value2);
@@ -458,10 +458,10 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 3, $value4);
 		$array = ExternalModules::getProjectSettingsAsArray($this->getInstance()->PREFIX, TEST_SETTING_PID);
 		$this->assertNotNull(json_encode($array));
-		$this->assertEquals($value1, $array[TEST_SETTING_KEY]['value'][0]);
-		$this->assertEquals($value2, $array[TEST_SETTING_KEY]['value'][1]);
-		$this->assertEquals($value3, $array[TEST_SETTING_KEY]['value'][2]);
-		$this->assertEquals($value4, $array[TEST_SETTING_KEY]['value'][3]);
+		$this->assertSame($value1, $array[TEST_SETTING_KEY]['value'][0]);
+		$this->assertSame($value2, $array[TEST_SETTING_KEY]['value'][1]);
+		$this->assertSame($value3, $array[TEST_SETTING_KEY]['value'][2]);
+		$this->assertSame($value4, $array[TEST_SETTING_KEY]['value'][3]);
 
 		ExternalModules::setProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, $value1);
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 1, $value2);
@@ -469,10 +469,10 @@ class ExternalModulesTest extends BaseTest
 		ExternalModules::setInstance($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY, 3, $value4);
 		$array = ExternalModules::getProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID,  TEST_SETTING_KEY);
 		$this->assertNotNull(json_encode($array));
-		$this->assertEquals($value1, $array[0]);
-		$this->assertEquals($value2, $array[1]);
-		$this->assertEquals($value3, $array[2]);
-		$this->assertEquals($value4, $array[3]);
+		$this->assertSame($value1, $array[0]);
+		$this->assertSame($value2, $array[1]);
+		$this->assertSame($value3, $array[2]);
+		$this->assertSame($value4, $array[3]);
 
 		ExternalModules::removeProjectSetting($this->getInstance()->PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY);
 	}
@@ -481,7 +481,7 @@ class ExternalModulesTest extends BaseTest
 	{
 		$assertLocalhost = function($expected, $host){
 			$_SERVER['HTTP_HOST'] = $host;
-			$this->assertEquals($expected, $this->callPrivateMethod('isLocalhost'));
+			$this->assertSame($expected, $this->callPrivateMethod('isLocalhost'));
 		};
 
 		$assertLocalhost(true, 'localhost');

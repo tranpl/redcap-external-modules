@@ -74,7 +74,7 @@ require_once '../../classes/ExternalModules.php';
 ?>
 </div></td>
 					<td style='vertical-align: middle;' class="external-modules-action-buttons">
-						<button class='enable-button'>Enable</button>					
+						<button class='enable-button'>Enable</button>
 					</td>
 				</tr>
 			<?php
@@ -89,7 +89,6 @@ require_once '../../classes/ExternalModules.php';
 <?php
 	if (isset($_GET['pid'])) {
 		echo "var pid = ".json_encode($_GET['pid']).";";
-		echo "var keyEnabled = '".ExternalModules::KEY_ENABLED."';";
 	} else {
 		echo "var pid = null;";
 		if (isset($disabledModuleConfigs)) {
@@ -98,4 +97,4 @@ require_once '../../classes/ExternalModules.php';
 	}
 ?>
 </script>
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/get-disabled-modules.js'); ?>
+<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'get-disabled-modules.js'); ?>

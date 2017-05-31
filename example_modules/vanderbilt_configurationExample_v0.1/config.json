@@ -3,6 +3,13 @@
 
 	"description": "Example module to show off all the options available",
 
+	"authors": [
+		{
+			"name": "Kyle McGuffin",
+			"email": "kyle.mcguffin@vanderbilt.edu"
+		}
+	],
+
 	"permissions": [
 		""
 	],
@@ -58,6 +65,18 @@
 				"type": "form-list"
 				},
 				{
+					"key": "arm-name",
+					"name": "Arm name",
+					"required": true,
+					"type": "arm-list"
+				},
+				{
+					"key": "event-name",
+					"name": "Event name",
+					"required": true,
+					"type": "event-list"
+				},
+				{
 				"key": "test-text",
 				"name": "Text Field",
 				"required": true,
@@ -71,6 +90,11 @@
 			"required": true,
 			"type": "textarea",
 			"repeatable": true
+		},
+		{
+			"key": "rich-text-area",
+			"name": "Rich Text Area",
+			"type": "rich-text"
 		},
 		{
 			"key": "dag",

@@ -213,14 +213,25 @@ class AbstractExternalModule
 
 	function getUrl($path)
 	{
+        	$pid = self::detectProjectId();
 		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        	$url = '';
 		if($extension != 'php'){
 			// This must be a resource, like an image or css/js file.
 			// Go ahead and return the version specific url.
-			return ExternalModules::getModuleDirectoryUrl($this->PREFIX, $this->VERSION) . '/' . $path;
-		}
+            		$url =  ExternalModules::getModuleDirectoryUrl($this->PREFIX, $this->VERSION) . '/' . $path;
+		}else {
+            		$url = ExternalModules::getUrl($this->PREFIX, $path);
+		    	if(!empty($pid)){
+		        	$url .= '&pid='.$pid;
+            		}
+        	}
+		return $url;
+	}
 
-		return ExternalModules::getUrl($this->PREFIX, $path);
+	public function getModuleName()
+	{
+		return $this->getConfig()['name'];
 	}
 
 	# function to enforce that a pid is required for a particular function
@@ -236,7 +247,7 @@ class AbstractExternalModule
 	}
 
 	# if $pid is empty/null, can get the pid from $_GET if it exists
-	private function detectProjectId($pid)
+	private function detectProjectId($pid=null)
 	{
 		if($pid == null){
 			$pid = @$_GET['pid'];

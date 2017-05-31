@@ -3,15 +3,11 @@ namespace ExternalModules;
 require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once ExternalModules::getProjectHeaderPath();
 
-ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/css/select2.min.css');
-ExternalModules::addResource('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2-rc.1/js/select2.min.js');
-
 if(!ExternalModules::hasDesignRights()){
 	echo "You don't have permission to manage external modules on this project.";
 	return;
 }
 
-ExternalModules::addResource('css/style.css');
 ?>
 
 <h4 style="margin-top: 0;">
@@ -21,7 +17,6 @@ ExternalModules::addResource('css/style.css');
 
 <?php
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 ?>
 
 <style>
@@ -59,13 +54,8 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_l
 	</div>
 </div>
 
-<script>
-	var pid = <?=$_GET['pid']?>;
-	var keyEnabled = '<?= ExternalModules::KEY_ENABLED ?>';
-</script>
-
-<?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'/project.js'); ?>
-
 <?php
+
+ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project.js');
 
 require_once ExternalModules::getProjectFooterPath();

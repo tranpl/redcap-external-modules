@@ -13,7 +13,7 @@ $(function() {
 		  var row = $(event.target).closest('tr');
 		  var prefix = row.data('module');
 
-		  $.post('ajax/disable-module.php?pid=' + pid, { module: prefix }, function(data){
+		  $.post('ajax/disable-module.php?pid=' + ExternalModules.PID, { module: prefix }, function(data){
 			   if (data == 'success') {
 				    reloadPage();
 			   }

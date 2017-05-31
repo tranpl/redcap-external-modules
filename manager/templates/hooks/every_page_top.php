@@ -36,7 +36,7 @@ $links = ExternalModules::getLinks();
 					var collapse = 0;
 				}
 				// Send ajax request to save cookie
-				$.post(app_path_webroot+'ProjectGeneral/project_menu_collapse.php?pid='+pid, { menu_id: $(this).prop('id'), collapse: collapse });
+				$.post(app_path_webroot+'ProjectGeneral/project_menu_collapse.php?pid='+ExternalModules.PID, { menu_id: $(this).prop('id'), collapse: collapse });
 			});
 
 			var menubox = newPanel.find('.x-panel-body .menubox .menubox')
@@ -49,8 +49,8 @@ $links = ExternalModules::getLinks();
 				?>
 				newLink = exampleLink.clone()
 				newLink.find('img').attr('src', '<?php
-                                if (file_exists(ExternalModules::$BASE_PATH . '/images/' . $link['icon'] . '.png')) {
-                                        echo ExternalModules::$BASE_URL . '/images/' . $link['icon'] . ".png";
+                                if (file_exists(ExternalModules::$BASE_PATH . 'images/' . $link['icon'] . '.png')) {
+                                        echo ExternalModules::$BASE_URL . 'images/' . $link['icon'] . ".png";
                                 } else {
                                         echo APP_PATH_WEBROOT . 'Resources/images/' . $link['icon'] . ".png";
                                 }

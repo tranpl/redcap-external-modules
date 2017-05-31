@@ -11,6 +11,7 @@ $(function(){
 
 	disabledModal.find('.enable-button').click(function(event){
 		disabledModal.hide();
+		$('#external-modules-enable-modal-error').hide();
 
 		var row = $(event.target).closest('tr');
 		var prefix = row.data('module');
@@ -34,30 +35,66 @@ $(function(){
 				enableModal.find('button').attr('disabled', true);
 
 				$.post('ajax/enable-module.php', {prefix: prefix, version: version}, function (data) {
-					if (data == 'success') {
-						reloadThisPage();
-						disabledModal.modal('hide');
-					}
-					else {
+					try {
+						var jsonAjax = jQuery.parseJSON(data);
+						if (typeof jsonAjax == 'object') {
+							console.log('a');
+							console.log("Message: "+jsonAjax['error_message']);
+							if (jsonAjax['error_message'] != "") {
+								$('#external-modules-enable-modal-error').show();
+								$('#external-modules-enable-modal-error').html(jsonAjax['error_message']);
+								$('.close-button').attr('disabled', false);
+								enableButton.hide();
+							}else if (jsonAjax['message'] == 'success') {
+								reloadThisPage();
+								disabledModal.modal('hide');
+								enableModal.modal('hide');
+							}
+						}else{
+							var message = 'An error occurred while enabling the module: ' + data;
+							console.log('AJAX Request Error:', message);
+							alert(message);
+							enableModal.modal('hide');
+						}
+					} catch(err) {
 						var message = 'An error occurred while enabling the module: ' + data;
 						console.log('AJAX Request Error:', message);
+						alert(message);
+						enableModal.modal('hide');
 					}
-
-					enableModal.modal('hide');
 				});
 			});
+			enableButton.show();
 			enableModal.modal('show');
 			return false;
 		} else {   // pid
+			var enableButton = enableModal.find('.enable-button');
 			$.post('ajax/enable-module.php?pid=' + pid, {prefix: prefix, version: version}, function(data){
-				if (data == 'success') {
-					reloadThisPage();
-					disabledModal.modal('hide');
-				}
-				else {
-					var message = 'An error occurred while enabling the module: ' + data;
+				try {
+					var jsonAjax = jQuery.parseJSON(data);
+					if (typeof jsonAjax == 'object') {
+						$('#external-modules-enable-modal-error').hide();
+						if ((typeof jsonAjax['error_message'] != "undefined") && (jsonAjax['error_message'] != "")) {
+							$('#external-modules-enable-modal-error').show();
+							$('#external-modules-enable-modal-error').html(jsonAjax['error_message']);
+							$('.close-button').attr('disabled', false);
+							enableButton.hide();
+						}else if (jsonAjax['message'] == 'success') {
+							reloadThisPage();
+							disabledModal.modal('hide');
+							enableModal.modal('hide');
+						}
+					}else{
+						var message = 'An error occurred while enabling the module: ' + jsonAjax;
+						console.log('AJAX Request Error:', message);
+						alert(message);
+						enableModal.modal('hide');
+					}
+				} catch(err) {
+					var message = 'An error occurred while enabling the module: ' + jsonAjax;
 					console.log('AJAX Request Error:', message);
 					alert(message);
+					enableModal.modal('hide');
 				}
 			});
 			return false;
