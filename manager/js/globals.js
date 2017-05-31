@@ -790,9 +790,9 @@ $(function(){
 
     var pid = ExternalModules.PID;
     var pidString = pid;
-    // if(pid === null){
-    	// pidString = '';
-    // }
+    if(pid === null){
+    	pidString = '';
+    }
     var configureModal = $('#external-modules-configure-modal');
     // may need to reconfigure
     var isSuperUser = (ExternalModules.SUPER_USER == 1);

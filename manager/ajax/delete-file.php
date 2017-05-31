@@ -21,7 +21,7 @@ $prefix = $_POST['moduleDirectoryPrefix'];
 
 # Check if you are deleting the system default value
 $systemValue = ExternalModules\ExternalModules::getSystemSetting($prefix, $key);
-if ($systemValue == $edoc) {
+if (($systemValue == $edoc) && $pid) {
 	# set the setting as "" - this denotes an empty file space
 	# if you deleted the actual database entry, then you would go to the system default value
 	ExternalModules\ExternalModules::setProjectSetting($prefix, $pid, $key, "");

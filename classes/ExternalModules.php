@@ -324,7 +324,7 @@ class ExternalModules
 
 	static function removeFileSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
-		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
+		self::setSetting($moduleDirectoryPrefix, $projectId, $key, null, "file");
 	}
 
 	# returns boolean
@@ -610,7 +610,7 @@ class ExternalModules
 			return null;
 		}
 		else{
-			throw new Exception("More than one External Module setting exists for project $projectId and key '$key'!  This should never happen!");
+			throw new Exception("More than one ($numRows) External Module setting exists for project $projectId and key '$key'!  This should never happen!");
 		}
 	}
 
