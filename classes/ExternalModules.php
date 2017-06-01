@@ -201,7 +201,7 @@ class ExternalModules
 					$message .= 'Line: ' . $error['line'] . "\n";
 
 					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message);
+					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
 
 					// We can't just call disable() from here because the database connection has been destroyed.
 					// Disable this module via AJAX instead.
@@ -247,16 +247,36 @@ class ExternalModules
 		return self::$activeModulePrefix;
 	}
 
-	private static function sendAdminEmail($subject, $message)
+	private static function sendAdminEmail($subject, $message, $prefix = null)
 	{
 		global $project_contact_email;
+
+		$additionalToAddresses = array();
+		if ($prefix) {
+			$config = self::getConfig($prefix);
+			foreach ($config['authors'] as $author) {
+				if (isset($author['email']) && preg_match("/@/", $author['email'])) {
+					$parts = preg_split("/@/", $author['email']);
+					if (count($parts) >= 2) {
+						$domain = $parts[1];
+						if ($_SERVER['HTTP_HOST'] == $domain) {
+							$additionalToAddresses[] = $author['email'];
+						}
+					}
+				}
+			}
+		}
+		$additionalTo = "";
+		if (count($additionalToAddresses) > 0) {
+			$additionalTo = ",".implode(",", $additionalToAddresses);
+		}
 
 		$message = str_replace('<br>', "\n", $message);
 		$message .= "\n\nServer: " . gethostname() . "\n";
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu'.$additionalTo);
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
@@ -825,7 +845,7 @@ class ExternalModules
 			catch(Exception $e){
 				$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '".self::$hookBeingExecuted."':\n\n" . $e;
 				error_log($message);
-				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
+				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message, $prefix);
 			}
 			self::setActiveModulePrefix(null);
 		}
@@ -906,7 +926,7 @@ class ExternalModules
 		} catch(Exception $e) {
 			$message = "REDCap External Modules threw the following exception:\n\n" . $e;
 			error_log($message);
-			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message);
+			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message, $prefix);
 		}
 	}
 
