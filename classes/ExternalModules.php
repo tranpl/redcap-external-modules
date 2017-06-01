@@ -99,6 +99,73 @@ class ExternalModules
 		return $host == 'localhost' || $isIpAddress;
 	}
 
+	static function saveSettingsFromPost($moduleDirectoryPrefix, $pid)
+	{
+		# for screening out files below
+		$config = self::getConfig($moduleDirectoryPrefix, null, $pid);
+		$files = array();
+		foreach(['system-settings', 'project-settings'] as $settingsKey){
+			foreach($config[$settingsKey] as $row) {
+				if ($row['type'] && ($row['type'] == "file")) {
+					$files[] = $row['key'];
+				}
+			}
+		}
+
+		$instances = array();   # for repeatable elements, you must save them after the original is saved
+		# if not, the value is overwritten by a string/int/etc. - not a JSON
+
+		# returns boolean
+		function isExternalModuleFile($key, $fileKeys) {
+			if (in_array($key, $fileKeys)) {
+				return true;
+			}
+			foreach ($fileKeys as $fileKey) {
+				if (preg_match('/^'.$fileKey.'____\d+$/', $key)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		# store everything BUT files and multiple instances (after the first one)
+		foreach($_POST as $key=>$value){
+			# files are stored in a separate $.ajax call
+			# numeric value signifies a file present
+			# empty strings signify non-existent files (systemValues or empty)
+			if (!isExternalModuleFile($key, $files) || !is_numeric($value)) {
+				if($value == '') {
+					$value = null;
+				}
+
+				if (preg_match("/____/", $key)) {
+					$parts = preg_split("/____/", $key);
+					$shortKey = $parts[0];
+
+					if(!isset($instances[$shortKey])){
+						$instances[$shortKey] = [];
+					}
+
+					if(!$value){
+						$value = '';
+					}
+
+					$instances[$shortKey][] = $value;
+				} else if (empty($pid)) {
+					$saved[$key] = $value;
+					self::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+				} else {
+					$saved[$key] = $value;
+					self::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
+				}
+			}
+		}
+
+		foreach($instances as $key => $values) {
+			self::setSetting($moduleDirectoryPrefix, $pid, $key, $values);
+		}
+	}
+
 	# initializes the External Module aparatus
 	static function initialize()
 	{
@@ -1604,6 +1671,7 @@ class ExternalModules
 	# fills is with null values for non-expressed positions in the JSON before instance
 	# JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
 	# the form of other JSON-encoded strings.
+	# This method is currently used in the Selective Email module (so don't remove it).
 	static function setInstance($prefix, $projectId, $key, $instance, $value) {
 		$instance = (int) $instance;
 		$oldValue = self::getSetting($prefix, $projectId, $key);
