@@ -247,6 +247,12 @@ class ExternalModules
 		return self::$activeModulePrefix;
 	}
 
+	private static function lastTwoNodes($hostname) {
+		$nodes = preg_split("/\./", $hostname);
+		$count = count($nodes);
+		return $nodes[$count - 2].".".$nodes[$count - 1];
+	}
+
 	private static function sendAdminEmail($subject, $message, $prefix = null)
 	{
 		global $project_contact_email;
@@ -259,7 +265,7 @@ class ExternalModules
 					$parts = preg_split("/@/", $author['email']);
 					if (count($parts) >= 2) {
 						$domain = $parts[1];
-						if ($_SERVER['HTTP_HOST'] == $domain) {
+						if (self::lastTwoNodes($_SERVER['HTTP_HOST']) == $domain) {
 							$additionalToAddresses[] = $author['email'];
 						}
 					}
