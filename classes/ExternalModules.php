@@ -1370,13 +1370,13 @@ class ExternalModules
 				$config['system-settings'] = $config['global-settings'];
 			}
 
-			self::$configs[$prefix][$version] = $config;
-		}
-
-		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
-			if(!isset($config[$key])){
-				$config[$key] = array();
+			foreach(['permissions', 'system-settings', 'project-settings'] as $key){
+				if(!isset($config[$key])){
+					$config[$key] = array();
+				}
 			}
+
+			self::$configs[$prefix][$version] = $config;
 		}
 
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
