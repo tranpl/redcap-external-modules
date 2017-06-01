@@ -1370,7 +1370,7 @@ class ExternalModules
 				$config['system-settings'] = $config['global-settings'];
 			}
 
-			$configs[$prefix][$version] = $config;
+			self::$configs[$prefix][$version] = $config;
 		}
 
 		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
