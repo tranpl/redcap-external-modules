@@ -1370,7 +1370,7 @@ class ExternalModules
 				$config['system-settings'] = $config['global-settings'];
 			}
 
-			foreach(['permissions', 'system-settings', 'project-settings'] as $key){
+			foreach(['permissions', 'system-settings', 'project-settings', 'no-auth-pages'] as $key){
 				if(!isset($config[$key])){
 					$config[$key] = array();
 				}
