@@ -259,18 +259,21 @@ class ExternalModules
 
 		$additionalToAddresses = array();
 		if ($prefix) {
-			$config = self::getConfig($prefix);
-			foreach ($config['authors'] as $author) {
-				if (isset($author['email']) && preg_match("/@/", $author['email'])) {
-					$parts = preg_split("/@/", $author['email']);
-					if (count($parts) >= 2) {
-						$domain = $parts[1];
-						if (self::lastTwoNodes($_SERVER['HTTP_HOST']) == $domain) {
-							$additionalToAddresses[] = $author['email'];
-						}
-					}
-				}
-			}
+            try {
+			    $config = self::getConfig($prefix);
+			    foreach ($config['authors'] as $author) {
+				    if (isset($author['email']) && preg_match("/@/", $author['email'])) {
+					    $parts = preg_split("/@/", $author['email']);
+					    if (count($parts) >= 2) {
+						    $domain = $parts[1];
+						    if (self::lastTwoNodes($_SERVER['HTTP_HOST']) == $domain) {
+							    $additionalToAddresses[] = $author['email'];
+						    }
+					    }
+				    }
+			    }
+            } catch(Exception $e) {
+            }
 		}
 		$additionalTo = "";
 		if (count($additionalToAddresses) > 0) {
