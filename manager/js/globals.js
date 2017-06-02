@@ -619,11 +619,14 @@ $(function(){
         // RULE: Variables are base name + ____X, where X is a 0-based name
         // so survey_name___0 is the first variable; survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
         // RULE 2: Cannot remove first item
+
+        var row = $(this).closest('tr');
+
         var newInstanceTotal = "";
         var newclass = "";
         var oldName = "";
         if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
+            row.nextAll('tr.subsettings-table').each(function () {
                 oldName = getOldName($(this).find('td:nth-child(2)'));
                 var newName = getNewName(oldName);
                 var idx = getIdx();
@@ -641,10 +644,10 @@ $(function(){
 
                 newInstanceTotal += '<tr class = "subsettings-table '+settings.getCustomConfigClass()+'">' + $newInstance.html() + '</tr>';
             });
-            oldName = $(this).closest('tr').find('label').attr('name');
+            oldName = row.find('label').attr('name');
             newclass = "-subsettings";
         }else if($(this).hasClass('external-modules-add-instance')) {
-            oldName = getOldName($(this).closest('tr'));
+            oldName = getOldName(row);
         }
 
         // show original sign if previous was first item
@@ -658,7 +661,7 @@ $(function(){
         var newName = getNewName(oldName);
         var idx = getIdx();
 
-        var $newInstanceTitle = $(this).closest('tr').clone();
+        var $newInstanceTitle = row.clone();
         $newInstanceTitle.find(".external-modules-remove-instance"+newclass).show();
         $newInstanceTitle.find(".external-modules-original-instance"+newclass).hide();
         $newInstanceTitle.find('[name="'+oldName+'"]').attr('name', newName);
@@ -667,9 +670,9 @@ $(function(){
 
         //We add the whole new block at the end
         if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').last().after("<tr class = '"+settings.getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
+            row.nextAll('tr.subsettings-table').last().after("<tr class = '"+settings.getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
         }else if($(this).hasClass('external-modules-add-instance')) {
-            $newInstanceTitle.insertAfter($(this).closest('tr'));
+            $newInstanceTitle.insertAfter(row);
         }
 
         // rename new instance of input/select and set value to empty string
@@ -677,7 +680,7 @@ $(function(){
         $newInstanceTitle.find('[name="'+newName+'"]').val('');
 
         // rename label
-        $(this).closest("tr").find('span.external-modules-instance-label').html((idx)+". ");
+        row.find('span.external-modules-instance-label').html((idx)+". ");
 
         // show only last +
         $(this).hide();
