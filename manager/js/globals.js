@@ -115,16 +115,12 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
             });
         }
 	} else if (setting.repeatable) {
-		var length
-		if(Object.prototype.toString.call(setting.value) === '[object Array]'){
-			length = setting.value.length
-        }
-        else{
-			setting.value = [setting.value]
-			length = 1 // always show at least one field, even if value is undefined
+        if(!Array.isArray(setting.value)){
+            // always show at least one field, even if value is undefined
+            setting.value = [setting.value]
         }
 
-        for (var instance=0; instance < length; instance++) {
+        for (var instance=0; instance < setting.value.length; instance++) {
             rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance) + '</tr>';
         }
     } else {
