@@ -273,17 +273,18 @@ ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, inst
         var addButtonStyle = " style='display: none;'";
         var removeButtonStyle = " style='display: none;'";
         var originalTagStyle = " style='display: none;'";
+        
+        var lastInstance = instance == setting.instanceCount-1
 
-
-        if (instance == setting.instanceCount-1) {
+        if (lastInstance) {
             addButtonStyle = "";
         }
 
-        if ((typeof instance != "undefined") && (instance > 0)) {
+        if(instance > 0 && (setting.type != 'sub_settings' || lastInstance)){
             removeButtonStyle = "";
         }
 
-        if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
+        if (instance == 0 && setting.instanceCount > 1) {
             originalTagStyle = "";
         }
 
@@ -646,6 +647,10 @@ $(function(){
             });
             oldName = row.find('label').attr('name');
             newclass = "-subsettings";
+
+            // Removing repeatable subsettings groups other than the last one never did work properly, so we now hide the remove button for all but the last row.
+            // We could change the remove implementation to support this case in the future if need be.
+            row.find('.external-modules-remove-instance-subsettings').hide();
         }else if($(this).hasClass('external-modules-add-instance')) {
             oldName = getOldName(row);
         }
@@ -736,6 +741,11 @@ $(function(){
             var oldNameParts = $(this).closest('tr').find('label').attr('name').split(new RegExp(settings.getInstanceSymbol()));
             var baseName = oldNameParts[0];
 			$("[name='"+ settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
+            
+            if(index > 1){
+				$("[name='"+ settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-remove-instance-subsettings").show();
+			}
+
 			if (index == 1) {
 				$("[name='"+settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
 			}
