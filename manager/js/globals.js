@@ -261,12 +261,12 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
 
     html += "<td class='external-modules-input-td'>" + inputHtml + "</td>";
 
-    html += this.addRepeatableButtons(setting, instance, header, type, key);
+    html += this.addRepeatableButtons(setting, instance, header, type);
 
     return html;
 }
 
-ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, instance, header, type, key){
+ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, instance, header, type){
     var html = '';
     // no repeatable files allowed
     if (setting.repeatable && (type != "file")) {
