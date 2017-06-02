@@ -693,7 +693,7 @@ $(function(){
      * @param newclass
      * @returns {string}
      */
-    function removeElements(newclass,oldName){
+    function removeElements(oldName){
         var oldNameParts = oldName.split(new RegExp(settings.getInstanceSymbol()));
         var baseName = oldNameParts[0];
         var i = 1;
@@ -725,12 +725,10 @@ $(function(){
 
         var newInstanceTotal = "";
         var index = 0;
-        var newclass = "";
         if($(this).hasClass('external-modules-remove-instance-subsettings')) {
             $(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
-                newclass = "-subsettings";
                 var oldName = getOldName($(this).find('td:nth-child(2)'));
-                index = removeElements(newclass,oldName);
+                index = removeElements(oldName);
             });
 
             //we remove the 'parent' element
@@ -742,13 +740,13 @@ $(function(){
 			}
         }else if($(this).hasClass('external-modules-remove-instance')) {
             var oldName = getOldName($(this).closest('tr'));
-            index = removeElements(newclass,oldName);
+            index = removeElements(oldName);
 
 			var oldNameParts = oldName.split(new RegExp(settings.getInstanceSymbol()));
 			var baseName = oldNameParts[0];
-			$("[name='" + settings.getInstanceName(baseName,(index-1)) + "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
+			$("[name='" + settings.getInstanceName(baseName,(index-1)) + "']").closest("tr").find(".external-modules-add-instance").show();
 			if (index == 1) {
-				$("[name='" + settings.getInstanceName(baseName,(index-1)) + "']").closest("tr").find(".external-modules-original-instance"+newclass).hide();
+				$("[name='" + settings.getInstanceName(baseName,(index-1)) + "']").closest("tr").find(".external-modules-original-instance").hide();
 			}
         }
 
