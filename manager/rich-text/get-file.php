@@ -1,5 +1,6 @@
 <?php
 namespace ExternalModules;
+define('NOAUTH', true);
 require_once '../../classes/ExternalModules.php';
 
 

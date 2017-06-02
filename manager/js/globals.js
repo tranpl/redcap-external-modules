@@ -29,7 +29,7 @@ ExternalModules.Settings.prototype.getSettingRows = function(system, configSetti
     configSettings.forEach(function(setting){
         var setting = $.extend({}, setting);
         var saved = savedSettings[setting.key];
-        var indexSubSet = 0;
+        var indexSubSet = 1;
         if (setting.sub_settings) {
             var i = 0;
             setting.sub_settings.forEach(function(subSetting) {
@@ -37,7 +37,11 @@ ExternalModules.Settings.prototype.getSettingRows = function(system, configSetti
                     setting.sub_settings[i].value = savedSettings[subSetting.key].value;
                     setting.sub_settings[i].systemValue =  savedSettings[subSetting.key].system_value;
                     //we keep the length of the array to know the number of elements
-                    if(subSetting.value && Array.isArray(subSetting.value)){
+                    if(subSetting.value){
+                        if(!Array.isArray(subSetting.value)){
+							subSetting.value = [subSetting.value]
+						}
+
                         indexSubSet = subSetting.value.length;
                     }
                 }
@@ -100,21 +104,10 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
     var rowTitleSubSetHtml = '';
     // SUB_SETTING
     if (setting.sub_settings) {
-        if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]')) {
-
-            if(indexSubSet == 0) {
-                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
-            }
-        }
-
         for (var instance = 0; instance < indexSubSet; instance++) {
             //we add the sub_settings header
-            if(indexSubSet == 0){
-                //if values empty NEW form
-                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
-            }else{
-                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
-            }
+			setting.instanceCount = indexSubSet
+            rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
 
             var settingsObject = this;
             setting.sub_settings.forEach(function (subSetting) {
@@ -122,8 +115,14 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
                 rowsHtml += '<tr class = "subsettings-table '+ customConfigClass+'">' + settingsObject.getProjectSettingColumns(subSetting, system, instance) + '</tr>';
             });
         }
-    } else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
+	} else if (setting.repeatable) {
+        if(!Array.isArray(setting.value)){
+            // always show at least one field, even if value is undefined
+            setting.value = [setting.value]
+        }
+
         for (var instance=0; instance < setting.value.length; instance++) {
+			setting.instanceCount = setting.value.length
             rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance) + '</tr>';
         }
     } else {
@@ -194,12 +193,8 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
 
     if (typeof instance != "undefined") {
         // for looping for repeatable elements
-        if (header < 1 || typeof header == "undefined") {
-            if (typeof value == "undefined") {
-                value = "";
-            }else{
-                value = value[instance];
-            }
+		if (typeof header == "undefined" && value !== undefined) {
+			value = value[instance];
         }
         key = this.getInstanceName(key, instance);
     }
@@ -264,12 +259,12 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
 
     html += "<td class='external-modules-input-td'>" + inputHtml + "</td>";
 
-    html += this.addRepeatableButtons(setting, instance, header, type, key);
+    html += this.addRepeatableButtons(setting, instance, header, type);
 
     return html;
 }
 
-ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, instance, header, type, key){
+ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, instance, header, type){
     var html = '';
     // no repeatable files allowed
     if (setting.repeatable && (type != "file")) {
@@ -278,22 +273,23 @@ ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, inst
         var addButtonStyle = " style='display: none;'";
         var removeButtonStyle = " style='display: none;'";
         var originalTagStyle = " style='display: none;'";
+        
+        var lastInstance = instance == setting.instanceCount-1
 
-
-        if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
+        if (lastInstance) {
             addButtonStyle = "";
         }
 
-        if ((typeof instance != "undefined") && (instance > 0)) {
+        if(instance > 0 && (setting.type != 'sub_settings' || lastInstance)){
             removeButtonStyle = "";
         }
 
-        if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
+        if (instance == 0 && setting.instanceCount > 1) {
             originalTagStyle = "";
         }
 
         //we are on the original element
-        if(type == 'sub_settings' && (instance === 0) && header > 0){
+        if(type == 'sub_settings' && (instance === 0) && header > 1){
             originalTagStyle = "";
             addButtonStyle = " style='display: none;'";
             removeButtonStyle = " style='display: none;'";
@@ -313,23 +309,7 @@ ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, inst
     } else {
         html += "<td></td>";
     }
-    //we add it after repeateable as it is a sub-setting and depends on it
-    if(type == 'sub_settings' &&  (header < 1 || typeof header == "undefined")){
-        html += this.getSubSettingsElements(key, setting.sub_settings, instance);
-    }
 
-    return html;
-}
-
-ExternalModules.Settings.prototype.getSubSettingsElements = function(name, value, instance){
-    if (typeof value == "undefined") {
-        value = "";
-    }
-
-    var html = '';
-    for(var i=0; i<value.length;i++){
-        html += '<tr class = "subsettings-table">'+this.getSettingColumns(value[i])+'<td></td></tr>';
-    }
     return html;
 }
 
@@ -446,7 +426,7 @@ ExternalModules.Settings.prototype.setCustomConfigClass = function(newcustomClas
 }
 
 ExternalModules.Settings.prototype.getInstanceName = function(name,instance){
-    if(instance != 0){
+    if(instance !== undefined){
         name += this.getInstanceSymbol()+instance;
     }
     return name;
@@ -637,15 +617,17 @@ $(function(){
      * Function to add new elements
      */
     $('#external-modules-configure-modal').on('click', '.external-modules-add-instance-subsettings, .external-modules-add-instance', function(){
-        // RULE: first variable is base name (e.g., survey_name)
-        // second and following variables are base name + ____X, where X is a 0-based name
-        // so survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
+        // RULE: Variables are base name + ____X, where X is a 0-based name
+        // so survey_name___0 is the first variable; survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
         // RULE 2: Cannot remove first item
+
+        var row = $(this).closest('tr');
+
         var newInstanceTotal = "";
         var newclass = "";
         var oldName = "";
         if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
+            row.nextAll('tr.subsettings-table').each(function () {
                 oldName = getOldName($(this).find('td:nth-child(2)'));
                 var newName = getNewName(oldName);
                 var idx = getIdx();
@@ -663,14 +645,18 @@ $(function(){
 
                 newInstanceTotal += '<tr class = "subsettings-table '+settings.getCustomConfigClass()+'">' + $newInstance.html() + '</tr>';
             });
-            oldName = $(this).closest('tr').find('label').attr('name');
+            oldName = row.find('label').attr('name');
             newclass = "-subsettings";
+
+            // Removing repeatable subsettings groups other than the last one never did work properly, so we now hide the remove button for all but the last row.
+            // We could change the remove implementation to support this case in the future if need be.
+            row.find('.external-modules-remove-instance-subsettings').hide();
         }else if($(this).hasClass('external-modules-add-instance')) {
-            oldName = getOldName($(this).closest('tr'));
+            oldName = getOldName(row);
         }
 
         // show original sign if previous was first item
-        if (!oldName.match(new RegExp(settings.getInstanceSymbol()))) {
+        if (oldName.match(new RegExp(settings.getInstanceSymbol() + 0))) {
             $("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance"+newclass).show();
         }
 
@@ -680,7 +666,7 @@ $(function(){
         var newName = getNewName(oldName);
         var idx = getIdx();
 
-        var $newInstanceTitle = $(this).closest('tr').clone();
+        var $newInstanceTitle = row.clone();
         $newInstanceTitle.find(".external-modules-remove-instance"+newclass).show();
         $newInstanceTitle.find(".external-modules-original-instance"+newclass).hide();
         $newInstanceTitle.find('[name="'+oldName+'"]').attr('name', newName);
@@ -689,9 +675,9 @@ $(function(){
 
         //We add the whole new block at the end
         if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').last().after("<tr class = '"+settings.getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
+            row.nextAll('tr.subsettings-table').last().after("<tr class = '"+settings.getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
         }else if($(this).hasClass('external-modules-add-instance')) {
-            $newInstanceTitle.insertAfter($(this).closest('tr'));
+            $newInstanceTitle.insertAfter(row);
         }
 
         // rename new instance of input/select and set value to empty string
@@ -699,7 +685,7 @@ $(function(){
         $newInstanceTitle.find('[name="'+newName+'"]').val('');
 
         // rename label
-        $(this).closest("tr").find('span.external-modules-instance-label').html((idx)+". ");
+        row.find('span.external-modules-instance-label').html((idx)+". ");
 
         // show only last +
         $(this).hide();
@@ -713,7 +699,7 @@ $(function(){
      * @param newclass
      * @returns {string}
      */
-    function removeElements(newclass,oldName){
+    function removeElements(oldName){
         var oldNameParts = oldName.split(new RegExp(settings.getInstanceSymbol()));
         var baseName = oldNameParts[0];
         var i = 1;
@@ -731,12 +717,7 @@ $(function(){
             }
             i++;
         }
-        if (j > 1) {
-            $("[name='" + settings.getInstanceName(baseName,(j-1))+ "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
-        } else {
-            $("[name='" + baseName + "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
-            $("[name='" + baseName + "']").closest("tr").find(".external-modules-original-instance"+newclass).hide();
-        }
+
         return j;
     }
 
@@ -750,28 +731,34 @@ $(function(){
 
         var newInstanceTotal = "";
         var index = 0;
-        var newclass = "";
         if($(this).hasClass('external-modules-remove-instance-subsettings')) {
             $(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
-                newclass = "-subsettings";
                 var oldName = getOldName($(this).find('td:nth-child(2)'));
-                index = removeElements(newclass,oldName);
+                index = removeElements(oldName);
             });
 
             //we remove the 'parent' element
             var oldNameParts = $(this).closest('tr').find('label').attr('name').split(new RegExp(settings.getInstanceSymbol()));
             var baseName = oldNameParts[0];
-            if (index > 1) {
-                $("[name='"+ settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
-                $("[name='"+settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
-            } else {
-                $("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
-                $("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
-            }
+			$("[name='"+ settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
+            
+            if(index > 1){
+				$("[name='"+ settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-remove-instance-subsettings").show();
+			}
 
+			if (index == 1) {
+				$("[name='"+settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
+			}
         }else if($(this).hasClass('external-modules-remove-instance')) {
             var oldName = getOldName($(this).closest('tr'));
-            index = removeElements(newclass,oldName);
+            index = removeElements(oldName);
+
+			var oldNameParts = oldName.split(new RegExp(settings.getInstanceSymbol()));
+			var baseName = oldNameParts[0];
+			$("[name='" + settings.getInstanceName(baseName,(index-1)) + "']").closest("tr").find(".external-modules-add-instance").show();
+			if (index == 1) {
+				$("[name='" + settings.getInstanceName(baseName,(index-1)) + "']").closest("tr").find(".external-modules-original-instance").hide();
+			}
         }
 
         $(this).closest('tr').remove();
@@ -968,7 +955,7 @@ $(function(){
 
     // helper method for saving
     var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
-        $.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(returnData){
+        $.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data, function(returnData){
             if(returnData.status != 'success'){
                 alert('An error occurred while saving settings: ' + returnData);
                 configureModal.show();

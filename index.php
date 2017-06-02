@@ -1,5 +1,12 @@
 <?php
 namespace ExternalModules;
+
+$noAuth = isset($_GET['NOAUTH']);
+if($noAuth){
+	// This must be defined at the top before redcap_connect.php is required.
+	define('NOAUTH', true);
+}
+
 require_once dirname(__FILE__) . '/classes/ExternalModules.php';
 
 use Exception;
@@ -16,6 +23,11 @@ if(empty($prefix)){
 $version = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_VERSION);
 if(empty($version)){
 	throw new Exception("The requested module is currently disabled systemwide.");
+}
+
+$config = ExternalModules::getConfig($prefix, $version);
+if($noAuth && !in_array($page, $config['no-auth-pages'])){
+	throw new Exception("The NOAUTH parameter is not allowed on this page.");
 }
 
 if($pid != null){

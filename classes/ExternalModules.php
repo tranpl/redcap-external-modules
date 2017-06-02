@@ -101,6 +101,73 @@ class ExternalModules
 		return $host == 'localhost' || $isIpAddress;
 	}
 
+	static function saveSettingsFromPost($moduleDirectoryPrefix, $pid)
+	{
+		# for screening out files below
+		$config = self::getConfig($moduleDirectoryPrefix, null, $pid);
+		$files = array();
+		foreach(['system-settings', 'project-settings'] as $settingsKey){
+			foreach($config[$settingsKey] as $row) {
+				if ($row['type'] && ($row['type'] == "file")) {
+					$files[] = $row['key'];
+				}
+			}
+		}
+
+		$instances = array();   # for repeatable elements, you must save them after the original is saved
+		# if not, the value is overwritten by a string/int/etc. - not a JSON
+
+		# returns boolean
+		function isExternalModuleFile($key, $fileKeys) {
+			if (in_array($key, $fileKeys)) {
+				return true;
+			}
+			foreach ($fileKeys as $fileKey) {
+				if (preg_match('/^'.$fileKey.'____\d+$/', $key)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		# store everything BUT files and multiple instances (after the first one)
+		foreach($_POST as $key=>$value){
+			# files are stored in a separate $.ajax call
+			# numeric value signifies a file present
+			# empty strings signify non-existent files (systemValues or empty)
+			if (!isExternalModuleFile($key, $files) || !is_numeric($value)) {
+				if($value == '') {
+					$value = null;
+				}
+
+				if (preg_match("/____/", $key)) {
+					$parts = preg_split("/____/", $key);
+					$shortKey = $parts[0];
+
+					if(!isset($instances[$shortKey])){
+						$instances[$shortKey] = [];
+					}
+
+					if(!$value){
+						$value = '';
+					}
+
+					$instances[$shortKey][] = $value;
+				} else if (empty($pid)) {
+					$saved[$key] = $value;
+					self::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
+				} else {
+					$saved[$key] = $value;
+					self::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
+				}
+			}
+		}
+
+		foreach($instances as $key => $values) {
+			self::setSetting($moduleDirectoryPrefix, $pid, $key, $values);
+		}
+	}
+
 	# initializes the External Module aparatus
 	static function initialize()
 	{
@@ -137,7 +204,7 @@ class ExternalModules
 					$message .= 'Line: ' . $error['line'] . "\n";
 
 					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message);
+					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
 
 					// We can't just call disable() from here because the database connection has been destroyed.
 					// Disable this module via AJAX instead.
@@ -183,16 +250,45 @@ class ExternalModules
 		return self::$activeModulePrefix;
 	}
 
-	private static function sendAdminEmail($subject, $message)
+	private static function lastTwoNodes($hostname) {
+		$nodes = preg_split("/\./", $hostname);
+		$count = count($nodes);
+		return $nodes[$count - 2].".".$nodes[$count - 1];
+	}
+
+	private static function sendAdminEmail($subject, $message, $prefix = null)
 	{
 		global $project_contact_email;
+
+		$additionalToAddresses = array();
+		if ($prefix) {
+            try {
+			    $config = self::getConfig($prefix);
+			    foreach ($config['authors'] as $author) {
+				    if (isset($author['email']) && preg_match("/@/", $author['email'])) {
+					    $parts = preg_split("/@/", $author['email']);
+					    if (count($parts) >= 2) {
+						    $domain = $parts[1];
+						    if (self::lastTwoNodes($_SERVER['HTTP_HOST']) == $domain) {
+							    $additionalToAddresses[] = $author['email'];
+						    }
+					    }
+				    }
+			    }
+            } catch(Exception $e) {
+            }
+		}
+		$additionalTo = "";
+		if (count($additionalToAddresses) > 0) {
+			$additionalTo = ",".implode(",", $additionalToAddresses);
+		}
 
 		$message = str_replace('<br>', "\n", $message);
 		$message .= "\n\nServer: " . gethostname() . "\n";
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu'.$additionalTo);
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
@@ -761,7 +857,7 @@ class ExternalModules
 			catch(Exception $e){
 				$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '".self::$hookBeingExecuted."':\n\n" . $e;
 				error_log($message);
-				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
+				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message, $prefix);
 			}
 			self::setActiveModulePrefix(null);
 		}
@@ -842,7 +938,7 @@ class ExternalModules
 		} catch(Exception $e) {
 			$message = "REDCap External Modules threw the following exception:\n\n" . $e;
 			error_log($message);
-			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message);
+			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message, $prefix);
 		}
 	}
 
@@ -1310,13 +1406,13 @@ class ExternalModules
 				$config['system-settings'] = $config['global-settings'];
 			}
 
-			$configs[$prefix][$version] = $config;
-		}
-
-		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
-			if(!isset($config[$key])){
-				$config[$key] = array();
+			foreach(['permissions', 'system-settings', 'project-settings', 'no-auth-pages'] as $key){
+				if(!isset($config[$key])){
+					$config[$key] = array();
+				}
 			}
+
+			self::$configs[$prefix][$version] = $config;
 		}
 
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
@@ -1619,6 +1715,7 @@ class ExternalModules
 	# fills is with null values for non-expressed positions in the JSON before instance
 	# JSON is a 0-based, one-dimensional array. It can be filled with associative arrays in
 	# the form of other JSON-encoded strings.
+	# This method is currently used in the Selective Email module (so don't remove it).
 	static function setInstance($prefix, $projectId, $key, $instance, $value) {
 		$instance = (int) $instance;
 		$oldValue = self::getSetting($prefix, $projectId, $key);
