@@ -2,6 +2,10 @@
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../classes/ExternalModules.php';
 
+use Exception;
+
+ExternalModules::addResource('css/style.css');
+
 $sql = ExternalModules::getSqlToRunIfDBOutdated();
 if($sql !== ""){
 	echo '<p>Your current database table structure does not match REDCap\'s expected table structure for External Modules, which means that database tables and/or parts of tables are missing. Copy the SQL in the box below and execute it in the MySQL database named '.$db.' where the REDCap database tables are stored. Once the SQL has been executed, reload this page to run this check again.</p>';
@@ -59,17 +63,7 @@ here. In turn, each project can override this set of defaults with their own val
 	var override = '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS?>';
 	var enabled = '<?=ExternalModules::KEY_ENABLED?>';
 	var overrideSuffix = '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
-<?php
-if (isset($_GET['pid'])) {
-?>
-	var pid = <?=json_encode($$_GET['pid'])?>;
-<?php
-} 
-?>
 </script>
-<?php
-	ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules-preface.js');
-?>
 
 <table id='external-modules-enabled' class="table">
 	<?php
@@ -132,7 +126,9 @@ if (isset($_GET['pid'])) {
 			?>
 					</div></td>
 					<td class="external-modules-action-buttons">
-						<button class='external-modules-configure-button'>Configure</button>
+						<?php if(ExternalModules::isProjectSettingsConfigOverwrittenBySystem($config) || !empty($config['project-settings'])){?>
+							<button class='external-modules-configure-button'>Configure</button>
+						<?php } ?>
 						<button class='external-modules-disable-button'>Disable</button>
 					</td>
 				</tr>
@@ -143,6 +139,7 @@ if (isset($_GET['pid'])) {
 
 	?>
 </table>
+
 <script>
 	(function(){
 		var enabledModulesTable = $('#external-modules-enabled')
@@ -166,22 +163,13 @@ global $configsByPrefixJSON,$versionsByPrefixJSON;
 $configsByPrefixJSON = json_encode($configsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
 if($configsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the configurations to JSON: ' . json_last_error_msg()) . ');</script>';
-	die();
+	throw new Exception('An error occurred while converting the configurations to JSON: ' . json_last_error_msg());
 }
-else if($configsByPrefixJSON == "") {
-	$configsByPrefixJSON = "''";
-}
+
 $versionsByPrefixJSON = json_encode($versionsByPrefix, JSON_PARTIAL_OUTPUT_ON_ERROR);
 if($versionsByPrefixJSON == null){
 	echo '<script>alert(' . json_encode('An error occurred while converting the versions to JSON: ' . json_last_error_msg()) . ');</script>';
-	die();
+	throw new Exception("An error occurred while converting the versions to JSON: " . json_last_error_msg());
 }
-else if($versionsByPrefixJSON == "") {
-	$versionsByPrefixJSON = "''";
-}
-?>
 
-<?php
-include_once(dirname(__DIR__)."/js/globals.php");
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'enabled-modules.js');
-?>
+require_once 'globals.php';

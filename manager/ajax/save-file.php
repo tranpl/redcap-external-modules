@@ -8,7 +8,6 @@ $moduleDirectoryPrefix = $_GET['moduleDirectoryPrefix'];
 $version = $_GET['moduleDirectoryVersion'];
 
 if(empty($pid) && !ExternalModules\ExternalModules::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
-//	die("You don't have permission to save system settings!");
 	header('Content-type: application/json');
 	echo json_encode(array(
 		'status' => 'You do not have permission to save system settings!'
@@ -19,7 +18,13 @@ $config = ExternalModules\ExternalModules::getConfig($moduleDirectoryPrefix, $ve
 $files = array();
 foreach(['system-settings', 'project-settings'] as $settingsKey){
 	 foreach($config[$settingsKey] as $row) {
-		  if ($row['type'] && ($row['type'] == "file")) {
+         if($row['type'] && ($row['type'] == "sub_settings") && $row['sub_settings']){
+             foreach ($row['sub_settings'] as $r){
+                 if ($r['type'] && ($r['type'] == "file")) {
+                     $files[] = $r['key'];
+                 }
+             }
+         }else if ($row['type'] && ($row['type'] == "file")) {
 			   $files[] = $row['key'];
 		  }
 	 }
@@ -48,13 +53,12 @@ $edoc = null;
 $myfiles = array();
 foreach($_FILES as $key=>$value){
 	$myfiles[] = $key;
-	if (isExternalModuleFile($key, $files) && $value) { 
+	if (isExternalModuleFile($key, $files) && $value) {
 		# use REDCap's uploadFile
 		$edoc = Files::uploadFile($_FILES[$key]);
 
 		if ($edoc) {
 			if(!empty($pid) && !ExternalModules\ExternalModules::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
-				// die("You don't have permission to save the following project setting: $key");
 				header('Content-type: application/json');
 				echo json_encode(array(
 					'status' => "You don't have permission to save the following project setting: $key!"
@@ -62,11 +66,10 @@ foreach($_FILES as $key=>$value){
 			}
 			ExternalModules\ExternalModules::setFileSetting($moduleDirectoryPrefix, $pidPossiblyWithNullValue, $key, $edoc);
 		} else {
-			die("You could not save a file properly.");
-				header('Content-type: application/json');
-				echo json_encode(array(
-					'status' => "You could not save a file properly."
-				));
+			header('Content-type: application/json');
+			echo json_encode(array(
+				'status' => "You could not save a file properly."
+			));
 		}
 	 }
 }

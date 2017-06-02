@@ -1,6 +1,9 @@
 <?php
 namespace ExternalModules;
 
+// Uncomment this line to quickly disable all External Module hooks (for troubleshooting).
+//define('EXTERNAL_MODULES_KILL_SWITCH', '');
+
 if (!defined(__DIR__)){
 	define(__DIR__, dirname(__FILE__));
 }
@@ -34,6 +37,7 @@ class ExternalModules
 	const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
 
 	const DISABLE_EXTERNAL_MODULE_HOOKS = 'disable-external-module-hooks';
+	const RICH_TEXT_UPLOADED_FILE_LIST = 'rich-text-uploaded-file-list';
 
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
@@ -111,11 +115,13 @@ class ExternalModules
 		$modulesDirectoryName = '/modules/';
 
 		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
-			die('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
+			throw new Exception('Requests directly to module version directories are disallowed.  Please use the getUrl() method to build urls to your module pages instead.');
 		}
 
 		self::$INCLUDED_RESOURCES = [];
-		self::$BASE_URL = APP_PATH_WEBROOT . '../external_modules/';
+		// We must use APP_PATH_WEBROOT_FULL here because some REDCap installations are hosted under subdirectories.
+		self::$BASE_URL = APP_PATH_WEBROOT_FULL.'external_modules/';
+		self::$MODULES_URL = APP_PATH_WEBROOT_FULL.'modules/';
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
 		self::$MODULES_PATH = $modulesDirectories;
@@ -186,7 +192,7 @@ class ExternalModules
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,scott.j.pearson@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
@@ -321,7 +327,7 @@ class ExternalModules
 
 	static function removeFileSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
-		self::setProjectSetting($moduleDirectoryPrefix, $projectId, $key, null);
+		self::setSetting($moduleDirectoryPrefix, $projectId, $key, null, "file");
 	}
 
 	# returns boolean
@@ -357,6 +363,17 @@ class ExternalModules
 			}
 		}
 
+		$projectId = db_real_escape_string($projectId);
+		$key = db_real_escape_string($key);
+
+		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
+
+		// Triple equals includes type checking, and even order checking for complex nested arrays!
+		if($value === $oldValue){
+			// Nothing changed, so we don't need to do anything.
+			return;
+		}
+
 		# if $value is an array, then encode as JSON
 		# else store $value as type specified in gettype(...)
 		if ($type === "") {
@@ -377,12 +394,6 @@ class ExternalModules
 
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
-		$projectId = db_real_escape_string($projectId);
-		$key = db_real_escape_string($key);
-
-		# oldValue is not escaped so that null values are maintained to specify an INSERT vs. UPDATE
-		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
-
 		$pidString = $projectId;
 		if (!$projectId) {
 			$pidString = "NULL";
@@ -391,17 +402,8 @@ class ExternalModules
 		if ($type == "boolean") {
 			$value = ($value) ? 'true' : 'false';
 		}
-		if (gettype($oldValue) == "boolean") {
-			$oldValue = ($oldValue) ? 'true' : 'false';
-		}
-		$oldValueStr = (string) $oldValue;
-		if (gettype($oldValue) == "array") {
-			$oldValueStr = json_encode($oldValue);
-		}
-		if((string) $value === $oldValueStr){
-			// We don't need to do anything.
-			return;
-		} else if($value === null){
+
+		if($value === null){
 			$event = "DELETE";
 			$sql = "DELETE FROM redcap_external_module_settings
 					WHERE
@@ -463,6 +465,8 @@ class ExternalModules
 		}
 	}
 
+	# getSystemSettingsAsArray and getProjectSettingsAsArray
+
 	# get all the settings as an array instead of one by one
 	# returns an associative array with index of key and value of value
 	# arrays of values (e.g., repeatble) will be returned as arrays
@@ -473,18 +477,41 @@ class ExternalModules
 	#	$ary['key3'][0] = 1;
 	#	$ary['key3'][1] = 'abc';
 	#	$ary['key3'][2] = 3;
+
+	static function getSystemSettingsAsArray($moduleDirectoryPrefixes)
+	{
+		return self::getSettingsAsArray($moduleDirectoryPrefixes);
+	}
+
 	static function getProjectSettingsAsArray($moduleDirectoryPrefixes, $projectId)
 	{
 		if (!$projectId) {
 			throw new Exception("The Project Id cannot be null!");
 		}
+		return self::getSettingsAsArray($moduleDirectoryPrefixes, $projectId);
+	}
 
-		$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
+	private static function getSettingsAsArray($moduleDirectoryPrefixes, $projectId = NULL)
+	{
+		if ($projectId === NULL) {
+			$result = self::getSettings($moduleDirectoryPrefixes, self::SYSTEM_SETTING_PROJECT_ID);
+		} else {
+			$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
+		}
+
+		$reservedKeys = [];
+		foreach(self::$RESERVED_SETTINGS as $reservedSetting){
+			$reservedKeys[$reservedSetting['key']] = true;
+		}
 
 		$settings = array();
 		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 			$key = $row['key'];
 			$value = $row['value'];
+
+			if(@$reservedKeys[$key] != null){
+				continue;
+			}
 
 			$setting =& $settings[$key];
 			if(!isset($setting)){
@@ -542,7 +569,8 @@ class ExternalModules
 		$value = $row['value'];
 
 		if ($type == "json") {
-			if ($json = json_decode($value,true)) {
+			$json = json_decode($value,true);
+			if ($json !== false) {
 				$value = $json;
 			}
 		}
@@ -558,7 +586,7 @@ class ExternalModules
 		}
 		else {
 			if (!settype($value, $type)) {
-				die('Unable to set the type of "' . $value . '" to "' . $type . '"!  This should never happen, as it means unexpected/inconsistent values exist in the database.');
+				throw new Exception('Unable to set the type of "' . $value . '" to "' . $type . '"!  This should never happen, as it means unexpected/inconsistent values exist in the database.');
 			}
 		}
 
@@ -569,6 +597,10 @@ class ExternalModules
 
 	private static function getSetting($moduleDirectoryPrefix, $projectId, $key)
 	{
+		if(empty($key)){
+			throw new Exception('The setting key cannot be empty!');
+		}
+
 		$result = self::getSettings($moduleDirectoryPrefix, $projectId, $key);
 
 		$numRows = db_num_rows($result);
@@ -581,7 +613,7 @@ class ExternalModules
 			return null;
 		}
 		else{
-			throw new Exception("More than one External Module setting exists for project $projectId and key '$key'!  This should never happen!");
+			throw new Exception("More than one ($numRows) External Module setting exists for project $projectId and key '$key'!  This should never happen!");
 		}
 	}
 
@@ -738,74 +770,80 @@ class ExternalModules
 	# calls a hooke via startHook
 	static function callHook($name, $arguments)
 	{
-		if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS])){
-			return;
-		}
-
-		if(!defined('PAGE')){
-			$page = ltrim($_SERVER['REQUEST_URI'], '/');
-			define('PAGE', $page);
-		}
-
-		# We must initialize this static class here, since this method actually gets called before anything else.
-		# We can't initialize sooner than this because we have to wait for REDCap to initialize it's functions and variables we depend on.
-		# This method is actually called many times (once per hook), so we should only initialize once.
-		if(!self::$initialized){
-			self::initialize();
-			self::$initialized = true;
-		}
-
-		$name = str_replace('redcap_', '', $name);
-
-		$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
-		if(file_exists($templatePath)){
-			self::safeRequire($templatePath, $arguments);
-		}
-
-		$pid = null;
-		if(!empty($arguments)){
-			$firstArg = $arguments[0];
-			if((int)$firstArg == $firstArg){
-				// As of REDCap 6.16.8, the above checks allow us to safely assume the first arg is the pid for all hooks.
-				$pid = $arguments[0];
+		try {
+			if(isset($_GET[self::DISABLE_EXTERNAL_MODULE_HOOKS]) || defined('EXTERNAL_MODULES_KILL_SWITCH')){
+				return;
 			}
-		}
 
-		self::$hookBeingExecuted = "hook_$name";
+			if(!defined('PAGE')){
+				$page = ltrim($_SERVER['REQUEST_URI'], '/');
+				define('PAGE', $page);
+			}
 
-		if (!self::$delayed) {
-			self::$delayed = array();
-		}
-		self::$delayed[self::$hookBeingExecuted] = array();
-
-		$versionsByPrefix = self::getEnabledModules($pid);
-		foreach($versionsByPrefix as $prefix=>$version){
-			self::$versionBeingExecuted = $version;
-
-			self::startHook($prefix, $version, $arguments);
-		}
-
-		# runs delayed modules
-		# terminates if queue is 0 or if it is the same as in the previous iteration
-		# (i.e., no modules completing)
-		$prevNumDelayed = count($versionsByPrefix) + 1;
-		while (($prevNumDelayed > count(self::$delayed[self::$hookBeingExecuted])) && (count(self::$delayed[self::$hookBeingExecuted]) > 0)) {
-			$prevDelayed = self::$delayed[self::$hookBeingExecuted];
-			 $prevNumDelayed = count($prevDelayed);
-			self::$delayed[self::$hookBeingExecuted] = array();
-			foreach ($prevDelayed as $prefix=>$version) {
-				self::$versionBeingExecuted = $version;
-
-				if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
-					// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
-					continue;
+			# We must initialize this static class here, since this method actually gets called before anything else.
+			# We can't initialize sooner than this because we have to wait for REDCap to initialize it's functions and variables we depend on.
+			# This method is actually called many times (once per hook), so we should only initialize once.
+			if(!self::$initialized){
+				self::initialize();
+				self::$initialized = true;
+			}
+	
+			$name = str_replace('redcap_', '', $name);
+	
+			$templatePath = __DIR__ . "/../manager/templates/hooks/$name.php";
+			if(file_exists($templatePath)){
+				self::safeRequire($templatePath, $arguments);
+			}
+	
+			$pid = null;
+			if(!empty($arguments)){
+				$firstArg = $arguments[0];
+				if((int)$firstArg == $firstArg){
+					// As of REDCap 6.16.8, the above checks allow us to safely assume the first arg is the pid for all hooks.
+					$pid = $arguments[0];
 				}
+			}
 
+			self::$hookBeingExecuted = "hook_$name";
+	
+			if (!self::$delayed) {
+				self::$delayed = array();
+			}
+			self::$delayed[self::$hookBeingExecuted] = array();
+	
+			$versionsByPrefix = self::getEnabledModules($pid);
+			foreach($versionsByPrefix as $prefix=>$version){
+				self::$versionBeingExecuted = $version;
+	
 				self::startHook($prefix, $version, $arguments);
 			}
+	
+			# runs delayed modules
+			# terminates if queue is 0 or if it is the same as in the previous iteration
+			# (i.e., no modules completing)
+			$prevNumDelayed = count($versionsByPrefix) + 1;
+			while (($prevNumDelayed > count(self::$delayed[self::$hookBeingExecuted])) && (count(self::$delayed[self::$hookBeingExecuted]) > 0)) {
+				$prevDelayed = self::$delayed[self::$hookBeingExecuted];
+			 	$prevNumDelayed = count($prevDelayed);
+				self::$delayed[self::$hookBeingExecuted] = array();
+				foreach ($prevDelayed as $prefix=>$version) {
+					self::$versionBeingExecuted = $version;
+	
+					if(!self::hasPermission($prefix, $version, self::$hookBeingExecuted)){
+						// To prevent unnecessary class conflicts (especially with old plugins), we should avoid loading any module classes that don't actually use this hook.
+						continue;
+					}
+	
+					self::startHook($prefix, $version, $arguments);
+				}
+			}
+			self::$hookBeingExecuted = "";
+			self::$versionBeingExecuted = "";
+		} catch(Exception $e) {
+			$message = "REDCap External Modules threw the following exception:\n\n" . $e;
+			error_log($message);
+			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message);
 		}
-		self::$hookBeingExecuted = "";
-		self::$versionBeingExecuted = "";
 	}
 
 	# places module in delaying queue to be executed after all others are executed
@@ -955,10 +993,14 @@ class ExternalModules
 		return $enabledVersions;
 	}
 
-	private static function shouldExcludeModule($prefix)
+	private static function shouldExcludeModule($prefix, $version)
 	{
+		$modulePath = self::getModuleDirectoryPath($prefix, $version);
+		$doesDirectoryExist = (file_exists($modulePath) && is_dir($modulePath));
+
 		$isTestPrefix = strpos($prefix, self::TEST_MODULE_PREFIX) === 0;
-		if($isTestPrefix && !self::isTesting($prefix)){
+
+		if($doesDirectoryExist && $isTestPrefix && !self::isTesting($prefix)){
 			// This php process is not running unit tests.
 			// Ignore the test prefix so it doesn't interfere with this process.
 			return true;
@@ -988,7 +1030,7 @@ class ExternalModules
 				$key = $row['key'];
 				$value = $row['value'];
 
-				if(self::shouldExcludeModule($prefix)){
+				if(self::shouldExcludeModule($prefix, self::KEY_VERSION)){
 					continue;
 				}
 
@@ -1472,7 +1514,7 @@ class ExternalModules
 		return $url;
 	}
 
-	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)
+	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key = null)
 	{
 		if(self::hasSystemSettingsSavePermission($moduleDirectoryPrefix)){
 			return true;
@@ -1497,8 +1539,7 @@ class ExternalModules
 
 	static function isSystemSetting($moduleDirectoryPrefix, $key)
 	{
-		$version = self::getSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
-		$config = self::getConfig($moduleDirectoryPrefix, $version);
+		$config = self::getConfig($moduleDirectoryPrefix);
 
 		foreach($config['system-settings'] as $details){
 			if($details['key'] == $key){
@@ -1507,6 +1548,23 @@ class ExternalModules
 		}
 
 		return false;
+	}
+
+	static function getSettingDetails($prefix, $key)
+	{
+		$config = self::getConfig($prefix);
+
+		$settingsTypes = [$config['system-settings'], $config['project-settings']];
+
+		foreach($settingsTypes as $type){
+			foreach($type as $details){
+				if($details['key'] == $key){
+					return $details;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	# returns boolean if design rights are given by REDCap for current user
@@ -1581,7 +1639,7 @@ class ExternalModules
 			}
 		}
 
-		# do not set null values for current instance; always set to empty string 
+		# do not set null values for current instance; always set to empty string
 		if ($value !== null) {
 			$json[$instance] = $value;
 		} else {
@@ -1607,5 +1665,56 @@ class ExternalModules
 		return "js/";
 		# just in case absolute path is needed, I have documented it here
 		// return APP_PATH_WEBROOT_PARENT."/external_modules/manager/js/";
+	}
+
+	/**
+	 * This is used by the EmailTriggerModule
+	 */
+	public static function getGlobalJSURL()
+	{
+		return self::$BASE_URL . '/manager/js/globals.js';
+	}
+
+	public static function isProjectSettingsConfigOverwrittenBySystem($config)
+	{
+		if(!empty($config)){
+			$systemSettings = $config['system-settings'];
+			if(empty($systemSettings) && !empty($config['global-settings'])){
+				$systemSettings = $config['global-settings'];
+			}else if(empty($systemSettings) && empty($config['global-settings'])){
+				return false;
+			}
+
+			$reservedKeys = [];
+			foreach(self::$RESERVED_SETTINGS as $reservedSetting){
+				$reservedKeys[$reservedSetting['key']] = true;
+			}
+
+			foreach ($systemSettings as $setting){
+				$key = $setting['key'];
+				if(@$reservedKeys[$key] == null){
+					if(array_key_exists("allow-project-overrides",$setting) && $setting["allow-project-overrides"] == true){
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public static function deleteEDoc($edocId){
+		// Prevent SQL injection
+		$edocId = intval($edocId);
+
+		if(!$edocId){
+			throw new Exception("The EDoc ID specified is not valid: $edocId");
+		}
+
+		# flag for deletion in the edocs database
+		$sql = "UPDATE `redcap_edocs_metadata`
+				SET `delete_date` = NOW()
+				WHERE doc_id = $edocId";
+
+		self::query($sql);
 	}
 }

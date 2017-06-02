@@ -1,9 +1,7 @@
 <?php
 namespace ExternalModules;
-require_once 'templates/shared-header.php';
+require_once __DIR__ . '/../classes/ExternalModules.php';
 require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
-
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.js');
 
 ?>
 
@@ -14,7 +12,6 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.j
 
 <?php
 ExternalModules::safeRequireOnce('templates/enabled-modules.php');
-ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project_lookup.js');
 ?>
 
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">

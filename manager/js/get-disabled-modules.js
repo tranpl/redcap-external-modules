@@ -36,7 +36,7 @@ $(function(){
 
 				$.post('ajax/enable-module.php', {prefix: prefix, version: version}, function (data) {
 					try {
-						jsonAjax = jQuery.parseJSON(data);
+						var jsonAjax = jQuery.parseJSON(data);
 						if (typeof jsonAjax == 'object') {
 							console.log('a');
 							console.log("Message: "+jsonAjax['error_message']);
@@ -71,7 +71,7 @@ $(function(){
 			var enableButton = enableModal.find('.enable-button');
 			$.post('ajax/enable-module.php?pid=' + pid, {prefix: prefix, version: version}, function(data){
 				try {
-					jsonAjax = jQuery.parseJSON(data);
+					var jsonAjax = jQuery.parseJSON(data);
 					if (typeof jsonAjax == 'object') {
 						$('#external-modules-enable-modal-error').hide();
 						if ((typeof jsonAjax['error_message'] != "undefined") && (jsonAjax['error_message'] != "")) {

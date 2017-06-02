@@ -213,20 +213,25 @@ class AbstractExternalModule
 
 	function getUrl($path)
 	{
-        $pid = self::detectProjectId();
+        	$pid = self::detectProjectId();
 		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        $url = '';
+        	$url = '';
 		if($extension != 'php'){
 			// This must be a resource, like an image or css/js file.
 			// Go ahead and return the version specific url.
-            $url =  ExternalModules::getModuleDirectoryUrl($this->PREFIX, $this->VERSION) . '/' . $path;
+            		$url =  ExternalModules::getModuleDirectoryUrl($this->PREFIX, $this->VERSION) . '/' . $path;
 		}else {
-            $url = ExternalModules::getUrl($this->PREFIX, $path);
-		    if(!empty($pid)){
-		        $url .= '&pid='.$pid;
-            }
-        }
+            		$url = ExternalModules::getUrl($this->PREFIX, $path);
+		    	if(!empty($pid)){
+		        	$url .= '&pid='.$pid;
+            		}
+        	}
 		return $url;
+	}
+
+	public function getModuleName()
+	{
+		return $this->getConfig()['name'];
 	}
 
 	# function to enforce that a pid is required for a particular function
