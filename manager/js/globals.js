@@ -106,6 +106,7 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
     if (setting.sub_settings) {
         for (var instance = 0; instance < indexSubSet; instance++) {
             //we add the sub_settings header
+			setting.instanceCount = indexSubSet
             rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
 
             var settingsObject = this;
@@ -121,6 +122,7 @@ ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, sys
         }
 
         for (var instance=0; instance < setting.value.length; instance++) {
+			setting.instanceCount = setting.value.length
             rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance) + '</tr>';
         }
     } else {
@@ -273,7 +275,7 @@ ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, inst
         var originalTagStyle = " style='display: none;'";
 
 
-        if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
+        if (instance == setting.instanceCount-1) {
             addButtonStyle = "";
         }
 
