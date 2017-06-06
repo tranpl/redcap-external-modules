@@ -233,7 +233,14 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
 	else if(type == 'rich-text') {
 		inputHtml = this.getRichTextElement(key, value);
 	}
+    else if(type == 'custom') {
+	    var functionName = setting.functionName;
+
+	    inputHtml = this.getInputElement(type, key, value, inputAttributes);
+	    inputHtml += "<script type='text/javascript'>" + functionName + "($('input[name=\"" + key + "\"]'));</script>";
+    }
     else if(type == 'sub_settings'){
+	    console.log("Setting up sub settings for " + setting.name);
         inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label>";
     }
     else if(type == 'radio'){
@@ -259,12 +266,12 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
 
     html += "<td class='external-modules-input-td'>" + inputHtml + "</td>";
 
-    html += this.addRepeatableButtons(setting, instance, header, type);
+    html += this.addRepeatableButtons(setting, instance, header, type, key);
 
     return html;
 }
 
-ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, instance, header, type){
+ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, instance, header, type, key){
     var html = '';
     // no repeatable files allowed
     if (setting.repeatable && (type != "file")) {
@@ -276,20 +283,20 @@ ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, inst
         
         var lastInstance = instance == setting.instanceCount-1
 
-        if (lastInstance) {
+        if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
             addButtonStyle = "";
         }
 
-        if(instance > 0 && (setting.type != 'sub_settings' || lastInstance)){
+        if ((typeof instance != "undefined") && (instance > 0)) {
             removeButtonStyle = "";
         }
 
-        if (instance == 0 && setting.instanceCount > 1) {
+        if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
             originalTagStyle = "";
         }
 
         //we are on the original element
-        if(type == 'sub_settings' && (instance === 0) && header > 1){
+        if(type == 'sub_settings' && (instance === 0) && header > 0){
             originalTagStyle = "";
             addButtonStyle = " style='display: none;'";
             removeButtonStyle = " style='display: none;'";
@@ -309,7 +316,23 @@ ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, inst
     } else {
         html += "<td></td>";
     }
+    //we add it after repeateable as it is a sub-setting and depends on it
+    if(type == 'sub_settings' &&  (header < 1 || typeof header == "undefined")){
+        html += this.getSubSettingsElements(key, setting.sub_settings, instance);
+    }
 
+    return html;
+}
+
+ExternalModules.Settings.prototype.getSubSettingsElements = function(name, value, instance){
+    if (typeof value == "undefined") {
+        value = "";
+    }
+
+    var html = '';
+    for(var i=0; i<value.length;i++){
+        html += '<tr class = "subsettings-table">'+this.getSettingColumns(value[i])+'<td></td></tr>';
+    }
     return html;
 }
 
