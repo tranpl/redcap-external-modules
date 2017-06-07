@@ -101,73 +101,6 @@ class ExternalModules
 		return $host == 'localhost' || $isIpAddress;
 	}
 
-	static function saveSettingsFromPost($moduleDirectoryPrefix, $pid)
-	{
-		# for screening out files below
-		$config = self::getConfig($moduleDirectoryPrefix, null, $pid);
-		$files = array();
-		foreach(['system-settings', 'project-settings'] as $settingsKey){
-			foreach($config[$settingsKey] as $row) {
-				if ($row['type'] && ($row['type'] == "file")) {
-					$files[] = $row['key'];
-				}
-			}
-		}
-
-		$instances = array();   # for repeatable elements, you must save them after the original is saved
-		# if not, the value is overwritten by a string/int/etc. - not a JSON
-
-		# returns boolean
-		function isExternalModuleFile($key, $fileKeys) {
-			if (in_array($key, $fileKeys)) {
-				return true;
-			}
-			foreach ($fileKeys as $fileKey) {
-				if (preg_match('/^'.$fileKey.'____\d+$/', $key)) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		# store everything BUT files and multiple instances (after the first one)
-		foreach($_POST as $key=>$value){
-			# files are stored in a separate $.ajax call
-			# numeric value signifies a file present
-			# empty strings signify non-existent files (systemValues or empty)
-			if (!isExternalModuleFile($key, $files) || !is_numeric($value)) {
-				if($value == '') {
-					$value = null;
-				}
-
-				if (preg_match("/____/", $key)) {
-					$parts = preg_split("/____/", $key);
-					$shortKey = $parts[0];
-
-					if(!isset($instances[$shortKey])){
-						$instances[$shortKey] = [];
-					}
-
-					if(!$value){
-						$value = '';
-					}
-
-					$instances[$shortKey][] = $value;
-				} else if (empty($pid)) {
-					$saved[$key] = $value;
-					self::setGlobalSetting($moduleDirectoryPrefix, $key, $value);
-				} else {
-					$saved[$key] = $value;
-					self::setProjectSetting($moduleDirectoryPrefix, $pid, $key, $value);
-				}
-			}
-		}
-
-		foreach($instances as $key => $values) {
-			self::setSetting($moduleDirectoryPrefix, $pid, $key, $values);
-		}
-	}
-
 	# initializes the External Module aparatus
 	static function initialize()
 	{
@@ -204,7 +137,7 @@ class ExternalModules
 					$message .= 'Line: ' . $error['line'] . "\n";
 
 					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
+					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message);
 
 					// We can't just call disable() from here because the database connection has been destroyed.
 					// Disable this module via AJAX instead.
@@ -250,45 +183,16 @@ class ExternalModules
 		return self::$activeModulePrefix;
 	}
 
-	private static function lastTwoNodes($hostname) {
-		$nodes = preg_split("/\./", $hostname);
-		$count = count($nodes);
-		return $nodes[$count - 2].".".$nodes[$count - 1];
-	}
-
-	private static function sendAdminEmail($subject, $message, $prefix = null)
+	private static function sendAdminEmail($subject, $message)
 	{
 		global $project_contact_email;
-
-		$additionalToAddresses = array();
-		if ($prefix) {
-            try {
-			    $config = self::getConfig($prefix);
-			    foreach ($config['authors'] as $author) {
-				    if (isset($author['email']) && preg_match("/@/", $author['email'])) {
-					    $parts = preg_split("/@/", $author['email']);
-					    if (count($parts) >= 2) {
-						    $domain = $parts[1];
-						    if (self::lastTwoNodes($_SERVER['HTTP_HOST']) == $domain) {
-							    $additionalToAddresses[] = $author['email'];
-						    }
-					    }
-				    }
-			    }
-            } catch(Exception $e) {
-            }
-		}
-		$additionalTo = "";
-		if (count($additionalToAddresses) > 0) {
-			$additionalTo = ",".implode(",", $additionalToAddresses);
-		}
 
 		$message = str_replace('<br>', "\n", $message);
 		$message .= "\n\nServer: " . gethostname() . "\n";
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu'.$additionalTo);
+		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu');
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
@@ -857,7 +761,7 @@ class ExternalModules
 			catch(Exception $e){
 				$message = "The '" . $prefix . "' module threw the following exception when calling the hook method '".self::$hookBeingExecuted."':\n\n" . $e;
 				error_log($message);
-				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message, $prefix);
+				ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message);
 			}
 			self::setActiveModulePrefix(null);
 		}
@@ -938,7 +842,7 @@ class ExternalModules
 		} catch(Exception $e) {
 			$message = "REDCap External Modules threw the following exception:\n\n" . $e;
 			error_log($message);
-			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message, $prefix);
+			ExternalModules::sendAdminEmail("REDCap External Module Exception", $message);
 		}
 	}
 
@@ -1406,14 +1310,16 @@ class ExternalModules
 				$config['system-settings'] = $config['global-settings'];
 			}
 
-			foreach(['permissions', 'system-settings', 'project-settings', 'no-auth-pages'] as $key){
-				if(!isset($config[$key])){
-					$config[$key] = array();
-				}
-			}
-
-			self::$configs[$prefix][$version] = $config;
+			$configs[$prefix][$version] = $config;
 		}
+
+		foreach(['permissions', 'system-settings', 'project-settings'] as $key){
+			if(!isset($config[$key])){
+				$config[$key] = array();
+			}
+		}
+
+		self::$configs[$prefix][$version] = $config;
 
 		## Pull form and field list for choice list of project-settings field-list and form-list settings
 		if(!empty($pid)) {
@@ -1539,10 +1445,6 @@ class ExternalModules
 		else if($configRow['type'] == 'sub_settings') {
 			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
 				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);
-				if(!isset($configRow['source']) && $configRow['sub_settings'][$subConfigKey]['source']) {
-					$configRow['source'] = "";
-				}
-				$configRow["source"] .= ($configRow["source"] == "" ? "" : ",").$configRow['sub_settings'][$subConfigKey]['source'];
 			}
 		}
 
