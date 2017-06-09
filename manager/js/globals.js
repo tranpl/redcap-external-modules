@@ -193,7 +193,7 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
 
     if (typeof instance != "undefined") {
         // for looping for repeatable elements
-		if (typeof header == "undefined" && value !== undefined) {
+		if (typeof header == "undefined" && typeof value != "undefined" && value !== null) {
 			value = value[instance];
         }
         key = this.getInstanceName(key, instance);
