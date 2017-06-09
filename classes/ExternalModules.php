@@ -1330,9 +1330,9 @@ class ExternalModules
                         $choices = [];
 
                         $sql = "SELECT role_id,role_name
-                                        FROM redcap_user_roles
-                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
-                                        ORDER BY role_id";
+								FROM redcap_user_roles
+								WHERE project_id = '" . db_real_escape_string($pid) . "'
+								ORDER BY role_id";
                         $result = self::query($sql);
 
                         while ($row = db_fetch_assoc($result)) {
@@ -1345,10 +1345,10 @@ class ExternalModules
                         $choices = [];
 
                         $sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
-                                        FROM redcap_user_rights ur, redcap_user_information ui
-                                        WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
-                                                AND ui.username = ur.username
-                                        ORDER BY ui.ui_id";
+								FROM redcap_user_rights ur, redcap_user_information ui
+								WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
+										AND ui.username = ur.username
+								ORDER BY ui.ui_id";
                         $result = self::query($sql);
 
                         while ($row = db_fetch_assoc($result)) {
@@ -1361,9 +1361,9 @@ class ExternalModules
                         $choices = [];
 
                         $sql = "SELECT group_id,group_name
-                                        FROM redcap_data_access_groups
-                                        WHERE project_id = '" . db_real_escape_string($pid) . "'
-                                        ORDER BY group_id";
+								FROM redcap_data_access_groups
+								WHERE project_id = '" . db_real_escape_string($pid) . "'
+								ORDER BY group_id";
                         $result = self::query($sql);
 
                         while ($row = db_fetch_assoc($result)) {
@@ -1382,7 +1382,10 @@ class ExternalModules
 			$result = self::query($sql);
 
 			while ($row = db_fetch_assoc($result)) {
-				$choices[] = ['value' => $row['field_name'], 'name' => $row['field_name'] . " - " . substr($row['element_label'], 0, 20)];
+				if(strpos($row['element_label'],"<") !== false) {
+					$row['element_label'] = preg_replace("/\\<.*?\\>/","",$row['element_label']);
+				}
+				$choices[] = ['value' => $row['field_name'], 'name' => $row['field_name'] . " - " . htmlspecialchars(substr($row['element_label'], 0, 20))];
 			}
 
 			$configRow['choices'] = $choices;
