@@ -269,6 +269,7 @@ class AbstractExternalModule
 	}
 
     /**
+     * Function that returns the label name from checkboxes, radio buttons, etc instead of the value.
      * @param $var, Redcap variable
      * @param $value, variable value
      * @param $data, project data => $data[$record][$event_id]
