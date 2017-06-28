@@ -429,4 +429,49 @@ class AbstractExternalModule
 	public function delayModuleExecution() {
 		ExternalModules::delayModuleExecution();
 	}
+
+    /**
+     * Function that returns the label name from checkboxes, radio buttons, etc instead of the value
+     * @param $var, Redcap variable
+     * @param $value, variable value
+     * @param $data, project data => $data[$record][$event_id]
+     * @return string, the label of the field. If mulptiple choice returns data separated by commas
+     */
+    public function getLogicLabel ($var, $value, $data){
+        $project_id = self::detectProjectId();
+        $field_name = str_replace('[', '', $var);
+        $field_name = str_replace(']', '', $field_name);
+        $metadata = \REDCap::getDataDictionary($project_id,'array',false,$field_name);
+        $label = "";
+        if($metadata[$field_name]['field_type'] == 'checkbox' || $metadata[$field_name]['field_type'] == 'dropdown' || $metadata[$field_name]['field_type'] == 'radio'){
+            $choices = preg_split("/\s*\|\s*/", $metadata[$field_name]['select_choices_or_calculations']);
+            $deletecoma = false;
+            foreach ($choices as $choice){
+                $option_value = preg_split("/,/", $choice)[0];
+                if(empty($value)){
+                    foreach ($data[$field_name] as $choiceValue=>$multipleChoice){
+                        if($multipleChoice === "1" && $choiceValue == $option_value) {
+                            $label .= trim(preg_split("/^(.+?),/", $choice)[1]).", ";
+                            $deletecoma = true;
+                        }
+                    }
+
+                }else if($value === $option_value){
+                    $label = trim(preg_split("/^(.+?),/", $choice)[1]);
+                    break;
+                }
+            }
+            if($deletecoma){
+                //we delete the last comma
+                $label = substr($label, 0, -2);
+            }
+        }else if($metadata[$field_name]['field_type'] == 'truefalse'){
+            if($value == '1'){
+                $label = "True";
+            }else{
+                $label = "False";
+            }
+        }
+        return $label;
+    }
 }
