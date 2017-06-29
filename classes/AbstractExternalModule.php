@@ -295,9 +295,15 @@ class AbstractExternalModule
 			$returnCode = $row['return_code'];
 			$hash = $row['hash'];
 
+			if($returnCode == "") {
+				$returnCode = generateRandomHash();
+			}
+
 			// Set the response as incomplete in the response table
 			$sql = "UPDATE redcap_surveys_participants p, redcap_surveys_response r
-					SET r.completion_time = null, r.first_submit_time = '".date('Y-m-d h:m:s')."'
+					SET r.completion_time = null,
+						r.first_submit_time = '".date('Y-m-d h:m:s')."',
+						r.return_code = '".prep($returnCode)."'
 					WHERE p.survey_id = $surveyId
 						AND p.event_id = ".prep($eventId)."
 						AND r.participant_id = p.participant_id
@@ -343,21 +349,39 @@ class AbstractExternalModule
 	}
 
 	public function getValidFormEventId($formName,$projectId) {
-		if(!is_numeric($projectId)) return false;
+		if(!is_numeric($projectId) || $projectId == "") return false;
 
-		$sql = "SELECT f.event_id
-				FROM redcap_events_forms f, redcap_events_metadata m, redcap_events_arms a
-				WHERE a.project_id = $projectId
-					AND a.arm_id = m.arm_id
-					AND m.event_id = f.event_id
-					AND f.form_name = '".prep($formName)."'
-				ORDER BY f.event_id ASC
-				LIMIT 1";
+		$projectDetails = $this->getProjectDetails($projectId);
 
-		$q = db_query($sql);
+		if($projectDetails["repeatforms"] == 0) {
+			$sql = "SELECT e.event_id
+					FROM redcap_events_metadata e, redcap_events_arms a
+					WHERE a.project_id = $projectId
+						AND a.arm_id = e.arm_id
+					ORDER BY e.event_id ASC
+					LIMIT 1";
 
-		if($row = db_fetch_assoc($q)) {
-			return $row['event_id'];
+			$q = db_query($sql);
+
+			if($row = db_fetch_assoc($q)) {
+				return $row['event_id'];
+			}
+		}
+		else {
+			$sql = "SELECT f.event_id
+					FROM redcap_events_forms f, redcap_events_metadata m, redcap_events_arms a
+					WHERE a.project_id = $projectId
+						AND a.arm_id = m.arm_id
+						AND m.event_id = f.event_id
+						AND f.form_name = '".prep($formName)."'
+					ORDER BY f.event_id ASC
+					LIMIT 1";
+
+			$q = db_query($sql);
+
+			if($row = db_fetch_assoc($q)) {
+				return $row['event_id'];
+			}
 		}
 
 		return false;
@@ -394,6 +418,16 @@ class AbstractExternalModule
 		$responseId = db_result($q, 0, 'response_id');
 
 		return [$participantId,$responseId];
+	}
+
+	public function getProjectDetails($projectId) {
+		$sql = "SELECT *
+				FROM redcap_projects
+				WHERE project_id = '".prep($projectId)."'";
+
+		$q = db_query($sql);
+
+		return db_fetch_assoc($q);
 	}
 
 	# function to enforce that a pid is required for a particular function
