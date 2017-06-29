@@ -332,11 +332,14 @@ class AbstractExternalModule
 
 		@db_query("COMMIT");
 
-		return array($hash,$returnCode);
+		return array("hash" => $hash, "return_code" => $returnCode);
 	}
 
 	public function createPassthruForm($projectId,$recordId,$surveyFormName = "", $eventId = "") {
-		list($hash,$returnCode) = $this->resetSurveyAndGetCodes($projectId,$recordId,$surveyFormName,$eventId);
+		$codeDetails = $this->resetSurveyAndGetCodes($projectId,$recordId,$surveyFormName,$eventId);
+
+		$hash = $codeDetails["hash"];
+		$returnCode = $codeDetails["return_code"];
 
 		$surveyLink = APP_PATH_SURVEY_FULL . "?s=$hash";
 
