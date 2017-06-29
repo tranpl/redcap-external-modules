@@ -234,7 +234,7 @@ class AbstractExternalModule
 		return $this->getConfig()['name'];
 	}
 
-	public function createPassthruForm($projectId,$recordId,$surveyFormName = "", $eventId = "") {
+	public function resetSurveyAndGetCodes($projectId,$recordId,$surveyFormName = "", $eventId = "") {
 		list($surveyId,$surveyFormName) = $this->getSurveyId($projectId,$surveyFormName);
 
 		## Validate surveyId and surveyFormName were found
@@ -330,9 +330,15 @@ class AbstractExternalModule
 			}
 		}
 
-		$surveyLink = APP_PATH_SURVEY_FULL . "?s=$hash";
-
 		@db_query("COMMIT");
+
+		return array($hash,$returnCode);
+	}
+
+	public function createPassthruForm($projectId,$recordId,$surveyFormName = "", $eventId = "") {
+		list($hash,$returnCode) = $this->resetSurveyAndGetCodes($projectId,$recordId,$surveyFormName,$eventId);
+
+		$surveyLink = APP_PATH_SURVEY_FULL . "?s=$hash";
 
 		## Build invisible self-submitting HTML form to get the user to the survey
 		echo "<html><body>
