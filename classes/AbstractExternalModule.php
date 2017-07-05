@@ -521,4 +521,8 @@ class AbstractExternalModule
         }
         return $label;
     }
+
+    public function sendAdminEmail($subject, $message){
+    	ExternalModules::sendAdminEmail($subject, $message, $this->PREFIX);
+	}
 }

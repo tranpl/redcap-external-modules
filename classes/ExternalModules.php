@@ -253,7 +253,7 @@ class ExternalModules
 		return $nodes[$count - 2].".".$nodes[$count - 1];
 	}
 
-	private static function sendAdminEmail($subject, $message, $prefix = null)
+	public static function sendAdminEmail($subject, $message, $prefix = null)
 	{
 		global $project_contact_email;
 
@@ -956,7 +956,7 @@ class ExternalModules
 	}
 
 	# this is where a module has its code loaded
-	private static function getModuleInstance($prefix, $version)
+	public static function getModuleInstance($prefix, $version)
 	{
 		self::setActiveModulePrefix($prefix);
 

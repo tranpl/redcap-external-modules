@@ -46,4 +46,7 @@ if(!file_exists($pagePath)){
 	throw new Exception("The specified page does not exist for this module. $pagePath");
 }
 
+// This variable is not used here, but is intended for use inside the file required below.
+$module = ExternalModules::getModuleInstance($prefix, $version);
+
 require_once $pagePath;
