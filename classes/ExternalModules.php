@@ -280,8 +280,7 @@ class ExternalModules
 			$additionalTo = ",".implode(",", $additionalToAddresses);
 		}
 
-		$message = str_replace('<br>', "\n", $message);
-		$message .= "\n\nServer: " . gethostname() . "\n";
+		$message .= "<br><br>Server: " . gethostname() . "<br>";
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
