@@ -86,7 +86,7 @@ require_once '../../classes/ExternalModules.php';
 </table>
 
 <script>
-<?php
+	<?php
 	if (isset($_GET['pid'])) {
 		echo "var pid = ".json_encode($_GET['pid']).";";
 	} else {
@@ -95,6 +95,8 @@ require_once '../../classes/ExternalModules.php';
 			echo "var disabledModules = ".json_encode($disabledModuleConfigs).";";
 		}
 	}
-?>
+	?>
+
+	ExternalModules.sortModuleTable($('#external-modules-disabled-table'))
 </script>
 <?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'get-disabled-modules.js'); ?>

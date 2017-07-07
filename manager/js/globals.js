@@ -1,4 +1,13 @@
-var ExternalModules = {};
+var ExternalModules = {
+    sortModuleTable: function(table){
+        table.find('tr').sort(function(a, b){
+            a = $(a).find('.external-modules-title').text()
+            b = $(b).find('.external-modules-title').text()
+
+            return a.localeCompare(b)
+        }).appendTo(table)
+    }
+};
 
 ExternalModules.Settings = function(){}
 
@@ -1035,5 +1044,20 @@ $(function(){
 
     configureModal.on('hidden.bs.modal', function () {
         tinymce.remove()
+    })
+
+    $('.external-modules-usage-button').click(function(){
+		var row = $(this).closest('tr');
+		var prefix = row.data('module')
+        $.get('ajax/usage.php', {prefix: prefix}, function(data){
+            if(data == ''){
+                data = 'None'
+            }
+
+            var modal = $('#external-modules-usage-modal')
+            modal.find('.modal-title').html('Project Usage:<br><b>' + row.find('.external-modules-title').text() + '</b>')
+            modal.find('.modal-body').html(data)
+            modal.modal('show')
+        })
     })
 });
