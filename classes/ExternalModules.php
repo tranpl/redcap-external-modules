@@ -649,6 +649,21 @@ class ExternalModules
 							WHERE " . implode(' AND ', $whereClauses));
 	}
 
+	static function getEnabledProjects($prefix)
+	{
+		$prefix = db_real_escape_string($prefix);
+
+		return self::query("SELECT s.project_id, p.app_title as name
+							FROM redcap_external_modules m
+							JOIN redcap_external_module_settings s
+								ON m.external_module_id = s.external_module_id
+							JOIN redcap_projects p
+								ON s.project_id = p.project_id
+							WHERE m.directory_prefix = '$prefix'
+								and `key` = '" . self::KEY_ENABLED . "'
+								and value = 'true'");
+	}
+
 	# row contains the data type in field 'type' and the value in field 'value'
 	# this makes sure that the data returned in 'value' is of that correct type
 	static function validateSettingsRow($row)

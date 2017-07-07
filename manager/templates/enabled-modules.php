@@ -31,6 +31,19 @@ $pid = $_GET['pid'];
 	</div>
 </div>
 
+<div id="external-modules-usage-modal" class="modal fade" role="dialog" data-backdrop="static">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title"></h4>
+			</div>
+			<div class="modal-body">
+			</div>
+		</div>
+	</div>
+</div>
+
 <br>
 <?php if (isset($_GET['pid'])) { ?>
 
@@ -113,6 +126,9 @@ here. In turn, each project can override this set of defaults with their own val
 							<button class='external-modules-configure-button'>Configure</button>
 						<?php } ?>
 						<button class='external-modules-disable-button'>Disable</button>
+						<?php if(!isset($_GET['pid'])) { ?>
+							<button class='external-modules-usage-button' style="min-width: 90px">View Usage</button>
+						<?php } ?>
 					</td>
 				</tr>
 			<?php
