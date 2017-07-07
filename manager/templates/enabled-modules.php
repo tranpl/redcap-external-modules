@@ -123,18 +123,6 @@ here. In turn, each project can override this set of defaults with their own val
 	?>
 </table>
 
-<script>
-	(function(){
-		var enabledModulesTable = $('#external-modules-enabled')
-		enabledModulesTable.find('tr').sort(function(a, b){
-			a = $(a).find('.external-modules-title').text()
-			b = $(b).find('.external-modules-title').text()
-
-			return a.localeCompare(b)
-		}).appendTo(enabledModulesTable)
-	})()
-</script>
-
 <?php
 global $configsByPrefixJSON,$versionsByPrefixJSON;
 
@@ -156,3 +144,8 @@ if($versionsByPrefixJSON == null){
 }
 
 require_once 'globals.php';
+
+?>
+<script>
+	ExternalModules.sortModuleTable($('#external-modules-enabled'))
+</script>

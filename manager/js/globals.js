@@ -1,4 +1,13 @@
-var ExternalModules = {};
+var ExternalModules = {
+    sortModuleTable: function(table){
+        table.find('tr').sort(function(a, b){
+            a = $(a).find('.external-modules-title').text()
+            b = $(b).find('.external-modules-title').text()
+
+            return a.localeCompare(b)
+        }).appendTo(table)
+    }
+};
 
 ExternalModules.Settings = function(){}
 
