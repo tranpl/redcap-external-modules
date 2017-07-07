@@ -55,6 +55,7 @@ class ExternalModules
 
 	# index is hook $name, then $prefix, then $version
 	private static $delayed;
+	private static $INCLUDED_RESOURCES;
 
 	private static $hookBeingExecuted;
 	private static $versionBeingExecuted;
@@ -189,6 +190,7 @@ class ExternalModules
 		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
 		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
 		self::$MODULES_PATH = $modulesDirectories;
+		self::$INCLUDED_RESOURCES = [];
 
 		if(!self::isLocalhost()){
 			register_shutdown_function(function(){
@@ -1220,7 +1222,7 @@ class ExternalModules
 	{
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
-		if(substr($path,0,8) == "https://") {
+		if(substr($path,0,8) == "https://" || substr($path,0,7) == "http://") {
 			$url = $path;
 		}
 		else {
@@ -1250,6 +1252,8 @@ class ExternalModules
 			}
 		}
 
+		if(in_array($url, self::$INCLUDED_RESOURCES)) return;
+
 		$integrityAttributes = '';
 		if(!empty($integrity)){
 			$integrityAttributes = "integrity='$integrity' crossorigin='anonymous'";
@@ -1264,6 +1268,8 @@ class ExternalModules
 		else {
 			throw new Exception('Unsupported resource added: ' . $path);
 		}
+
+		self::$INCLUDED_RESOURCES[] = $url;
 	}
 
 	# returns an array of links requested by the config.json
@@ -1534,6 +1540,10 @@ class ExternalModules
 		else if($configRow['type'] == 'sub_settings') {
 			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
 				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);
+				if(!isset($configRow['source']) && $configRow['sub_settings'][$subConfigKey]['source']) {
+					$configRow['source'] = "";
+				}
+				$configRow["source"] .= ($configRow["source"] == "" ? "" : ",").$configRow['sub_settings'][$subConfigKey]['source'];
 			}
 		}
 
@@ -1594,7 +1604,8 @@ class ExternalModules
 
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
-		return ExternalModules::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix, $version));
+		$subpath = substr(ExternalModules::getModuleDirectoryPath($prefix,$version),strlen(dirname(APP_PATH_DOCROOT)));
+		return APP_PATH_WEBROOT_FULL . $subpath;
 	}
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key = null)

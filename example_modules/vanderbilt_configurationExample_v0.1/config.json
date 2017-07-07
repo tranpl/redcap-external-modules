@@ -47,10 +47,45 @@
 			"required": false,
 			"type": "project-id",
 			"repeatable": false
+		},
+		{
+			"key": "test-list",
+			"name": "List of Sub Settings",
+			"required": true,
+			"type": "sub_settings",
+			"repeatable":true,
+			"sub_settings":[
+				{
+					"key": "global_project_sub",
+					"name": "Global Project",
+					"required": true,
+					"type": "project-id"
+				},
+				{
+					"key": "global_project_text",
+					"name": "Sub Text Field",
+					"required": true,
+					"type": "text"
+				}
+			]
 		}
 	],
 
 	"project-settings": [
+		{
+			"key": "custom-field1",
+			"name": "Custom Field 1",
+			"type": "custom",
+			"source": "js/test_javascript.js",
+			"functionName": "ExternalModulesOptional.customTextAlert"
+		},
+		{
+			"key": "custom-field2",
+			"name": "Custom Field 2",
+			"type": "custom",
+			"source": "extra_types.js",
+			"functionName": "ExternalModulesOptional.addColorToText"
+		},
 		{
 			"key": "test-list",
 			"name": "List of Sub Settings",

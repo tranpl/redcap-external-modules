@@ -248,6 +248,12 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting, instanc
 
             inputHtml += this.getInputElement(type, key, choice.value, inputAttributes) + '<label>' + choice.name + '</label><br>';
         }
+    }
+    else if(type == 'custom') {
+	    var functionName = setting.functionName;
+
+	    inputHtml = this.getInputElement(type, key, value, inputAttributes);
+	    inputHtml += "<script type='text/javascript'>" + functionName + "($('input[name=\"" + key + "\"]'));</script>";
     } else {
         var inputAttributes = [];
         if(type == 'checkbox' && value == 1){

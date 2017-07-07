@@ -80,6 +80,25 @@ here. In turn, each project can override this set of defaults with their own val
 			} else {
 				$config = ExternalModules::getConfig($prefix, $version);
 			}
+
+			## Add resources for custom javascript fields
+			foreach(array_merge($config['project-settings'],$config['system-settings']) as $configRow) {
+				if($configRow['source']) {
+					$sources = explode(",",$configRow['source']);
+					foreach($sources as $sourceLocation) {
+						if(is_file(ExternalModules::getModuleDirectoryPath($prefix,$version)."/".$sourceLocation)) {
+							// include file from module directory
+							ExternalModules::addResource(ExternalModules::getModuleDirectoryUrl($prefix,$version)."/".$sourceLocation);
+						}
+						else if(is_file(dirname(__DIR__)."/js/".$sourceLocation)) {
+							// include file from external_modules directory
+							ExternalModules::addResource("js/".$sourceLocation);
+						}
+					}
+				}
+			}
+
+
 			$configsByPrefix[$prefix] = $config;
 			$enabled = false;
 			if (isset($_GET['pid'])) {
