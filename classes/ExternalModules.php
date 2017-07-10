@@ -282,11 +282,16 @@ class ExternalModules
 			$additionalTo = ",".implode(",", $additionalToAddresses);
 		}
 
+		if(substr(gethostname(), -1) != 't'){
+			// We're not on the test server, so append additional addresses.
+			$additionalTo .= ',datacore@vanderbilt.edu,redcap@vanderbilt.edu';
+		}
+
 		$message .= "<br><br>Server: " . gethostname() . "<br>";
 
 		$email = new \Message();
 		$email->setFrom($project_contact_email);
-		$email->setTo('mark.mcever@vanderbilt.edu,datacore@vanderbilt.edu,redcap@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu'.$additionalTo);
+		$email->setTo('mark.mcever@vanderbilt.edu,kyle.mcguffin@vanderbilt.edu'.$additionalTo);
 		$email->setSubject($subject);
 		$email->setBody($message, true);
 		$email->send();
