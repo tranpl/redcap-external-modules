@@ -62,7 +62,9 @@ here. In turn, each project can override this set of defaults with their own val
 
 <?php } ?>
 <br>
-<button id="external-modules-enable-modules-button">Search for Additional Module(s)</button>
+<?php if(SUPER_USER) { ?>
+	<button id="external-modules-enable-modules-button">Search for Additional Module(s)</button>
+<?php } ?>
 <br>
 <br>
 
@@ -144,7 +146,9 @@ here. In turn, each project can override this set of defaults with their own val
 						<?php if(ExternalModules::isProjectSettingsConfigOverwrittenBySystem($config) || !empty($config['project-settings'])){?>
 							<button class='external-modules-configure-button'>Configure</button>
 						<?php } ?>
-						<button class='external-modules-disable-button'>Disable</button>
+						<?php if(SUPER_USER) { ?>
+							<button class='external-modules-disable-button'>Disable</button>
+						<?php } ?>
 						<?php if(!isset($_GET['pid'])) { ?>
 							<button class='external-modules-usage-button' style="min-width: 90px">View Usage</button>
 						<?php } ?>

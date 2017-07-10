@@ -1324,7 +1324,7 @@ class ExternalModules
 		};
 
 		if(isset($pid)){
-			if(SUPER_USER || !empty($modules) && self::hasDesignRights()){
+			if(SUPER_USER || !empty($versionsByPrefix) && self::hasDesignRights()){
 				$addManageLink('manager/project.php?');
 			}
 		}
