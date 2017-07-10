@@ -147,33 +147,33 @@ class AbstractExternalModule
 		return basename(dirname($reflector->getFileName()));
 	}
 
-	# a GLOBAL/SYSTEM setting is a value to be used on all projects. It can be overridden by a particular project
+	# a SYSTEM setting is a value to be used on all projects. It can be overridden by a particular project
 	# a PROJECT setting is a value set by each project. It may be a value that overrides a system setting
 	#      or it may be a value set for that project alone with no suggested System-level value.
 	#      the project_id corresponds to the value in REDCap
-	#      if a project_id (pid) is null, then it becomes a global/system value 
+	#      if a project_id (pid) is null, then it becomes a system value
 
 	# Set the setting specified by the key to the specified value
-	# globally/systemwide (shared by all projects).
+	# systemwide (shared by all projects).
 	function setSystemSetting($key, $value)
 	{
 		ExternalModules::setSystemSetting($this->PREFIX, $key, $value);
 	}
 
-	# Get the value stored globally/systemwide for the specified key.
+	# Get the value stored systemwide for the specified key.
 	function getSystemSetting($key)
 	{
 		return ExternalModules::getSystemSetting($this->PREFIX, $key);
 	}
 
-	# Remove the value stored globally/systemwide for the specified key.
+	# Remove the value stored systemwide for the specified key.
 	function removeSystemSetting($key)
 	{
 		ExternalModules::removeSystemSetting($this->PREFIX, $key);
 	}
 
 	# Set the setting specified by the key to the specified value for
-	# this project (override the global/system setting).  In most cases
+	# this project (override the system setting).  In most cases
 	# the project id can be detected automatically, but it can
 	# optionaly be specified as the third parameter instead.
 	function setProjectSetting($key, $value, $pid = null)
@@ -184,7 +184,7 @@ class AbstractExternalModule
 
 	# Returns the value stored for the specified key for the current
 	# project if it exists.  If this setting key is not set (overriden)
-	# for the current project, the global value for this key is
+	# for the current project, the system value for this key is
 	# returned.  In most cases the project id can be detected
 	# automatically, but it can optionaly be specified as the third
 	# parameter instead.
@@ -195,7 +195,7 @@ class AbstractExternalModule
 	}
 
 	# returns an array of the project-level settings (all values for the given project, including
-	# any global/system values that were not overridden)
+	# any system values that were not overridden)
 	function getAllProjectSettings($pid = null)
 	{
 		$pid = self::requireProjectId($pid);

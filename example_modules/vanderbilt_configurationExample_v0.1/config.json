@@ -24,25 +24,25 @@
 		]
 	},
 
-	"global-settings": [
+	"system-settings": [
 		{
-			"key": "global-file",
-			"name": "Global Upload",
+			"key": "system-file",
+			"name": "System Upload",
 			"required": false,
 			"type": "file",
 			"repeatable": false,
 			"allow-project-overrides": true
 		},
 		{
-			"key": "global-checkbox",
-			"name": "Global Checkbox",
+			"key": "system-checkbox",
+			"name": "System Checkbox",
 			"required": false,
 			"type": "checkbox",
 			"repeatable": false,
 			"allow-project-overrides": true
 		},
 		{
-			"key": "global-project",
+			"key": "system-project",
 			"name": "Project",
 			"required": false,
 			"type": "project-id",
@@ -56,13 +56,13 @@
 			"repeatable":true,
 			"sub_settings":[
 				{
-					"key": "global_project_sub",
-					"name": "Global Project",
+					"key": "system_project_sub",
+					"name": "System Project",
 					"required": true,
 					"type": "project-id"
 				},
 				{
-					"key": "global_project_text",
+					"key": "system_project_text",
 					"name": "Sub Text Field",
 					"required": true,
 					"type": "text"

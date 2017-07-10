@@ -83,7 +83,7 @@ External Modules combine the concepts of REDCap Plugins and REDCap Hooks. They c
 		* A **name** to be displayed on the site
 		* An **icon** in REDCap's image repository
 		* A **url** either in the local directory or external to REDCap.
-	* **system-settings** (also known as **global-settings**) specify settings configurable at the system-wide level (this Control Center). Individual projects can override these settings. 
+	* **system-settings** specify settings configurable at the system-wide level (this Control Center). Individual projects can override these settings. 
 	* **project-settings** specify settings configurable at the project level, different for each project.  
 	* A setting consists of:
 		* A **key** that is the unique identifier for the item. Dashes (-'s) are preferred to underscores (_'s).
