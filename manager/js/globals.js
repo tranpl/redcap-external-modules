@@ -607,7 +607,7 @@ $(function(){
 
     var onValueChange = function() {
         var val;
-        if ($(this).type == "checkbox") {
+        if (this.type == "checkbox") {
             val = $(this).is(":checked");
         } else {
             val = $(this).val();
