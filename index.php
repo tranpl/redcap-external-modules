@@ -31,8 +31,9 @@ if($noAuth && !in_array($page, $config['no-auth-pages'])){
 }
 
 if($pid != null){
+	$enabledGlobal = ExternalModules::getSystemSetting($prefix,ExternalModules::KEY_ENABLED);
 	$enabled = ExternalModules::getProjectSetting($prefix, $pid, ExternalModules::KEY_ENABLED);
-	if(!$enabled){
+	if(!$enabled && !$enabledGlobal){
 		throw new Exception("The requested module is currently disabled on this project.");
 	}
 }

@@ -568,19 +568,10 @@ class ExternalModules
 			$result = self::getSettings($moduleDirectoryPrefixes, array(self::SYSTEM_SETTING_PROJECT_ID, $projectId));
 		}
 
-		$reservedKeys = [];
-		foreach(self::$RESERVED_SETTINGS as $reservedSetting){
-			$reservedKeys[$reservedSetting['key']] = true;
-		}
-
 		$settings = array();
 		while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 			$key = $row['key'];
 			$value = $row['value'];
-
-			if(@$reservedKeys[$key] != null){
-				continue;
-			}
 
 			$setting =& $settings[$key];
 			if(!isset($setting)){
@@ -800,11 +791,11 @@ class ExternalModules
 		$nullSql = "";
 
 		foreach($array as $item){
-		if(!empty($valueListSql)){
-			$valueListSql .= ', ';
-		}
+			if(!empty($valueListSql)){
+				$valueListSql .= ', ';
+			}
 
-		$item = db_real_escape_string($item);
+			$item = db_real_escape_string($item);
 
 			if($item == 'NULL'){
 				$nullSql = "$columnName IS NULL";

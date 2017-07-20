@@ -87,7 +87,7 @@
 			"functionName": "ExternalModulesOptional.addColorToText"
 		},
 		{
-			"key": "test-list",
+			"key": "test-list2",
 			"name": "List of Sub Settings",
 			"required": true,
 			"type": "sub_settings",

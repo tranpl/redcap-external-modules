@@ -17,7 +17,7 @@ ExternalModules.Settings.prototype.shouldShowSettingOnProjectManagementPage = fu
         // Always show project level settings.
         return true;
     }
-    if(setting.key == enabled){
+    if(setting.key == ExternalModules.KEY_ENABLED){
         // Hide the 'enabled' setting on projects, since we have buttons for enabling/disabling now.
         // Also, leaving this setting in place caused the enabled flag to be changed from a boolean to a string (which could cause unexpected behavior).
         return false;
@@ -69,7 +69,7 @@ ExternalModules.Settings.prototype.getSettingRows = function(system, configSetti
         }
 
         if(!ExternalModules.PID){
-            rowsHtml += '<tr>' + settingsObject.getSystemSettingColumns(setting) + '</tr>';
+            rowsHtml += '<tr>' + settingsObject.getSystemSettingColumns(setting,system,indexSubSet) + '</tr>';
         }
         else if(settingsObject.shouldShowSettingOnProjectManagementPage(setting, system)){
             rowsHtml += settingsObject.getProjectSettingHTML(setting,system, indexSubSet,'', '');
@@ -79,9 +79,25 @@ ExternalModules.Settings.prototype.getSettingRows = function(system, configSetti
     return rowsHtml;
 }
 
-ExternalModules.Settings.prototype.getSystemSettingColumns = function(setting){
-    var columns = this.getSettingColumns(setting);
+ExternalModules.Settings.prototype.getSystemSettingColumns = function(setting,system,indexSubSet){
+	var columns = '';
+	// SUB_SETTING
+	if (setting.sub_settings) {
+		for (var instance = 0; instance < indexSubSet; instance++) {
+			//we add the sub_settings header
+			setting.instanceCount = indexSubSet;
+			columns += this.getSettingColumns(setting,instance,indexSubSet);
 
+			setting.sub_settings.forEach(function (subSetting)  {
+				columns += '<tr class = "subsettings-table">' + ExternalModules.Settings.prototype.getSystemSettingColumns(subSetting) + '</tr>';
+			});
+		}
+	}
+	else {
+		columns += this.getSettingColumns(setting,undefined,indexSubSet);
+	}
+//    var columns = this.getSettingColumns(setting);
+//console.log(columns);
     if(setting['allow-project-overrides']){
         var overrideChoices = [
             { value: '', name: 'Superusers Only' },
@@ -495,24 +511,25 @@ ExternalModules.Settings.prototype.configureSettings = function(configSettings, 
         }
     });
 
-    $(".project_id_textbox").select2({
-        width: '100%',
-        ajax: {
-            url: 'ajax/get-project-list.php',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) { return {'parameters':params.term }; },
-            method: 'GET',
-            cache: true
-        }
-    });
-
     $(function(){
 		settings.initializeRichTextFields()
     })
 }
 
 ExternalModules.Settings.prototype.initializeRichTextFields = function(){
+
+	$(".project_id_textbox").select2({
+		width: '100%',
+		ajax: {
+			url: 'ajax/get-project-list.php',
+			dataType: 'json',
+			delay: 250,
+			data: function(params) { return {'parameters':params.term }; },
+			method: 'GET',
+			cache: true
+		}
+	});
+
 	$('.external-modules-rich-text-field').each(function(index, textarea){
 		textarea = $(textarea)
         var expectedId = 'external-modules-rich-text-field_' + textarea.attr('name')
@@ -970,7 +987,7 @@ $(function(){
 
     // helper method for saving
     var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
-        $.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data, function(returnData){
+	   $.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data).done( function(returnData){
             if(returnData.status != 'success'){
                 alert('An error occurred while saving settings: ' + returnData);
                 configureModal.show();
