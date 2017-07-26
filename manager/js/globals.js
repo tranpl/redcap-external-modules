@@ -111,6 +111,9 @@ ExternalModules.Settings.prototype.getSettingColumns = function(system,setting,s
 			rowsHtml += "<tr style='display:none' class='sub_end' field='" + setting.key + "'></tr>";
 		}
 		else {
+			if(typeof settingValue !== "string") {
+				settingValue = "";
+			}
 			rowsHtml += settingsObject.getColumnHtml(system, setting, settingValue);
 		}
 	});
@@ -596,22 +599,6 @@ ExternalModules.Settings.prototype.initializeRichTextFields = function(){
 
 $(function(){
 	var settings = new ExternalModules.Settings();
-
-	/**
-	 * Function that given a position, returns the element name
-	 * @param positionElement
-	 * @returns {*}
-	 */
-	function getOldName(positionElement){
-		var oldName = positionElement.find('input').attr('name');
-		if (!oldName) {
-			oldName = positionElement.find('select').attr('name');
-		}
-		if (!oldName) {
-			oldName = positionElement.find('textarea').attr('name');
-		}
-		return oldName;
-	}
 
 	var onValueChange = function() {
 		var val;

@@ -149,7 +149,7 @@ class ExternalModules
 
 				if (preg_match("/____/", $key)) {
 					$parts = preg_split("/____/", $key);
-					$shortKey = $parts[0];
+					$shortKey = array_shift($parts);
 
 					if(!isset($instances[$shortKey])){
 						$instances[$shortKey] = [];
