@@ -339,6 +339,25 @@ class AbstractExternalModule
 		return array("hash" => $hash, "return_code" => $returnCode);
 	}
 
+	public function getProjectAndRecordFromHashes($surveyHash, $returnCode) {
+		$sql = "SELECT s.project_id as projectId, r.record as recordId, s.form_name as surveyForm, p.event_id as eventId
+				FROM redcap_surveys_participants p, redcap_surveys_response r, redcap_surveys s
+				WHERE p.hash = '".prep($surveyHash)."'
+					AND p.survey_id = s.survey_id
+					AND p.participant_id = r.participant_id
+					AND r.return_code = '".prep($returnCode)."'";
+
+		$q = db_query($sql);
+
+		$row = db_fetch_assoc($q);
+
+		if($row) {
+			return $row;
+		}
+
+		return false;
+	}
+
 	public function createPassthruForm($projectId,$recordId,$surveyFormName = "", $eventId = "") {
 		$codeDetails = $this->resetSurveyAndGetCodes($projectId,$recordId,$surveyFormName,$eventId);
 
