@@ -9,7 +9,7 @@ Development work for REDCap External Modules/Packages to support a standardized 
 		1. Insert the following at the top of your hooks file:
 		
 			```
-			require_once dirname(__FILE__) . '/classes/ExternalModules.php';
+			require_once dirname(APP_PATH_DOCROOT) . '/external_modules/classes/ExternalModules.php';
 			use ExternalModules\ExternalModules;
 			```
 			
