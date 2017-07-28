@@ -19,7 +19,15 @@ if(!defined('APP_PATH_WEBROOT')){
 	// Only include redcap_connect.php if it hasn't been included at some point before.
 	// Upgrades crash without this check.
 	// Perhaps it has something to do with loading both the new and old version of redcap_connect.php......
-	require_once __DIR__ . "/../../redcap_connect.php";
+	$connectPath = dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . "redcap_connect.php";
+	if (file_exists($connectPath)) {
+		require_once $connectPath;
+	} else {
+		$connectPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "redcap_connect.php";
+		if (file_exists($connectPath)) {
+			require_once $connectPath;
+		}
+	}
 }
 
 if (class_exists('ExternalModules\ExternalModules')) {
@@ -176,8 +184,12 @@ class ExternalModules
 			ini_set('display_startup_errors', 1);
 			error_reporting(E_ALL);
 		}
-
-		$modulesDirectories = ['/modules/','/external_modules/example_modules/'];
+		
+		if (defined("APP_PATH_EXTMOD")) {
+			$modulesDirectories = [dirname(APP_PATH_DOCROOT).DS.'modules'.DS, APP_PATH_EXTMOD.'example_modules'.DS];
+		} else {
+			$modulesDirectories = [dirname(APP_PATH_DOCROOT).DS.'modules'.DS, dirname(APP_PATH_DOCROOT).DS.'external_modules'.DS.'example_modules'.DS];
+		}
 		$modulesDirectoryName = '/modules/';
 
 		if(strpos($_SERVER['REQUEST_URI'], $modulesDirectoryName) === 0){
@@ -185,10 +197,10 @@ class ExternalModules
 		}
 
 		// We must use APP_PATH_WEBROOT_FULL here because some REDCap installations are hosted under subdirectories.
-		self::$BASE_URL = APP_PATH_WEBROOT_FULL.'external_modules/';
+		self::$BASE_URL = defined("APP_URL_EXTMOD") ? APP_URL_EXTMOD : APP_PATH_WEBROOT_FULL.'external_modules/';
 		self::$MODULES_URL = APP_PATH_WEBROOT_FULL.'modules/';
-		self::$BASE_PATH = APP_PATH_DOCROOT . '../external_modules/';
-		self::$MODULES_BASE_PATH = dirname(dirname(__DIR__));
+		self::$BASE_PATH = defined("APP_PATH_EXTMOD") ? APP_PATH_EXTMOD : APP_PATH_DOCROOT . '../external_modules/';
+		self::$MODULES_BASE_PATH = dirname(APP_PATH_DOCROOT) . DS;
 		self::$MODULES_PATH = $modulesDirectories;
 		self::$INCLUDED_RESOURCES = [];
 
@@ -1311,7 +1323,7 @@ class ExternalModules
 	{
 		$dirs = [];
 		foreach(self::$MODULES_PATH as $path) {
-			$dirs = array_merge($dirs,scandir(self::$MODULES_BASE_PATH.$path));
+			$dirs = array_merge($dirs,scandir($path));
 		}
 
 		$disabledModuleVersions = array();
@@ -1569,7 +1581,7 @@ class ExternalModules
 	static function getModuleDirectoryPath($prefix, $version){
 		$directoryToFind = $prefix . '_' . $version;
 		foreach(self::$MODULES_PATH as $pathDir) {
-			$modulePath = ExternalModules::$MODULES_BASE_PATH . $pathDir . $directoryToFind;
+			$modulePath = $pathDir . $directoryToFind;
 			if(is_dir($modulePath)) {
 				break;
 			}
