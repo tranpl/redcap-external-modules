@@ -159,7 +159,15 @@ class ExternalModules
 						$value = '';
 					}
 
-					$instances[$shortKey][] = $value;
+					$thisInstance = &$instances[$shortKey];
+					foreach($parts as $thisIndex) {
+						if(!isset($thisInstance[$thisIndex])) {
+							$thisInstance[$thisIndex] = [];
+						}
+						$thisInstance = &$thisInstance[$thisIndex];
+					}
+
+					$thisInstance = $value;
 				} else if (empty($pid)) {
 					$saved[$key] = $value;
 					self::setSystemSetting($moduleDirectoryPrefix, $key, $value);
@@ -170,8 +178,9 @@ class ExternalModules
 			}
 		}
 
+		var_dump($instances);
 		foreach($instances as $key => $values) {
-			self::setSetting($moduleDirectoryPrefix, $pid, $key, $values);
+			self::setSetting($moduleDirectoryPrefix, $pid, $key, json_encode($values),"json");
 		}
 	}
 
@@ -1407,7 +1416,9 @@ class ExternalModules
 			}
 		}
 
-		$config = self::addReservedSettings($config);
+		if($pid === null) {
+			$config = self::addReservedSettings($config);
+		}
 
 		return $config;
 	}

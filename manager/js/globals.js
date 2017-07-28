@@ -519,7 +519,7 @@ ExternalModules.Settings.prototype.resetConfigInstances = function() {
 				currentInstance[currentInstance.length - 1]++;
 			}
 			else {
-				currentInstance.push(1);
+				currentInstance.push(0);
 				currentFields.push($(this).attr("field"));
 			}
 		}
@@ -529,8 +529,9 @@ ExternalModules.Settings.prototype.resetConfigInstances = function() {
 		// Update the number scheme on label and input names
 		var currentLabel = "";
 		var currentName = "";
+		// Use PHP/JSON instance keys, so need to add one to make it look normal
 		for(var i = 0; i < currentInstance.length; i++) {
-			currentLabel += currentInstance[i] + ".";
+			currentLabel += (currentInstance[i] + 1) + ".";
 			currentName += ExternalModules.Settings.prototype.getInstanceSymbol() + currentInstance[i];
 		}
 
