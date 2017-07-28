@@ -462,6 +462,31 @@ class AbstractExternalModule
 		return db_fetch_assoc($q);
 	}
 
+	public function getData($projectId,$recordId,$eventId="",$format="array") {
+		$data = \REDCap::getData($projectId,$format,$recordId);
+
+		if($eventId != "") {
+			return $data[$recordId][$eventId];
+		}
+		return $data;
+	}
+
+	public function saveData($projectId,$recordId,$eventId,$data) {
+		return \REDCap::saveData($projectId,"array",[$recordId => [$eventId =>$data]]);
+	}
+
+	/**
+	 * @param $projectId
+	 * @param $recordId
+	 * @param $eventId
+	 * @param $formName
+	 * @param $data array This must be in [instance => [field => value]] format
+	 * @return array
+	 */
+	public function saveInstanceData($projectId,$recordId,$eventId,$formName,$data) {
+		return \REDCap::saveData($projectId,"array",[$recordId => [$eventId => [$formName => $data]]]);
+	}
+
 	# function to enforce that a pid is required for a particular function
 	private function requireProjectId($pid)
 	{
