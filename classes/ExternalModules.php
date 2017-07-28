@@ -958,8 +958,16 @@ class ExternalModules
 		$modulePath = self::getModuleDirectoryPath($prefix, $version);
 		$instance = @self::$instanceCache[$prefix][$version];
 		if(!isset($instance)){
-			$className = self::getMainClassName($prefix);
-			$classNameWithNamespace = "\\" . __NAMESPACE__ . "\\$className";
+			$config = self::getConfig($prefix, $version);
+			$namespace = @$config['namespace'];
+			if(!$namespace){
+				// TODO - Once all modules have been given a namespace, require a namespace by throwing an exception here.
+				$namespace = __NAMESPACE__;
+			}
+
+			$className = self::getMainClassName($prefix, $version);
+
+			$classNameWithNamespace = "\\$namespace\\$className";
 
 			if(!class_exists($classNameWithNamespace)){
 				$classFilePath = "$modulePath/$className.php";

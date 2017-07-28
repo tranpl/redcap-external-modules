@@ -1,6 +1,8 @@
 {
 	"name": "Configuration Example",
 
+	"namespace": "Vanderbilt",
+
 	"description": "Example module to show off all the options available",
 
 	"authors": [
