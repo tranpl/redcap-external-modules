@@ -959,13 +959,22 @@ class ExternalModules
 		$instance = @self::$instanceCache[$prefix][$version];
 		if(!isset($instance)){
 			$config = self::getConfig($prefix, $version);
+
 			$namespace = @$config['namespace'];
 			if(!$namespace){
-				// TODO - Once all modules have been given a namespace, require a namespace by throwing an exception here.
 				$namespace = __NAMESPACE__;
+
+				// TODO - Once all modules have been given a namespace, require a namespace by throwing an exception here.
+				//throw new Exception("The '$prefix' module MUST specify a 'module-class-name' in it's config.json file.");
 			}
 
-			$className = self::getMainClassName($prefix, $version);
+			$className = @$config['module-class-name'];
+			if (!$className) {
+				$className = self::getMainClassName($prefix, $version);
+
+				// TODO - Once all modules have been given a module-class-name, require it by throwing an exception here.
+				//throw new Exception("The '$prefix' module MUST specify a 'module-class-name' in it's config.json file.");
+			}
 
 			$classNameWithNamespace = "\\$namespace\\$className";
 
