@@ -1591,8 +1591,7 @@ class ExternalModules
 
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
-		$subpath = substr(ExternalModules::getModuleDirectoryPath($prefix,$version),strlen(dirname(APP_PATH_DOCROOT)));
-		return APP_PATH_WEBROOT_FULL . $subpath;
+		return self::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix,$version));
 	}
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key = null)
