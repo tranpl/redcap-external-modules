@@ -700,7 +700,7 @@ class ExternalModules
 			return null;
 		}
 		else{
-			throw new Exception("More than one ($numRows) External Module setting exists for project $projectId and key '$key'!  This should never happen!");
+			throw new Exception("More than one ($numRows) External Module setting exists for prefix '$moduleDirectoryPrefix', project ID '$projectId', and key '$key'!  This should never happen!");
 		}
 	}
 
