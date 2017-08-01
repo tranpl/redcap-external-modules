@@ -350,6 +350,18 @@ class ExternalModules
 		self::enableForProject($moduleDirectoryPrefix, $version, null);
 	}
 
+	static function enableAndCatchExceptions($moduleDirectoryPrefix, $version)
+	{
+		try {
+			self::enable($moduleDirectoryPrefix, $version);
+		} catch (\Exception $e) {
+			self::setActiveModulePrefix(null); // Unset the active module prefix, so an error email is not sent out.
+			return $e;
+		}
+
+		return null;
+	}
+
 	# initializes the system settings
 	static function initializeSettingDefaults($moduleInstance)
 	{
@@ -982,7 +994,7 @@ class ExternalModules
 				$classFilePath = "$modulePath/$className.php";
 
 				if(!file_exists($classFilePath)){
-					throw new Exception("Could not find the following External Module main class file: $classFilePath");
+					throw new Exception("Could not find the module class file '$className.php' for the module with prefix '$prefix'.");
 				}
 
 				self::safeRequireOnce($classFilePath);
