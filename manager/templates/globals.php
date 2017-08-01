@@ -29,6 +29,7 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.j
     ExternalModules.BASE_URL = <?=json_encode(ExternalModules::$BASE_URL)?>;
     ExternalModules.configsByPrefixJSON = <?=$configsByPrefixJSON?>;
     ExternalModules.versionsByPrefixJSON = <?=$versionsByPrefixJSON?>;
+    ExternalModules.LibraryURL = '<?=APP_PATH_WEBROOT_FULL?>plugins/external_modules/login.php?referer=<?=urlencode(PAGE_FULL)?>';
 
     $(function () {
         var disabledModal = $('#external-modules-disabled-modal');
@@ -55,5 +56,34 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.j
 
             disabledModal.modal('show');
         });
+        $('#external-modules-download-modules-button').click(function(){
+			window.location.href = ExternalModules.LibraryURL;
+		});
+		if (isNumeric(getParameterByName('download_module_id')) && getParameterByName('download_module_name') != '') {
+			$('#external-modules-download').dialog({ title: 'Download external module?', bgiframe: true, modal: true, width: 550, buttons: { 
+				Cancel: function() { $(this).dialog('close'); },
+				Download: function() {
+					showProgress(1);
+					$.get('<?=APP_URL_EXTMOD?>manager/ajax/download-module.php?module_id='+getParameterByName('download_module_id'),{},function(data){
+						showProgress(0,0);
+						if (data == '0') {
+							simpleDialog("An error occurred because the External Module could not be found.","ERROR");
+						} else if (data == '1') {
+							simpleDialog("An error occurred because the External Module zip file could not be written to the REDCap temp directory before extracting it.","ERROR");
+						} else if (data == '2' || data == '3') {
+							simpleDialog("An error occurred because the External Module zip file could not be extracted or could not create a new modules directory on the REDCap web server.","ERROR");
+						} else if (data == '4') {
+							simpleDialog("An error occurred because the External Module directory already exists on the REDCap web server. Thus, it cannot be used for this module.","ERROR");
+						} else {
+							modifyURL('<?=PAGE_FULL?>');
+							simpleDialog(data,"SUCCESS",null,null,function(){
+								$('#external-modules-enable-modules-button').trigger('click');
+							},"Close");
+						}
+					});
+					$(this).dialog('close'); 
+				}
+			} });
+		}
     });
 </script>

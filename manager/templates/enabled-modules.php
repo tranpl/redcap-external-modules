@@ -16,6 +16,12 @@ if($sql !== ""){
 $pid = $_GET['pid'];
 ?>
 
+<div id="external-modules-download" class="simpleDialog" role="dialog">
+	Do you wish to download the External Module named 
+	"<b><?php print \RCView::escape(rawurldecode(urldecode($_GET['download_module_name']))) ?></b>"?
+	This will create a new directory folder for the module on the REDCap web server.
+</div>
+
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -63,7 +69,10 @@ here. In turn, each project can override this set of defaults with their own val
 <?php } ?>
 <br>
 <?php if(SUPER_USER) { ?>
-	<button id="external-modules-enable-modules-button">Search for Additional Module(s)</button>
+	<button id="external-modules-enable-modules-button">Enable a module</button>
+<?php } ?>
+<?php if (SUPER_USER && !isset($_GET['pid'])) { ?>
+	<button id="external-modules-download-modules-button">Download new module from library</button>
 <?php } ?>
 <br>
 <br>

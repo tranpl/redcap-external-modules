@@ -1794,4 +1794,58 @@ class ExternalModules
 
 		self::query($sql);
 	}
+
+	public static function downloadModule($module_id=null){
+		// Set modules directory path
+		$modulesDir = dirname(APP_PATH_DOCROOT).DS.'modules'.DS;
+		// Validate module_id
+		if (empty($module_id) || !is_numeric($module_id)) exit("0");
+		$module_id = (int)$module_id;
+		// Call the module download service to download the module zip
+		$moduleZipContents = http_get(APP_URL_EXTMOD_LIB . "download.php?module_id=$module_id");
+		// Also obtain the folder name of the module
+		$moduleFolderName = http_get(APP_URL_EXTMOD_LIB . "download.php?module_id=$module_id&name=1");
+		// First see if the module directory already exists
+		$moduleFolderDir = $modulesDir . $moduleFolderName . DS;
+		if (file_exists($moduleFolderDir) && is_dir($moduleFolderDir)) {
+		   exit("4");
+		}
+		// Errors?
+		if ($moduleZipContents == 'ERROR') {
+			// 0 = Module does not exist in library
+			exit("0");
+		}
+		// Place the file in the temp directory before extracting it
+		$filename = APP_PATH_TEMP . date('YmdHis') . "_externalmodule_" . substr(sha1(rand()), 0, 6) . ".zip";
+		if (file_put_contents($filename, $moduleZipContents) === false) {
+			// 1 = Module zip couldn't be written to temp
+			exit("1");
+		}
+		// Extract the module to /redcap/modules
+		$zip = new \ZipArchive;
+		if ($zip->open($filename) !== TRUE) {
+		   exit("2");
+		}
+		// First, we need to rename the parent folder in the zip because GitHub has it as something else
+		$i = 0;
+		while ($item_name = $zip->getNameIndex($i)){
+			$item_name_end = substr($item_name, strpos($item_name, "/"));
+			$zip->renameIndex($i++, $moduleFolderName . $item_name_end);
+		}
+		$zip->close();
+		// Now extract the zip to the modules folder
+		$zip = new \ZipArchive;
+		if ($zip->open($filename) === TRUE) {
+			$zip->extractTo($modulesDir);
+			$zip->close();
+		}
+		// Remove temp file
+		unlink($filename);
+		// Now double check that the new module directory got created
+		if (!(file_exists($moduleFolderDir) && is_dir($moduleFolderDir))) {
+		   exit("3");
+		}
+		// Give success message
+		print "The module was successfully downloaded to the REDCap server, and can now be enabled.";
+	}
 }
