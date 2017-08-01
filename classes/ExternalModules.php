@@ -207,44 +207,53 @@ class ExternalModules
 		if(!self::isLocalhost()){
 			register_shutdown_function(function(){
 				$activeModulePrefix = self::getActiveModulePrefix();
-				if($activeModulePrefix != null){
-					$error = error_get_last();
-					$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
-					$message .= 'Error Message: ' . $error['message'] . "\n";
-					$message .= 'File: ' . $error['file'] . "\n";
-					$message .= 'Line: ' . $error['line'] . "\n";
 
-					error_log($message);
-					ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
-
-					// We can't just call disable() from here because the database connection has been destroyed.
-					// Disable this module via AJAX instead.
-					?>
-					<br>
-					<h4 id="external-modules-message">
-						A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
-						Disabling that module...
-					</h4>
-					<script>
-						var request = new XMLHttpRequest();
-						request.onreadystatechange = function() {
-							if (request.readyState == XMLHttpRequest.DONE ) {
-								var messageElement = document.getElementById('external-modules-message')
-								if(request.responseText == 'success'){
-									messageElement.innerHTML = 'The "<?=$activeModulePrefix?>" external module was automatically disabled in order to allow REDCap to function properly.  The REDCap administrator has been notified.  Please save a copy of the above error and fix it before re-enabling the module.';
-								}
-								else{
-									messageElement.innerHTML += '<br>An error occurred while disabling the "<?=$activeModulePrefix?>" module: ' + request.responseText;
-								}
-							}
-						};
-
-						request.open("POST", "<?=self::$BASE_URL?>manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
-						request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-						request.send("module=<?=$activeModulePrefix?>");
-					</script>
-					<?php
+				if ($activeModulePrefix == null){
+					// A fatal error did not occur in the middle of a module operation.
+					return;
 				}
+				else if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
+					// An admin was attempting to enable a module.
+					// Simply let REDCap display the error to the admin, instead of sending an email to all admins about it.
+					return;
+				}
+
+				$error = error_get_last();
+				$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
+				$message .= 'Error Message: ' . $error['message'] . "\n";
+				$message .= 'File: ' . $error['file'] . "\n";
+				$message .= 'Line: ' . $error['line'] . "\n";
+
+				error_log($message);
+				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
+
+				// We can't just call disable() from here because the database connection has been destroyed.
+				// Disable this module via AJAX instead.
+				?>
+				<br>
+				<h4 id="external-modules-message">
+					A fatal error occurred while loading the "<?=$activeModulePrefix?>" external module.<br>
+					Disabling that module...
+				</h4>
+				<script>
+					var request = new XMLHttpRequest();
+					request.onreadystatechange = function() {
+						if (request.readyState == XMLHttpRequest.DONE ) {
+							var messageElement = document.getElementById('external-modules-message')
+							if(request.responseText == 'success'){
+								messageElement.innerHTML = 'The "<?=$activeModulePrefix?>" external module was automatically disabled in order to allow REDCap to function properly.  The REDCap administrator has been notified.  Please save a copy of the above error and fix it before re-enabling the module.';
+							}
+							else{
+								messageElement.innerHTML += '<br>An error occurred while disabling the "<?=$activeModulePrefix?>" module: ' + request.responseText;
+							}
+						}
+					};
+
+					request.open("POST", "<?=self::$BASE_URL?>manager/ajax/disable-module.php?<?=self::DISABLE_EXTERNAL_MODULE_HOOKS?>");
+					request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+					request.send("module=<?=$activeModulePrefix?>");
+				</script>
+				<?php
 			});
 		}
 	}
