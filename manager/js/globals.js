@@ -11,27 +11,6 @@ var ExternalModules = {
 
 ExternalModules.Settings = function(){}
 
-
-ExternalModules.Settings.prototype.shouldShowSettingOnProjectManagementPage = function(setting, system) {
-	if(!system){
-		// Always show project level settings.
-		return true;
-	}
-	if(setting.key == ExternalModules.KEY_ENABLED){
-		// Hide the 'enabled' setting on projects, since we have buttons for enabling/disabling now.
-		// Also, leaving this setting in place caused the enabled flag to be changed from a boolean to a string (which could cause unexpected behavior).
-		return false;
-	}
-	if(setting.overrideLevelValue == null && !ExternalModules.SUPER_USER){
-		// Hide this setting since the override level will prevent the non-superuser from actually saving it.
-		return false;
-	}
-	// Checking whether a system setting is actually overridden is necessary for the UI to reflect when
-	// settings are overridden prior to allow-project-overrides being set to false.
-	var alreadyOverridden = setting.value != setting.systemValue;
-	return setting['allow-project-overrides'] || alreadyOverridden;
-}
-
 ExternalModules.Settings.prototype.getAttributeValueHtml = function(s){
 	if(typeof s == 'string'){
 		s = s.replace(/"/g, '&quot;');
@@ -46,27 +25,19 @@ ExternalModules.Settings.prototype.getAttributeValueHtml = function(s){
 }
 
 // Function to get the HTML for all the setting rows
-ExternalModules.Settings.prototype.getSettingRows = function(system, configSettings, savedSettings,instance){
+ExternalModules.Settings.prototype.getSettingRows = function(configSettings, savedSettings,instance){
 	var rowsHtml = '';
 	var settingsObject = this;
 	configSettings.forEach(function(setting){
 		var setting = $.extend({}, setting);
 
-		// Will need to clean up because can't use PHP constants in .js file
-		setting.overrideLevelKey = setting.key + ExternalModules.OVERRIDE_PERMISSION_LEVEL_SUFFIX;
-		var overrideLevel = savedSettings[setting.overrideLevelKey];
-
-		if(overrideLevel){
-			setting.overrideLevelValue = overrideLevel.value
-		}
-
-		rowsHtml += settingsObject.getSettingColumns(system,setting,savedSettings,instance);
+		rowsHtml += settingsObject.getSettingColumns(setting,savedSettings,instance);
 	});
 
 	return rowsHtml;
 };
 
-ExternalModules.Settings.prototype.getSettingColumns = function(system,setting,savedSettings,previousInstance) {
+ExternalModules.Settings.prototype.getSettingColumns = function(setting,savedSettings,previousInstance) {
 	var settingsObject = this;
 	var rowsHtml = '';
 
@@ -104,9 +75,9 @@ ExternalModules.Settings.prototype.getSettingColumns = function(system,setting,s
 		subInstance.push(instance);
 
 		if(setting.type == "sub_settings") {
-			rowsHtml += settingsObject.getColumnHtml(system, setting);
+			rowsHtml += settingsObject.getColumnHtml(setting);
 			setting.sub_settings.forEach(function(settingDetails){
-				rowsHtml += settingsObject.getSettingRows(system,[settingDetails],savedSettings,subInstance);
+				rowsHtml += settingsObject.getSettingRows([settingDetails],savedSettings,subInstance);
 			});
 			rowsHtml += "<tr style='display:none' class='sub_end' field='" + setting.key + "'></tr>";
 		}
@@ -114,7 +85,7 @@ ExternalModules.Settings.prototype.getSettingColumns = function(system,setting,s
 			if(typeof settingValue !== "string") {
 				settingValue = "";
 			}
-			rowsHtml += settingsObject.getColumnHtml(system, setting, settingValue);
+			rowsHtml += settingsObject.getColumnHtml(setting, settingValue);
 		}
 	});
 
@@ -125,6 +96,9 @@ ExternalModules.Settings.prototype.getSettingColumns = function(system,setting,s
 ExternalModules.Settings.prototype.configureSettings = function(configSettings, savedSettings) {
 	var settings = this;
 
+	// Set up other functions that need configuration
+	settings.initializeRichTextFields();
+
 	// For project IDs that have already been set, set up the value
 	configSettings.forEach(function(setting){
 		var setting = $.extend({}, setting);
@@ -133,8 +107,9 @@ ExternalModules.Settings.prototype.configureSettings = function(configSettings, 
 			var saved = savedSettings[setting.key];
 			if(saved){
 				setting.value = saved.value;
-				setting.systemValue = saved.system_value;
 			}
+			console.log(setting);
+			console.log(savedSettings);
 
 			if(setting.value != '' && setting.value != null) {
 				$('select[name="' + setting.key + '"]').removeClass('project_id_textbox');
@@ -167,15 +142,12 @@ ExternalModules.Settings.prototype.configureSettings = function(configSettings, 
 		}
 	});
 
-	// Set up other functions that need configuration
-	settings.initializeRichTextFields();
-
 	// Reset the instances so that things will be saved correctly
 	settings.resetConfigInstances();
 }
 
 
-ExternalModules.Settings.prototype.getColumnHtml = function(system,setting,value){
+ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
 	var type = setting.type;
 	var key = setting.key;
 	var trClass = "";
@@ -223,6 +195,10 @@ ExternalModules.Settings.prototype.getColumnHtml = function(system,setting,value
 		inputHtml = this.getSelectElement(key, setting.choices, value, []);
 	}
 	else if(type == 'project-id'){
+		// Set up an option to store the saved value (setting.choice will be blank otherwise)
+		if(value != "") {
+			setting.choices = [{"value" : value, "name" : value}];
+		}
 		inputHtml = "<div style='width:200px'>" + this.getSelectElement(key, setting.choices, value, {"class":"project_id_textbox"}) + "</div>";
 	}
 	else if(type == 'textarea'){
@@ -278,28 +254,6 @@ ExternalModules.Settings.prototype.getColumnHtml = function(system,setting,value
 		html += "<td></td>";
 	}
 
-	if(!ExternalModules.PID) {
-		if(setting['allow-project-overrides']){
-			var overrideChoices = [
-				{ value: '', name: 'Superusers Only' },
-				// Will need to clean up because can't use PHP constants in .js file
-				{ value: ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS, name: 'Project Admins' },
-			];
-
-			var selectAttributes = '';
-			// Will need to clean up because can't use PHP constants in .js file
-			if(setting.key == ExternalModules.KEY_ENABLED){
-				// For now, we've decided that only super users can enable modules on projects.
-				// To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
-				selectAttributes = 'disabled'
-			}
-
-			html += '<td>' + this.getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue, selectAttributes) + '</td>';
-		}
-		else{
-			html += '<td></td>';
-		}
-	}
 	var outputHtml = "<tr" + (trClass === "" ? "" : " class='" + trClass + "'") + " field='" + setting.key + "'>" + html + "</tr>";
 
 	return outputHtml;
@@ -327,7 +281,7 @@ ExternalModules.Settings.prototype.getSelectElement = function(name, choices, se
 	var defaultAttributes = {"class" : "external-modules-input-element"};
 	var attributeString = this.getElementAttributes(defaultAttributes,selectAttributes);
 
-	return '<select ' + attributeString + ' name="' + name + '" ' + selectAttributes + '>' + optionsHtml + '</select>';
+	return '<select ' + attributeString + ' name="' + name + '" >' + optionsHtml + '</select>';
 }
 
 ExternalModules.Settings.prototype.getInputElement = function(type, name, value, inputAttributes){
@@ -417,7 +371,6 @@ ExternalModules.Settings.prototype.getInstanceSymbol = function(){
 ExternalModules.Settings.prototype.findSettings = function(config,name) {
 	var configSettings = [config['project-settings'],config['system-settings']];
 	var activeSetting = false;
-	var systemSetting = false;
 
 	configSettings.forEach(function(configType) {
 		var matchedSetting = ExternalModules.Settings.prototype.parseSettings(configType, name);
@@ -425,12 +378,7 @@ ExternalModules.Settings.prototype.findSettings = function(config,name) {
 		if(matchedSetting !== false) {
 			activeSetting = matchedSetting;
 		}
-
-		// Second pass is system settings, so second loop will be true
-		systemSetting = true;
 	});
-
-	activeSetting['isSystem'] = systemSetting;
 
 	return activeSetting;
 };
@@ -608,17 +556,6 @@ $(function(){
 		} else {
 			val = $(this).val();
 		}
-		var overrideButton = $(this).closest('tr').find('button.external-modules-use-system-setting');
-		if (overrideButton) {
-			var systemValue = overrideButton.data('system-value');
-			if (typeof systemValue != "undefined") {
-				if (systemValue == val) {
-					overrideButton.hide();
-				} else {
-					overrideButton.show();
-				}
-			}
-		}
 	};
 
 	$('#external-modules-configure-modal').on('change', '.external-modules-input-element', onValueChange);
@@ -639,7 +576,7 @@ $(function(){
 		//console.log(setting);
 		if(typeof setting !== "undefined") {
 			// Create new html for this setting
-			var html = ExternalModules.Settings.prototype.getSettingRows(setting.isSystem,[setting],[{}]);
+			var html = ExternalModules.Settings.prototype.getSettingRows([setting],[{}]);
 
 			var thisTr = $(this).closest("tr");
 
@@ -724,10 +661,12 @@ $(function(){
 
 			// Get the html for the configuration
 			var settingsHtml = "";
-			settingsHtml += settings.getSettingRows(true, config['system-settings'], savedSettings);
 
 			if(pid) {
-				settingsHtml += settings.getSettingRows(false, config['project-settings'], savedSettings);
+				settingsHtml += settings.getSettingRows(config['project-settings'], savedSettings);
+			}
+			else {
+				settingsHtml += settings.getSettingRows(config['system-settings'], savedSettings);
 			}
 
 			// Add blank tr to end of table to make resetConfigInstances work better
@@ -768,15 +707,6 @@ $(function(){
 			} else {		// failure
 				alert("The file was not able to be deleted. "+JSON.stringify(data));
 			}
-
-			var overrideButton = row.find("button.external-modules-use-system-setting");
-			var systemValue = overrideButton.data("system-value");
-
-			if (systemValue != "") {	// compare to new value
-				overrideButton.show();
-			} else {
-				overrideButton.hide();
-			}
 		});
 	};
 	configureModal.on('click', '.external-modules-delete-file', function() {
@@ -799,44 +729,6 @@ $(function(){
 	}
 
 	configureModal.on('change', 'input[type=file]', resetSaveButton);
-
-	configureModal.on('click', '.external-modules-use-system-setting', function(){
-		var overrideButton = $(this);
-		var systemValue = overrideButton.data('system-value');
-		var row = overrideButton.closest('tr');
-		var inputs = row.find('td:nth-child(2)').find('input, select');
-
-		var type = inputs[0].type;
-		if(type == 'radio'){
-			inputs.filter('[value=' + systemValue + ']').click();
-		}
-		else if(type == 'checkbox'){
-			inputs.prop('checked', systemValue);
-		}
-		else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
-			deleteFile($(this));
-			resetSaveButton("");
-		}
-		else if(type == 'file') {
-			// if a real value
-			if (!isNaN(systemValue)) {
-				var edocLine = row.find(".external-modules-input-td");
-				if (edocLine) {
-					var inputAttributes = "";
-					if (inputs.prop("disabled")) {
-						inputAttributes = "disabled";
-					}
-					edocLine.html(settings.getSystemFileFieldElement(inputs.attr('name'), systemValue, inputAttributes));
-					resetSaveButton(systemValue);
-					row.find(".external-modules-delete-file").show();
-				}
-			}
-		}
-		else{ // text or select
-			inputs.val(systemValue);
-		}
-		overrideButton.hide();
-	});
 
 	// helper method for saving
 	var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
@@ -898,7 +790,6 @@ $(function(){
 		
 		configureModal.find('input, select, textarea').each(function(index, element){
 			var element = $(element);
-			var systemValue = element.closest('tr').find('.override-system-setting').data('system-value');
 			var name = element.attr('name');
 			var type = element[0].type;
 
@@ -929,10 +820,6 @@ $(function(){
 				}
 				else{
 					value = element.val();
-				}
-
-				if(value == systemValue){
-					value = '';
 				}
 
 				data[name] = value;
