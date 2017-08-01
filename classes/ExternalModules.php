@@ -998,6 +998,10 @@ class ExternalModules
 				}
 
 				self::safeRequireOnce($classFilePath);
+
+				if (!class_exists($classNameWithNamespace)) {
+					throw new Exception("The file '$className.php' file must define the '$classNameWithNamespace' class for the '$prefix' module.");
+				}
 			}
 
 			$instance = new $classNameWithNamespace();
