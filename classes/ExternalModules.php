@@ -629,7 +629,7 @@ class ExternalModules
 		if (!empty($projectIds)) {
 			$whereClauses[] = self::getSQLInClause('s.project_id', $projectIds);
 		}
-		else {
+		else if($projectIds !== null) {
 			$whereClauses[] = self::getSQLInClause('s.project_id', ["NULL"]);
 		}
 
@@ -1110,7 +1110,7 @@ class ExternalModules
 		return PHP_SAPI == 'cli' && strpos($_SERVER['argv'][0], 'phpunit') !== FALSE;
 	}
 
-	# calling this method stores a local cache of all releavant data from the database
+	# calling this method stores a local cache of all relevant data from the database
 	private static function cacheAllEnableData()
 	{
 		$systemwideEnabledVersions = array();
