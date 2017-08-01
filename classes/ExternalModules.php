@@ -1351,11 +1351,10 @@ class ExternalModules
 
 			list($prefix, $version) = self::getParseModuleDirectoryPrefixAndVersion($dir);
 
-			if(@$enabledModules[$prefix] != $version) {
+			if($prefix && @$enabledModules[$prefix] != $version) {
 				$versions = @$disabledModuleVersions[$prefix];
 				if(!isset($versions)){
 					$versions = array();
-
 				}
 
 				// Use array_merge_recursive() to show newest versions first.
