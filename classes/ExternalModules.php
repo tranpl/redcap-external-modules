@@ -457,10 +457,8 @@ class ExternalModules
 
 		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
-		// Triple equals includes type checking, and even order checking for complex nested arrays!
-		if($value === $oldValue){
-			// Nothing changed, so we don't need to do anything.
-			return;
+		if(is_array($oldValue)) {
+			$oldValue = json_encode($oldValue);
 		}
 
 		# if $value is an array, then encode as JSON
@@ -481,10 +479,16 @@ class ExternalModules
 			$value = json_encode($newValue);
 		}
 
+		// Triple equals includes type checking, and even order checking for complex nested arrays!
+		if($value === $oldValue){
+			// Nothing changed, so we don't need to do anything.
+			return;
+		}
+
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
 		$pidString = $projectId;
-		if (!$projectId) {
+		if (!$projectId || $projectId == "") {
 			$pidString = "NULL";
 		}
 
@@ -526,7 +530,7 @@ class ExternalModules
 							type = '$type'
 						WHERE
 							external_module_id = $externalModuleId
-							AND " . self::getSqlEqualClause('project_id', $projectId) . "
+							AND " . self::getSqlEqualClause('project_id', $pidString) . "
 							AND `key` = '$key'";
 			}
 		}
@@ -624,6 +628,9 @@ class ExternalModules
 
 		if (!empty($projectIds)) {
 			$whereClauses[] = self::getSQLInClause('s.project_id', $projectIds);
+		}
+		else {
+			$whereClauses[] = self::getSQLInClause('s.project_id', ["NULL"]);
 		}
 
 		if (!empty($keys)) {
