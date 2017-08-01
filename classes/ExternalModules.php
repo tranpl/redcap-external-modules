@@ -1431,52 +1431,52 @@ class ExternalModules
 
 	# specialty field lists include: user-role-list, user-list, dag-list, field-list, and form-list
 	public static function getAdditionalFieldChoices($configRow,$pid) {
-                if ($configRow['type'] == 'user-role-list') {
-                        $choices = [];
+		if ($configRow['type'] == 'user-role-list') {
+				$choices = [];
 
-                        $sql = "SELECT role_id,role_name
-								FROM redcap_user_roles
-								WHERE project_id = '" . db_real_escape_string($pid) . "'
-								ORDER BY role_id";
-                        $result = self::query($sql);
+				$sql = "SELECT role_id,role_name
+						FROM redcap_user_roles
+						WHERE project_id = '" . db_real_escape_string($pid) . "'
+						ORDER BY role_id";
+				$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
-                        }
+				while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
+				}
 
-                        $configRow['choices'] = $choices;
-                }
-                else if ($configRow['type'] == 'user-list') {
-                        $choices = [];
+				$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'user-list') {
+				$choices = [];
 
-                        $sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
-								FROM redcap_user_rights ur, redcap_user_information ui
-								WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
-										AND ui.username = ur.username
-								ORDER BY ui.ui_id";
-                        $result = self::query($sql);
+				$sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
+						FROM redcap_user_rights ur, redcap_user_information ui
+						WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
+								AND ui.username = ur.username
+						ORDER BY ui.ui_id";
+				$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
-                        }
+				while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
+				}
 
-                        $configRow['choices'] = $choices;
-                }
-                else if ($configRow['type'] == 'dag-list') {
-                        $choices = [];
+				$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'dag-list') {
+				$choices = [];
 
-                        $sql = "SELECT group_id,group_name
-								FROM redcap_data_access_groups
-								WHERE project_id = '" . db_real_escape_string($pid) . "'
-								ORDER BY group_id";
-                        $result = self::query($sql);
+				$sql = "SELECT group_id,group_name
+						FROM redcap_data_access_groups
+						WHERE project_id = '" . db_real_escape_string($pid) . "'
+						ORDER BY group_id";
+				$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
-                        }
+				while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
+				}
 
-                        $configRow['choices'] = $choices;
-                }
+				$configRow['choices'] = $choices;
+		}
 		else if ($configRow['type'] == 'field-list') {
 			$choices = [];
 
@@ -1549,6 +1549,22 @@ class ExternalModules
 				}
 				$configRow["source"] .= ($configRow["source"] == "" ? "" : ",").$configRow['sub_settings'][$subConfigKey]['source'];
 			}
+		}
+		else if($configRow['type'] == 'project-id') {
+			$sql = "SELECT p.project_id, p.app_title
+					FROM redcap_projects p, redcap_user_rights u
+					WHERE p.project_id = u.project_id
+						AND u.username = '".db_real_escape_string(USERID)."'
+						AND LOWER(p.app_title) LIKE '%".strtolower(db_real_escape_string($pid))."%'";
+
+			$result = db_query($sql);
+
+			$matchingProjects = [];
+
+			while($row = db_fetch_assoc($result)) {
+				$matchingProjects[] = ["id" => $row["project_id"], "text" => $row["app_title"]];
+			}
+			$configRow['choices'] = $matchingProjects;
 		}
 
 		return $configRow;

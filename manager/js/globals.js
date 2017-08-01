@@ -93,54 +93,25 @@ ExternalModules.Settings.prototype.getSettingColumns = function(setting,savedSet
 };
 
 // Function to use javascript to finish setting up configuration
-ExternalModules.Settings.prototype.configureSettings = function(configSettings, savedSettings) {
+// This is called twice from two different ajax calls when first loading a configuration, so we wait until
+// both are done before actually configuring the settings
+ExternalModules.Settings.prototype.configureSettings = function() {
+	if($('#external-modules-configure-modal').find('tbody').html() == "" || (typeof ExternalModules.Settings.projectList === "undefined")) {
+		return;
+	}
+
+	// Loop through every project_id_textbox to add the project label to the select
+	$(".project_id_textbox").each(function() {
+		var selectedOption = $(this).find("option:selected");
+		if(selectedOption.val() in ExternalModules.Settings.projectList) {
+			selectedOption.html(ExternalModules.Settings.projectList[selectedOption.val()]);
+		}
+	});
+
 	var settings = this;
 
 	// Set up other functions that need configuration
 	settings.initializeRichTextFields();
-
-	// For project IDs that have already been set, set up the value
-	configSettings.forEach(function(setting){
-		var setting = $.extend({}, setting);
-
-		if(setting.type == 'project-id') {
-			var saved = savedSettings[setting.key];
-			if(saved){
-				setting.value = saved.value;
-			}
-			console.log(setting);
-			console.log(savedSettings);
-
-			if(setting.value != '' && setting.value != null) {
-				$('select[name="' + setting.key + '"]').removeClass('project_id_textbox');
-				$.ajax({
-					url: 'ajax/get-project-list.php',
-					dataType: 'json'
-				}).done(function(data) {
-					var selectHtml = "";
-					for(var key in data.results) {
-						if(data.results[key]['id'] == setting.value) {
-							selectHtml = "<option value='" + setting.value + "'>" + data.results[key]['text'] + "</option>";
-						}
-					}
-					$('select[name="' + setting.key + '"]').html(selectHtml);
-
-					$('select[name="' + setting.key + '"]').select2({
-						width: '100%',
-						data: data.results,
-						ajax: {
-							url: 'ajax/get-project-list.php',
-							dataType: 'json',
-							delay: 250,
-							data: function(params) { return {'parameters':params.term }; },
-							method: 'GET',
-							cache: true
-						}
-					});
-				});
-			}
-		}
-	});
 
 	// Reset the instances so that things will be saved correctly
 	settings.resetConfigInstances();
@@ -208,7 +179,7 @@ ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
 		inputHtml = this.getRichTextElement(key, value);
 	}
 	else if(type == 'sub_settings'){
-		inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label>";
+		inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label><input type='hidden' value='true' name='key' />";
 		trClass += 'sub_start';
 	}
 	else if(type == 'radio'){
@@ -651,6 +622,20 @@ $(function(){
 			params['pid'] = pidString;
 		}
 
+		// Just in case there are any project-id lists, we need to get a full project list
+		if(typeof ExternalModules.Settings.projectList === "undefined") {
+			$.ajax({
+				url:'ajax/get-project-list.php',
+				dataType: 'json'
+			}).done(function(data) {
+				ExternalModules.Settings.projectList = [];
+				data["results"].forEach(function(projectDetails) {
+					ExternalModules.Settings.projectList[projectDetails["id"]] = projectDetails["text"];
+				});
+				settings.configureSettings();
+			});
+		}
+
 		// Get the existing values for this module through ajax
 		$.post('ajax/get-settings.php', params, function(data){
 			if(data.status != 'success'){
@@ -675,12 +660,7 @@ $(function(){
 			tbody.html(settingsHtml);
 
 			// Post HTML scripting
-			if(pid) {
-				settings.configureSettings(config['project-settings'], savedSettings);
-			}
-			else {
-				settings.configureSettings(config['system-settings'], savedSettings);
-			}
+			settings.configureSettings();
 		});
 	});
 
