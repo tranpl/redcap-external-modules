@@ -18,7 +18,7 @@ $pid = $_GET['pid'];
 
 <div id="external-modules-download" class="simpleDialog" role="dialog">
 	Do you wish to download the External Module named 
-	"<b><?php print \RCView::escape(rawurldecode(urldecode($_GET['download_module_name']))) ?></b>"?
+	"<b><?php print \RCView::escape(rawurldecode(urldecode($_GET['download_module_title']))) ?></b>"?
 	This will create a new directory folder for the module on the REDCap web server.
 </div>
 
@@ -69,10 +69,16 @@ here. In turn, each project can override this set of defaults with their own val
 <?php } ?>
 <br>
 <?php if(SUPER_USER) { ?>
-	<button id="external-modules-enable-modules-button">Enable a module</button>
+	<button id="external-modules-enable-modules-button" class="btn btn-success btn-sm">
+		<span class="glyphicon glyphicon-off" aria-hidden="true"></span>
+		Enable a module
+	</button>
 <?php } ?>
 <?php if (SUPER_USER && !isset($_GET['pid'])) { ?>
-	<button id="external-modules-download-modules-button">Download new module from library</button>
+	<button id="external-modules-download-modules-button" class="btn btn-primary btn-sm">
+		<span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+		Download new module from repository
+	</button>
 <?php } ?>
 <br>
 <br>

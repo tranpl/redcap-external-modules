@@ -1801,8 +1801,6 @@ class ExternalModules
 		// Validate module_id
 		if (empty($module_id) || !is_numeric($module_id)) exit("0");
 		$module_id = (int)$module_id;
-		// Call the module download service to download the module zip
-		$moduleZipContents = http_get(APP_URL_EXTMOD_LIB . "download.php?module_id=$module_id");
 		// Also obtain the folder name of the module
 		$moduleFolderName = http_get(APP_URL_EXTMOD_LIB . "download.php?module_id=$module_id&name=1");
 		// First see if the module directory already exists
@@ -1810,6 +1808,8 @@ class ExternalModules
 		if (file_exists($moduleFolderDir) && is_dir($moduleFolderDir)) {
 		   exit("4");
 		}
+		// Call the module download service to download the module zip
+		$moduleZipContents = http_get(APP_URL_EXTMOD_LIB . "download.php?module_id=$module_id");
 		// Errors?
 		if ($moduleZipContents == 'ERROR') {
 			// 0 = Module does not exist in library
