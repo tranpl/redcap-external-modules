@@ -149,7 +149,7 @@ class ExternalModules
 
 				if (preg_match("/____/", $key)) {
 					$parts = preg_split("/____/", $key);
-					$shortKey = $parts[0];
+					$shortKey = array_shift($parts);
 
 					if(!isset($instances[$shortKey])){
 						$instances[$shortKey] = [];
@@ -159,7 +159,15 @@ class ExternalModules
 						$value = '';
 					}
 
-					$instances[$shortKey][] = $value;
+					$thisInstance = &$instances[$shortKey];
+					foreach($parts as $thisIndex) {
+						if(!isset($thisInstance[$thisIndex])) {
+							$thisInstance[$thisIndex] = [];
+						}
+						$thisInstance = &$thisInstance[$thisIndex];
+					}
+
+					$thisInstance = $value;
 				} else if (empty($pid)) {
 					$saved[$key] = $value;
 					self::setSystemSetting($moduleDirectoryPrefix, $key, $value);
@@ -171,7 +179,7 @@ class ExternalModules
 		}
 
 		foreach($instances as $key => $values) {
-			self::setSetting($moduleDirectoryPrefix, $pid, $key, $values);
+			self::setSetting($moduleDirectoryPrefix, $pid, $key, json_encode($values),"json");
 		}
 	}
 
@@ -470,10 +478,8 @@ class ExternalModules
 
 		$oldValue = self::getSetting($moduleDirectoryPrefix, $projectId, $key);
 
-		// Triple equals includes type checking, and even order checking for complex nested arrays!
-		if($value === $oldValue){
-			// Nothing changed, so we don't need to do anything.
-			return;
+		if(is_array($oldValue)) {
+			$oldValue = json_encode($oldValue);
 		}
 
 		# if $value is an array, then encode as JSON
@@ -494,10 +500,16 @@ class ExternalModules
 			$value = json_encode($newValue);
 		}
 
+		// Triple equals includes type checking, and even order checking for complex nested arrays!
+		if($value === $oldValue){
+			// Nothing changed, so we don't need to do anything.
+			return;
+		}
+
 		$externalModuleId = self::getIdForPrefix($moduleDirectoryPrefix);
 
 		$pidString = $projectId;
-		if (!$projectId) {
+		if (!$projectId || $projectId == "") {
 			$pidString = "NULL";
 		}
 
@@ -539,7 +551,7 @@ class ExternalModules
 							type = '$type'
 						WHERE
 							external_module_id = $externalModuleId
-							AND " . self::getSqlEqualClause('project_id', $projectId) . "
+							AND " . self::getSqlEqualClause('project_id', $pidString) . "
 							AND `key` = '$key'";
 			}
 		}
@@ -637,6 +649,9 @@ class ExternalModules
 
 		if (!empty($projectIds)) {
 			$whereClauses[] = self::getSQLInClause('s.project_id', $projectIds);
+		}
+		else if($projectIds !== null) {
+			$whereClauses[] = self::getSQLInClause('s.project_id', ["NULL"]);
 		}
 
 		if (!empty($keys)) {
@@ -1137,7 +1152,7 @@ class ExternalModules
 		return PHP_SAPI == 'cli' && strpos($_SERVER['argv'][0], 'phpunit') !== FALSE;
 	}
 
-	# calling this method stores a local cache of all releavant data from the database
+	# calling this method stores a local cache of all relevant data from the database
 	private static function cacheAllEnableData()
 	{
 		$systemwideEnabledVersions = array();
@@ -1451,59 +1466,61 @@ class ExternalModules
 			}
 		}
 
-		$config = self::addReservedSettings($config);
+		if($pid === null) {
+			$config = self::addReservedSettings($config);
+		}
 
 		return $config;
 	}
 
 	# specialty field lists include: user-role-list, user-list, dag-list, field-list, and form-list
 	public static function getAdditionalFieldChoices($configRow,$pid) {
-                if ($configRow['type'] == 'user-role-list') {
-                        $choices = [];
+		if ($configRow['type'] == 'user-role-list') {
+				$choices = [];
 
-                        $sql = "SELECT role_id,role_name
-								FROM redcap_user_roles
-								WHERE project_id = '" . db_real_escape_string($pid) . "'
-								ORDER BY role_id";
-                        $result = self::query($sql);
+				$sql = "SELECT role_id,role_name
+						FROM redcap_user_roles
+						WHERE project_id = '" . db_real_escape_string($pid) . "'
+						ORDER BY role_id";
+				$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
-                        }
+				while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['role_id'], 'name' => $row['role_name']];
+				}
 
-                        $configRow['choices'] = $choices;
-                }
-                else if ($configRow['type'] == 'user-list') {
-                        $choices = [];
+				$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'user-list') {
+				$choices = [];
 
-                        $sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
-								FROM redcap_user_rights ur, redcap_user_information ui
-								WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
-										AND ui.username = ur.username
-								ORDER BY ui.ui_id";
-                        $result = self::query($sql);
+				$sql = "SELECT ur.username,ui.user_firstname,ui.user_lastname
+						FROM redcap_user_rights ur, redcap_user_information ui
+						WHERE ur.project_id = '" . db_real_escape_string($pid) . "'
+								AND ui.username = ur.username
+						ORDER BY ui.ui_id";
+				$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
-                        }
+				while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['username'], 'name' => $row['user_firstname'] . ' ' . $row['user_lastname']];
+				}
 
-                        $configRow['choices'] = $choices;
-                }
-                else if ($configRow['type'] == 'dag-list') {
-                        $choices = [];
+				$configRow['choices'] = $choices;
+		}
+		else if ($configRow['type'] == 'dag-list') {
+				$choices = [];
 
-                        $sql = "SELECT group_id,group_name
-								FROM redcap_data_access_groups
-								WHERE project_id = '" . db_real_escape_string($pid) . "'
-								ORDER BY group_id";
-                        $result = self::query($sql);
+				$sql = "SELECT group_id,group_name
+						FROM redcap_data_access_groups
+						WHERE project_id = '" . db_real_escape_string($pid) . "'
+						ORDER BY group_id";
+				$result = self::query($sql);
 
-                        while ($row = db_fetch_assoc($result)) {
-                                $choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
-                        }
+				while ($row = db_fetch_assoc($result)) {
+						$choices[] = ['value' => $row['group_id'], 'name' => $row['group_name']];
+				}
 
-                        $configRow['choices'] = $choices;
-                }
+				$configRow['choices'] = $choices;
+		}
 		else if ($configRow['type'] == 'field-list') {
 			$choices = [];
 
@@ -1576,6 +1593,22 @@ class ExternalModules
 				}
 				$configRow["source"] .= ($configRow["source"] == "" ? "" : ",").$configRow['sub_settings'][$subConfigKey]['source'];
 			}
+		}
+		else if($configRow['type'] == 'project-id') {
+			$sql = "SELECT p.project_id, p.app_title
+					FROM redcap_projects p, redcap_user_rights u
+					WHERE p.project_id = u.project_id
+						AND u.username = '".db_real_escape_string(USERID)."'
+						AND LOWER(p.app_title) LIKE '%".strtolower(db_real_escape_string($pid))."%'";
+
+			$result = db_query($sql);
+
+			$matchingProjects = [];
+
+			while($row = db_fetch_assoc($result)) {
+				$matchingProjects[] = ["id" => $row["project_id"], "text" => $row["app_title"]];
+			}
+			$configRow['choices'] = $matchingProjects;
 		}
 
 		return $configRow;

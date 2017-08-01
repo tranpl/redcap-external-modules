@@ -34,16 +34,14 @@
 			"name": "System Upload",
 			"required": false,
 			"type": "file",
-			"repeatable": false,
-			"allow-project-overrides": true
+			"repeatable": false
 		},
 		{
 			"key": "system-checkbox",
 			"name": "System Checkbox",
 			"required": false,
 			"type": "checkbox",
-			"repeatable": false,
-			"allow-project-overrides": true
+			"repeatable": false
 		},
 		{
 			"key": "system-project",
