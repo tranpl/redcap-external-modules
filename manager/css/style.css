@@ -114,3 +114,7 @@
 .external-modules-input-td .mce-path {
 	display: none;
 }
+
+.btn-group-sm>.btn, .btn-sm {
+	font-size: 13px;
+}
