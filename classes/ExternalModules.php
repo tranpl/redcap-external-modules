@@ -1424,6 +1424,9 @@ class ExternalModules
 			}
 
 			if($config == null){
+				// Disable the module to prevent repeated errors, especially those that prevent the External Modules menu items from appearing.
+				self::disable($prefix);
+
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 			}
 
