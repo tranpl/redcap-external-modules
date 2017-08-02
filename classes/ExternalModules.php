@@ -1325,22 +1325,6 @@ class ExternalModules
 			}
 		}
 
-		$addManageLink = function($url) use (&$links){
-			$links['Manage External Modules'] = array(
-				'icon' => 'puzzle_small',
-				'url' => ExternalModules::$BASE_URL  . $url
-			);
-		};
-
-		if(isset($pid)){
-			if(SUPER_USER || !empty($versionsByPrefix) && self::hasDesignRights()){
-				$addManageLink('manager/project.php?');
-			}
-		}
-		else{
-			$addManageLink('manager/control_center.php');
-		}
-
 		ksort($links);
 
 		return $links;
