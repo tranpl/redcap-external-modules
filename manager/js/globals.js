@@ -118,10 +118,14 @@ ExternalModules.Settings.prototype.configureSettings = function() {
 }
 
 
-ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
+ExternalModules.Settings.prototype.getColumnHtml = function(setting,value,className){
 	var type = setting.type;
 	var key = setting.key;
-	var trClass = "";
+
+	if(typeof className === "undefined") {
+		className = "";
+	}
+	var trClass = className;
 
 	var instanceLabel = "";
 	if (typeof instance != "undefined") {
@@ -180,7 +184,7 @@ ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
 	}
 	else if(type == 'sub_settings'){
 		inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label><input type='hidden' value='true' name='key' />";
-		trClass += 'sub_start';
+		trClass += ' sub_start';
 	}
 	else if(type == 'radio'){
 		inputHtml = "";
@@ -455,7 +459,7 @@ ExternalModules.Settings.prototype.resetConfigInstances = function() {
 		}
 
 		$(this).find(".external-modules-instance-label").html(currentLabel + " ");
-		$(this).find("select, input").attr("name",$(this).attr("field") + currentName);
+		$(this).find("input, select, textarea").attr("name",$(this).attr("field") + currentName);
 	});
 };
 
