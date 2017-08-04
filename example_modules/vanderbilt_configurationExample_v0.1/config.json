@@ -3,8 +3,6 @@
 
 	"namespace": "Vanderbilt\\ConfigurationExampleExternalModule",
 
-	"module-class-name": "ConfigurationExampleExternalModule",
-
 	"description": "Example module to show off all the options available",
 
 	"authors": [

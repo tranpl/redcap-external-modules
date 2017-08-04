@@ -37,7 +37,7 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 				<h4 class="modal-title">Enable Module: <span class="module-name"></span></h4>
 			</div>
 			<div class="modal-body">
-				<div id="external-modules-enable-modal-error" style="display:none;color:red;font-weight: bold"></div>
+				<div id="external-modules-enable-modal-error"></div>
 				<p>This module requests the following permissions:</p>
 				<ul></ul>
 			</div>
