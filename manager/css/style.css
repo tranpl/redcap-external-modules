@@ -118,3 +118,10 @@
 .btn-group-sm>.btn, .btn-sm {
 	font-size: 13px;
 }
+
+#external-modules-enable-modal-error {
+	word-wrap: break-word;
+	display: none;
+	color: red;
+	font-weight: bold;
+}
