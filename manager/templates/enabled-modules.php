@@ -50,7 +50,6 @@ $pid = $_GET['pid'];
 	</div>
 </div>
 
-<br>
 <?php if (isset($_GET['pid'])) { ?>
 
 <p>External modules combine and replace what REDCap previously has called plugins and hooks.

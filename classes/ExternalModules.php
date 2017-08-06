@@ -53,6 +53,9 @@ class ExternalModules
 	// We can't write values larger than this to the database, or they will be truncated.
 	const SETTING_SIZE_LIMIT = 65535;
 
+	// The minimum required PHP version for External Modules to run
+	const MIN_PHP_VERSION = '5.4.0';
+
 	# base URL for external modules
 	public static $BASE_URL;
 
