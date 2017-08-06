@@ -66,6 +66,22 @@ where desired, have been set by the author of the module. Each system can overri
 here. In turn, each project can override this set of defaults with their own value.</p>
 
 <?php } ?>
+
+<?php
+// Ensure that server is running PHP 5.4.0+ since REDCap's minimum requirement is PHP 5.3.0
+if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
+	?>
+	<div class="red">
+		<b>PHP <?=ExternalModules::MIN_PHP_VERSION?> or higher is required for External Modules:</b>
+		Sorry, but unfortunately your REDCap web server must be running PHP <?=ExternalModules::MIN_PHP_VERSION?>
+		or a later version to utilize the External Modules functionality. Your current version is PHP <?=PHP_VERSION?>.
+		You should consider upgrading PHP.
+	</div>
+	<?php
+	require_once APP_PATH_DOCROOT . 'ControlCenter/footer.php';
+	exit;
+}
+?>
 <br>
 <?php if(SUPER_USER) { ?>
 	<button id="external-modules-enable-modules-button" class="btn btn-success btn-sm">
