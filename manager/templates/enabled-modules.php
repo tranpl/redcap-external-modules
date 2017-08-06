@@ -50,20 +50,30 @@ $pid = $_GET['pid'];
 	</div>
 </div>
 
-<?php if (isset($_GET['pid'])) { ?>
+<p>External Modules are individual packages of software that can be downloaded and installed by a REDCap administrator.
+Modules can extend REDCap's current functionality, and can also provide customizations and enhancements for REDCap's
+existing behavior and appearance at the system level or project level.</p>
 
-<p>External modules combine and replace what REDCap previously has called plugins and hooks.
-Below is a list of enabled modules that can be used in this project. You can see what other modules are
-available by searching for additional modules. These are groups of code from outside sources
-that enhance REDCap functioning for specific purposes.</p> 
+<?php if (isset($_GET['pid']) && SUPER_USER) { ?>
+
+<p>As a REDCap administrator, you may enable any module that has been installed in REDCap for this project.
+Some configuration settings might be required to be set, in which administrators or
+users in this project with Project Setup/Design privileges can modify the configuration of any module at any time after the module
+has first been enabled by an administrator. Note: Normal project users will not be able to enable or disable modules.</p>
+
+<?php } elseif (isset($_GET['pid']) && !SUPER_USER) { ?>
+
+<p>As a user with Project Setup/Design privileges in this project, you can modify the configuration (if applicable)
+of any enabled module. Note: Only REDCap administrators are able to enable or disable modules.</p>
 
 <?php } else { ?>
 
-<p>External modules combine and replace what REDCap previously has called plugins and hooks.
-Below is a list of enabled modules (consisting of hooks and plugins) that are available for your users' use.
-They can be enabled system-wide or they can be enabled (opt-in style) on a project-level. Default values for each module,
-where desired, have been set by the author of the module. Each system can override these defaults by configuring them
-here. In turn, each project can override this set of defaults with their own value.</p>
+<p>You may click the "Download new module" button below to navigate to the External Modules Repository, which is a centralized catalog 
+of curated modules that have been submitted by various REDCap partner institutions. If you find a module in the repository that you wish
+to download, you will be able to install it, enable it, and then set any configuration settings (if applicable).
+If you choose not to enable the module in all REDCap projects by default, then you will need to navigate to the External Modules page
+on the left-hand menu of a given project to enable it there for that project. Some project-level configuration settings, depending on the module,
+may also need to set on the project page.</p>
 
 <?php } ?>
 
@@ -99,9 +109,9 @@ if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
 <br>
 
 <?php if (isset($_GET['pid'])) { ?>
-<h3>Currently Enabled Modules</h3>
+<h4><b>Currently Enabled Modules</b></h4>
 <?php } else { ?>
-<h3>Modules Currently Available on this System</h3>
+<h4><b>Modules Currently Available on this System</b></h4>
 <?php } ?>
 
 <script>
