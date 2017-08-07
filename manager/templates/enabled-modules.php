@@ -145,10 +145,12 @@ here. In turn, each project can override this set of defaults with their own val
                         $name = $author['name'];
                         if ($name) {
                                 if ($author['email']) {
-                                        $names[] = "<a href='mailto:".$author['email']."'>".$name."</a>";
-                                } else {
-                                        $names[] = $name;
+                                        $name = "<a href='mailto:".$author['email']."?subject=".rawurlencode($config['name']." - ".$version)."'>".$name."</a>";
                                 }
+                                if ($author['institution']) {
+                                        $name .= " (" . $author['institution'] . ")";
+                                }
+                                $names[] = $name;
                         }
                 }
                 if (count($names) > 0) {
