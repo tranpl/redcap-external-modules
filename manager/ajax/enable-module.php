@@ -35,6 +35,7 @@ else {
 		$exception = ExternalModules::enableAndCatchExceptions($_POST['prefix'], $_POST['version']);
 		if($exception){
 			$return_data['error_message'] = 'Exception while enabling module: ' . $exception->getMessage();
+			$return_data['stack_trace'] = $exception->getTraceAsString();
 		}
     }
 }
