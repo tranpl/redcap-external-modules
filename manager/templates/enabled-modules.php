@@ -191,7 +191,7 @@ if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
                         $institution = empty($author['institution']) ? "" : " <span class='author-institution'>({$author['institution']})</span>";
                         if ($name) {
                                 if ($author['email']) {
-                                        $names[] = "<a href='mailto:".$author['email']."'>".$name."</a>$institution";
+                                        $names[] = "<a href='mailto:".$author['email']."?subject=".rawurlencode($config['name']." - ".$version)."'>".$name."</a>$institution";
                                 } else {
                                         $names[] = $name . $institution;
                                 }
