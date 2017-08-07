@@ -359,6 +359,9 @@ class ExternalModules
 		# Attempt to create an instance of the module before enabling it system wide.
 		# This should catch problems like syntax errors in module code.
 		$instance = self::getModuleInstance($moduleDirectoryPrefix, $version);
+		
+		// Ensure compatibility with PHP version and REDCap version before instantiating the module class
+		self::isCompatibleWithREDCapPHP($moduleDirectoryPrefix, $version);
 
 		if (!isset($project_id)) {
 			self::initializeSettingDefaults($instance);
@@ -995,6 +998,32 @@ class ExternalModules
 	# Use the $arguments variable to pass data to the required file.
 	static function safeRequireOnce($path, $arguments = array()){
 		require_once $path;
+	}
+
+	# Ensure compatibility with PHP version and REDCap version during module installation using config values
+	private static function isCompatibleWithREDCapPHP($moduleDirectoryPrefix, $version)
+	{
+		$config = self::getConfig($moduleDirectoryPrefix, $version);
+		if (!isset($config['compatibility'])) return;
+		$Exceptions = array();
+		$compat = $config['compatibility'];
+		if (isset($compat['php-version-max']) && !empty($compat['php-version-max']) && !version_compare(PHP_VERSION, $compat['php-version-max'], '<=')) {
+			$Exceptions[] = "This module's maximum compatible PHP version is {$compat['php-version-max']}, but you are currently running PHP " . PHP_VERSION . ".";
+		}
+		elseif (isset($compat['php-version-min']) && !empty($compat['php-version-min']) && !version_compare(PHP_VERSION, $compat['php-version-min'], '>=')) {
+			$Exceptions[] = "This module's minimum required PHP version is {$compat['php-version-min']}, but you are currently running PHP " . PHP_VERSION . ".";
+		}
+		if (isset($compat['redcap-version-max']) && !empty($compat['redcap-version-max']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-max'], '<=')) {
+			$Exceptions[] = "This module's maximum compatible REDCap version is {$compat['redcap-version-max']}, but you are currently running REDCap " . REDCAP_VERSION . ".";
+		}
+		elseif (isset($compat['redcap-version-min']) && !empty($compat['redcap-version-min']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-min'], '>=')) {
+			$Exceptions[] = "This module's minimum required REDCap version is {$compat['redcap-version-min']}, but you are currently running REDCap " . REDCAP_VERSION . ".";
+		}
+		if (!empty($Exceptions)) {
+			throw new Exception("COMPATIBILITY ERROR: This version of the module \"".$config['name']."\"
+								is not compatible with your current version of PHP and/or REDCap, so cannot be installed on your 
+								REDCap server at this time. Details:<ul><li>" . implode("</li><li>", $Exceptions) . "</li></ul>");
+		}
 	}
 
 	# this is where a module has its code loaded
