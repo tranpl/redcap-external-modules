@@ -54,6 +54,25 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 	</div>
 </div>
 
+<div id="external-modules-disable-confirm-modal" class="modal fade" role="dialog" data-backdrop="static">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Disable module? <span class="module-name"></span></h4>
+			</div>
+			<div class="modal-body">
+				Are you sure you wish to disable this module (<b><span id="external-modules-disable-confirm-module-name"></span>_<span id="external-modules-disable-confirm-module-version"></span></b>)
+				for the current project?
+			</div>
+			<div class="modal-footer">
+				<button data-dismiss="modal">Cancel</button>
+				<button id="external-modules-disable-button-confirmed" class="save">Disable module</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <?php
 
 ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'project.js');

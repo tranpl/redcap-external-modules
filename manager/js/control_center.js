@@ -10,20 +10,26 @@ $(function () {
 		configureModal.find('.module-name').html(moduleName);
 	});
 
-	$('.external-modules-disable-button').click(function (event) {
+	$('.external-modules-disable-button').click(function (event) {	
 		var button = $(event.target);
-		button.attr('disabled', true);
-
 		var row = button.closest('tr');
 		var module = row.data('module');
+		var version = row.data('version');
+		$('#external-modules-disable-confirm-modal').modal('show');
+		$('#external-modules-disable-confirm-module-name').html(module);
+		$('#external-modules-disable-confirm-module-version').html(version);
+	});
+		
+	$('#external-modules-disable-button-confirmed').click(function (event) {
+		var button = $(event.target);
+		button.attr('disabled', true);
+		var module = $('#external-modules-disable-confirm-module-name').text();
 		$.post('ajax/disable-module.php', {module: module}, function (data) {
+			$('#external-modules-disable-confirm-modal').modal('hide');
 			if (data == 'success') {
-				    button.attr('disabled', false);
-				var table = row.closest('table');
-				row.remove();
-    
-				if(table.find('tr').length == 0){
-					table.html('None');
+				$('#external-modules-enabled tr[data-module="'+module+'"]').remove();    
+				if($('#external-modules-enabled tr').length == 0){
+					$('#external-modules-enabled').html('None');
 				}
 			}
 			else {

@@ -80,22 +80,14 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
-				<h4 class="modal-title">Configure Module: <span class="module-name"></span></h4>
+				<h4 class="modal-title">Disable module? <span class="module-name"></span></h4>
 			</div>
 			<div class="modal-body">
-				<table class="table table-no-top-row-border">
-					<thead>
-						<tr>
-							<th colspan="3">System Settings for All Projects</th>
-							<th>Project Override<br>Permission Level</th>
-						</tr>
-					</thead>
-					<tbody></tbody>
-				</table>
+				Are you sure you wish to disable this module (<b><span id="external-modules-disable-confirm-module-name"></span>_<span id="external-modules-disable-confirm-module-version"></span></b>)?
 			</div>
 			<div class="modal-footer">
 				<button data-dismiss="modal">Cancel</button>
-				<button class="save">Save</button>
+				<button id="external-modules-disable-button-confirmed" class="save">Disable module</button>
 			</div>
 		</div>
 	</div>
