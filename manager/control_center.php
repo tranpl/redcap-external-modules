@@ -75,6 +75,32 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 	</div>
 </div>
 
+<div id="external-modules-disable-confirm-modal" class="modal fade" role="dialog" data-backdrop="static">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Configure Module: <span class="module-name"></span></h4>
+			</div>
+			<div class="modal-body">
+				<table class="table table-no-top-row-border">
+					<thead>
+						<tr>
+							<th colspan="3">System Settings for All Projects</th>
+							<th>Project Override<br>Permission Level</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+			<div class="modal-footer">
+				<button data-dismiss="modal">Cancel</button>
+				<button class="save">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <?php ExternalModules::addResource('spin.js/spin.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js', 'sha256-PieqE0QdEDMppwXrTzSZQr6tWFX3W5KkyRVyF1zN3eg='); ?>
 <?php ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'control_center.js'); ?>
 

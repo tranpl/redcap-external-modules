@@ -574,20 +574,6 @@ class ExternalModules
 
 		$affectedRows = db_affected_rows();
 
-		$description = ucfirst(strtolower($event)) . ' External Module setting';
-		$logevent = "MANAGE";
-
-		if (($value === "") || ($value === null)) {
-			if(class_exists('Logging')){
-				// REDCap v6.18.3 or later
-				\Logging::logEvent($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
-			}
-			else{
-				// REDCap prior to v6.18.3
-				log_event($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
-			}
-		}
-
 		if($affectedRows != 1){
 			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
 		}
@@ -812,6 +798,19 @@ class ExternalModules
 		}
 
 		return null;
+	}
+
+	# gets the currently installed module's version based on the module prefix string
+	public static function getModuleVersionByPrefix($prefix){
+		$prefix = db_real_escape_string($prefix);
+		
+		$sql = "SELECT s.value FROM redcap_external_modules m, redcap_external_module_settings s 
+				WHERE m.external_module_id = s.external_module_id AND m.directory_prefix = '$prefix'
+				AND s.project_id IS NULL AND s.`key` = '" . self::KEY_VERSION . "' LIMIT 1";
+		
+		$result = self::query($sql);
+
+		return db_result($result, 0);
 	}
 
 	# executes a database query and returns the result
