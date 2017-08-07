@@ -12,7 +12,7 @@ if(!ExternalModules::hasDesignRights()){
 
 <h4 style="margin-top: 0;">
 	<img src="<?= '../images/puzzle_medium.png' ?>">
-	Module Management for Your Project
+	External Modules - Project Module Manager
 </h4>
 
 <?php

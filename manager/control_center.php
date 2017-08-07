@@ -7,7 +7,7 @@ require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
 
 <h4 style="margin-top: 0;">
 	<img src='../images/puzzle_medium.png'>
-	Module Management
+	External Modules - Module Manager
 </h4>
 
 <?php
