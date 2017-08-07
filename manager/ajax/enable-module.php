@@ -34,7 +34,7 @@ else {
     if(empty($return_data['error_message'])) {
 		$exception = ExternalModules::enableAndCatchExceptions($_POST['prefix'], $_POST['version']);
 		if($exception){
-			$return_data['error_message'] = $exception->getMessage();
+			$return_data['error_message'] = 'Exception while enabling module: ' . $exception->getMessage();
 		}
     }
 }
