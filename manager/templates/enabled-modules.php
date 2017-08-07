@@ -16,6 +16,12 @@ if($sql !== ""){
 $pid = $_GET['pid'];
 ?>
 
+<div id="external-modules-download" class="simpleDialog" role="dialog">
+	Do you wish to download the External Module named 
+	"<b><?php print \RCView::escape(rawurldecode(urldecode($_GET['download_module_title']))) ?></b>"?
+	This will create a new directory folder for the module on the REDCap web server.
+</div>
+
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -26,6 +32,19 @@ $pid = $_GET['pid'];
 			<div class="modal-body">
 				<form>
 				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="external-modules-usage-modal" class="modal fade" role="dialog" data-backdrop="static">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title"></h4>
+			</div>
+			<div class="modal-body">
 			</div>
 		</div>
 	</div>
@@ -49,7 +68,18 @@ here. In turn, each project can override this set of defaults with their own val
 
 <?php } ?>
 <br>
-<button id="external-modules-enable-modules-button">Search for Additional Module(s)</button>
+<?php if(SUPER_USER) { ?>
+	<button id="external-modules-enable-modules-button" class="btn btn-success btn-sm">
+		<span class="glyphicon glyphicon-off" aria-hidden="true"></span>
+		Enable a module
+	</button>
+<?php } ?>
+<?php if (SUPER_USER && !isset($_GET['pid'])) { ?>
+	<button id="external-modules-download-modules-button" class="btn btn-primary btn-sm">
+		<span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+		Download new module from repository
+	</button>
+<?php } ?>
 <br>
 <br>
 
@@ -80,6 +110,25 @@ here. In turn, each project can override this set of defaults with their own val
 			} else {
 				$config = ExternalModules::getConfig($prefix, $version);
 			}
+
+			## Add resources for custom javascript fields
+			foreach(array_merge($config['project-settings'],$config['system-settings']) as $configRow) {
+				if($configRow['source']) {
+					$sources = explode(",",$configRow['source']);
+					foreach($sources as $sourceLocation) {
+						if(is_file(ExternalModules::getModuleDirectoryPath($prefix,$version)."/".$sourceLocation)) {
+							// include file from module directory
+							ExternalModules::addResource(ExternalModules::getModuleDirectoryUrl($prefix,$version)."/".$sourceLocation);
+						}
+						else if(is_file(dirname(__DIR__)."/js/".$sourceLocation)) {
+							// include file from external_modules directory
+							ExternalModules::addResource("js/".$sourceLocation);
+						}
+					}
+				}
+			}
+
+
 			$configsByPrefix[$prefix] = $config;
 			$enabled = false;
 			if (isset($_GET['pid'])) {
@@ -112,7 +161,12 @@ here. In turn, each project can override this set of defaults with their own val
 						<?php if(ExternalModules::isProjectSettingsConfigOverwrittenBySystem($config) || !empty($config['project-settings'])){?>
 							<button class='external-modules-configure-button'>Configure</button>
 						<?php } ?>
-						<button class='external-modules-disable-button'>Disable</button>
+						<?php if(SUPER_USER) { ?>
+							<button class='external-modules-disable-button'>Disable</button>
+						<?php } ?>
+						<?php if(!isset($_GET['pid'])) { ?>
+							<button class='external-modules-usage-button' style="min-width: 90px">View Usage</button>
+						<?php } ?>
 					</td>
 				</tr>
 			<?php
@@ -122,18 +176,6 @@ here. In turn, each project can override this set of defaults with their own val
 
 	?>
 </table>
-
-<script>
-	(function(){
-		var enabledModulesTable = $('#external-modules-enabled')
-		enabledModulesTable.find('tr').sort(function(a, b){
-			a = $(a).find('.external-modules-title').text()
-			b = $(b).find('.external-modules-title').text()
-
-			return a.localeCompare(b)
-		}).appendTo(enabledModulesTable)
-	})()
-</script>
 
 <?php
 global $configsByPrefixJSON,$versionsByPrefixJSON;
@@ -156,3 +198,8 @@ if($versionsByPrefixJSON == null){
 }
 
 require_once 'globals.php';
+
+?>
+<script>
+	ExternalModules.sortModuleTable($('#external-modules-enabled'))
+</script>

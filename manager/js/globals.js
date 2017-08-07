@@ -1,412 +1,309 @@
-var ExternalModules = {};
+var ExternalModules = {
+	sortModuleTable: function(table){
+		table.find('tr').sort(function(a, b){
+			a = $(a).find('.external-modules-title').text()
+			b = $(b).find('.external-modules-title').text()
+
+			return a.localeCompare(b)
+		}).appendTo(table)
+	}
+};
 
 ExternalModules.Settings = function(){}
 
+ExternalModules.Settings.prototype.getAttributeValueHtml = function(s){
+	if(typeof s == 'string'){
+		s = s.replace(/"/g, '&quot;');
+		s = s.replace(/'/g, '&apos;');
+	}
 
-ExternalModules.Settings.prototype.shouldShowSettingOnProjectManagementPage = function(setting, system) {
-    if(!system){
-        // Always show project level settings.
-        return true;
-    }
-    if(setting.key == enabled){
-        // Hide the 'enabled' setting on projects, since we have buttons for enabling/disabling now.
-        // Also, leaving this setting in place caused the enabled flag to be changed from a boolean to a string (which could cause unexpected behavior).
-        return false;
-    }
-    if(setting.overrideLevelValue == null && !ExternalModules.SUPER_USER){
-        // Hide this setting since the override level will prevent the non-superuser from actually saving it.
-        return false;
-    }
-    // Checking whether a system setting is actually overridden is necessary for the UI to reflect when
-    // settings are overridden prior to allow-project-overrides being set to false.
-    var alreadyOverridden = setting.value != setting.systemValue;
-    return setting['allow-project-overrides'] || alreadyOverridden;
+	if (typeof s == "undefined") {
+		s = "";
+	}
+
+	return s;
 }
 
-ExternalModules.Settings.prototype.getSettingRows = function(system, configSettings, savedSettings){
-    var rowsHtml = '';
-    var settingsObject = this;
-    configSettings.forEach(function(setting){
-        var setting = $.extend({}, setting);
-        var saved = savedSettings[setting.key];
-        var indexSubSet = 0;
-        if (setting.sub_settings) {
-            var i = 0;
-            setting.sub_settings.forEach(function(subSetting) {
-                if (savedSettings[subSetting.key]) {
-                    setting.sub_settings[i].value = savedSettings[subSetting.key].value;
-                    setting.sub_settings[i].systemValue =  savedSettings[subSetting.key].system_value;
-                    //we keep the length of the array to know the number of elements
-                    if(subSetting.value && Array.isArray(subSetting.value)){
-                        indexSubSet = subSetting.value.length;
-                    }
-                }
-                i++;
-            });
-        } else if(saved){
-            setting.value = saved.value;
-            setting.systemValue = saved.system_value;
-        }
-        // Will need to clean up because can't use PHP constants in .js file
-        setting.overrideLevelKey = setting.key + ExternalModules.OVERRIDE_PERMISSION_LEVEL_SUFFIX;
-        var overrideLevel = savedSettings[setting.overrideLevelKey];
+// Function to get the HTML for all the setting rows
+ExternalModules.Settings.prototype.getSettingRows = function(configSettings, savedSettings,instance){
+	var rowsHtml = '';
+	var settingsObject = this;
+	configSettings.forEach(function(setting){
+		var setting = $.extend({}, setting);
 
-        if(overrideLevel){
-            setting.overrideLevelValue = overrideLevel.value
-        }
+		rowsHtml += settingsObject.getSettingColumns(setting,savedSettings,instance);
+	});
 
-        if(!ExternalModules.PID){
-            rowsHtml += '<tr>' + settingsObject.getSystemSettingColumns(setting) + '</tr>';
-        }
-        else if(settingsObject.shouldShowSettingOnProjectManagementPage(setting, system)){
-            rowsHtml += settingsObject.getProjectSettingHTML(setting,system, indexSubSet,'', '');
-        }
-    });
-
-    return rowsHtml;
-}
-
-ExternalModules.Settings.prototype.getSystemSettingColumns = function(setting){
-    var columns = this.getSettingColumns(setting);
-
-    if(setting['allow-project-overrides']){
-        var overrideChoices = [
-            { value: '', name: 'Superusers Only' },
-            // Will need to clean up because can't use PHP constants in .js file
-            { value: ExternalModules.OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS, name: 'Project Admins' },
-        ];
-
-        var selectAttributes = '';
-        // Will need to clean up because can't use PHP constants in .js file
-        if(setting.key == ExternalModules.KEY_ENABLED){
-            // For now, we've decided that only super users can enable modules on projects.
-            // To enforce this, we disable this override dropdown for ExternalModules::KEY_ENABLED.
-            selectAttributes = 'disabled'
-        }
-
-        columns += '<td>' + this.getSelectElement(setting.overrideLevelKey, overrideChoices, setting.overrideLevelValue, selectAttributes) + '</td>';
-    }
-    else{
-        columns += '<td></td>';
-    }
-
-    return columns;
+	return rowsHtml;
 };
 
-ExternalModules.Settings.prototype.getProjectSettingHTML = function(setting, system, indexSubSet, rowsHtml, customConfigClass){
-    if(customConfigClass != undefined){
-        this.setCustomConfigClass(customConfigClass);
-    }
-    var rowTitleSubSetHtml = '';
-    // SUB_SETTING
-    if (setting.sub_settings) {
-        if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Undefined]')) {
+ExternalModules.Settings.prototype.getSettingColumns = function(setting,savedSettings,previousInstance) {
+	var settingsObject = this;
+	var rowsHtml = '';
 
-            if(indexSubSet == 0) {
-                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
-            }
-        }
+	if(typeof previousInstance === 'undefined') {
+		previousInstance = [];
+	}
 
-        for (var instance = 0; instance < indexSubSet; instance++) {
-            //we add the sub_settings header
-            if(indexSubSet == 0){
-                //if values empty NEW form
-                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
-            }else{
-                rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance, indexSubSet) + '</tr>';
-            }
+	var thisSavedSettings = savedSettings[setting.key];
 
-            var settingsObject = this;
-            setting.sub_settings.forEach(function (subSetting) {
-                subSetting.sub_setting = true;
-                rowsHtml += '<tr class = "subsettings-table '+ customConfigClass+'">' + settingsObject.getProjectSettingColumns(subSetting, system, instance) + '</tr>';
-            });
-        }
-    } else if (setting.repeatable && (Object.prototype.toString.call(setting.value) === '[object Array]')) {
-        for (var instance=0; instance < setting.value.length; instance++) {
-            rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system, instance) + '</tr>';
-        }
-    } else {
-        rowsHtml += '<tr class="'+customConfigClass+'">' + this.getProjectSettingColumns(setting, system) + '</tr>';
-    }
+	if(typeof thisSavedSettings === "undefined") {
+		thisSavedSettings = [{}];
+	}
+	else {
+		thisSavedSettings = thisSavedSettings.value;
+		for(var i = 0; i < previousInstance.length; i++) {
+			if(thisSavedSettings.hasOwnProperty(previousInstance[i])) {
+				thisSavedSettings = thisSavedSettings[previousInstance[i]];
+			}
+			else {
+				thisSavedSettings = [{}];
+			}
+		}
+	}
 
-    return rowsHtml;
+	if(typeof thisSavedSettings === 'undefined') {
+		thisSavedSettings = [{}];
+	}
+
+	if(!Array.isArray(thisSavedSettings)) {
+		thisSavedSettings = [thisSavedSettings];
+	}
+
+	thisSavedSettings.forEach(function(settingValue,instance) {
+		var subInstance  = previousInstance.slice();
+		subInstance.push(instance);
+
+		if(setting.type == "sub_settings") {
+			rowsHtml += settingsObject.getColumnHtml(setting);
+			setting.sub_settings.forEach(function(settingDetails){
+				rowsHtml += settingsObject.getSettingRows([settingDetails],savedSettings,subInstance);
+			});
+			rowsHtml += "<tr style='display:none' class='sub_end' field='" + setting.key + "'></tr>";
+		}
+		else {
+			if(typeof settingValue !== "string") {
+				settingValue = "";
+			}
+			rowsHtml += settingsObject.getColumnHtml(setting, settingValue);
+		}
+	});
+
+	return rowsHtml;
+};
+
+// Function to use javascript to finish setting up configuration
+// This is called twice from two different ajax calls when first loading a configuration, so we wait until
+// both are done before actually configuring the settings
+ExternalModules.Settings.prototype.configureSettings = function() {
+	if($('#external-modules-configure-modal').find('tbody').html() == "" || (typeof ExternalModules.Settings.projectList === "undefined")) {
+		return;
+	}
+
+	// Loop through every project_id_textbox to add the project label to the select
+	$(".project_id_textbox").each(function() {
+		var selectedOption = $(this).find("option:selected");
+		if(selectedOption.val() in ExternalModules.Settings.projectList) {
+			selectedOption.html(ExternalModules.Settings.projectList[selectedOption.val()]);
+		}
+	});
+
+	var settings = this;
+
+	// Set up other functions that need configuration
+	settings.initializeRichTextFields();
+
+	// Reset the instances so that things will be saved correctly
+	settings.resetConfigInstances();
 }
 
-ExternalModules.Settings.prototype.getProjectSettingColumns = function(setting, system, instance, header){
-    var setting = $.extend({}, setting);
-    var projectName = setting['project-name'];
-    if(projectName){
-        setting.name = projectName;
-    }
-    var overrideButtonAttributes = 'data-system-value="' + this.getAttributeValueHtml(setting.systemValue) + '"';
 
-    if(system && (setting.type == "checkbox")) {
-        if (setting.value == "false") {
-            setting.value = 0;
-        }
-        if (setting.systemValue == "false") {
-            setting.systemValue = 0;
-        }
-    }
-    if(system && (setting.value == setting.systemValue)){
-        overrideButtonAttributes += " style='display: none;'";
-    }
+ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
+	var type = setting.type;
+	var key = setting.key;
+	var trClass = "";
 
-    var columns = this.getSettingColumns(setting, instance, header);
+	var instanceLabel = "";
+	if (typeof instance != "undefined") {
+		instanceLabel = (instance+1)+". ";
+	}
+	var html = "<td></td>";
+	if(type != 'sub_settings') {
+		html = "<td><span class='external-modules-instance-label'>" + instanceLabel + "</span><label>" + setting.name + ":</label></td>";
+	}
 
-    if(system){
-        columns += "<td style='width: 50px'><div style='min-height: 50px;'><button "+overrideButtonAttributes+" class='external-modules-use-system-setting'>Use<br>System<br>Setting</button></div></td>";
-    }
-    else{
-        columns += '<td></td>';
-    }
+	if (typeof instance != "undefined") {
+		// for looping for repeatable elements
+		if (typeof header == "undefined" && typeof value != "undefined" && value !== null) {
+			value = value[instance];
+		}
+		key = this.getInstanceName(key, instance);
+	}
 
-    return columns;
-}
-
-ExternalModules.Settings.prototype.getAttributeValueHtml = function(s){
-    if(typeof s == 'string'){
-        s = s.replace(/"/g, '&quot;');
-        s = s.replace(/'/g, '&apos;');
-    }
-
-    if (typeof s == "undefined") {
-        s = "";
-    }
-
-    return s;
-}
-
-ExternalModules.Settings.prototype.getSettingColumns = function(setting, instance, header){
-    var type = setting.type;
-    var key = setting.key;
-    var value = setting.value;
-
-    var instanceLabel = "";
-    if (typeof instance != "undefined") {
-        instanceLabel = (instance+1)+". ";
-    }
-    var html = "<td></td>";
-    if(type != 'sub_settings') {
-        html = "<td><span class='external-modules-instance-label'>" + instanceLabel + "</span><label>" + setting.name + ":</label></td>";
-    }
-
-    if (typeof instance != "undefined") {
-        // for looping for repeatable elements
-        if (header < 1 || typeof header == "undefined") {
-            if (typeof value == "undefined") {
-                value = "";
-            }else{
-                value = value[instance];
-            }
-        }
-        key = this.getInstanceName(key, instance);
-    }
-
-    var inputHtml;
-    if(type == 'dropdown'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'field-list'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'form-list'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'event-list'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'arm-list'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'user-list'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'user-role-list'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'dag-list'){
-        inputHtml = this.getSelectElement(key, setting.choices, value, []);
-    }
-    else if(type == 'project-id'){
-        inputHtml = "<div style='width:200px'>" + this.getSelectElement(key, setting.choices, value, {"class":"project_id_textbox"}) + "</div>";
-    }
-    else if(type == 'textarea'){
-        inputHtml = this.getTextareaElement(key, value, {"rows" : "6"});
-    }
+	var inputHtml;
+	if(type == 'dropdown'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'field-list'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'form-list'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'event-list'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'arm-list'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'user-list'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'user-role-list'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'dag-list'){
+		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+	}
+	else if(type == 'project-id'){
+		// Set up an option to store the saved value (setting.choice will be blank otherwise)
+		if(value != "") {
+			setting.choices = [{"value" : value, "name" : value}];
+		}
+		inputHtml = "<div style='width:200px'>" + this.getSelectElement(key, setting.choices, value, {"class":"project_id_textbox"}) + "</div>";
+	}
+	else if(type == 'textarea'){
+		inputHtml = this.getTextareaElement(key, value, {"rows" : "6"});
+	}
 	else if(type == 'rich-text') {
 		inputHtml = this.getRichTextElement(key, value);
 	}
-    else if(type == 'sub_settings'){
-        inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label>";
-    }
-    else if(type == 'radio'){
-        inputHtml = "";
-        for(var i in setting.choices ){
-            var choice = setting.choices[i];
+	else if(type == 'sub_settings'){
+		inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label><input type='hidden' value='true' name='key' />";
+		trClass += 'sub_start';
+	}
+	else if(type == 'radio'){
+		inputHtml = "";
+		for(var i in setting.choices ){
+			var choice = setting.choices[i];
 
-            var inputAttributes = [];
-            if(choice.value == value) {
-                inputAttributes["checked"] = "true";
-            }
+			var inputAttributes = [];
+			if(choice.value == value) {
+				inputAttributes["checked"] = "true";
+			}
 
-            inputHtml += this.getInputElement(type, key, choice.value, inputAttributes) + '<label>' + choice.name + '</label><br>';
-        }
-    } else {
-        var inputAttributes = [];
-        if(type == 'checkbox' && value == 1){
-            inputAttributes['checked'] = 'checked';
-        }
+			inputHtml += this.getInputElement(type, key, choice.value, inputAttributes) + '<label>' + choice.name + '</label><br>';
+		}
+	}
+	else if(type == 'custom') {
+		var functionName = setting.functionName;
 
-        inputHtml = this.getInputElement(type, key, value, inputAttributes);
-    }
+		inputHtml = this.getInputElement(type, key, value, inputAttributes);
+		inputHtml += "<script type='text/javascript'>" + functionName + "($('input[name=\"" + key + "\"]'));</script>";
+	} else {
+		var inputAttributes = [];
+		if(type == 'checkbox' && value == 1){
+			inputAttributes['checked'] = 'checked';
+		}
 
-    html += "<td class='external-modules-input-td'>" + inputHtml + "</td>";
+		inputHtml = this.getInputElement(type, key, value, inputAttributes);
+	}
 
-    html += this.addRepeatableButtons(setting, instance, header, type, key);
+	html += "<td class='external-modules-input-td'>" + inputHtml + "</td>";
 
-    return html;
-}
+	if(setting.repeatable) {
+		// Add repeatable buttons
+		html += "<td class='external-modules-add-remove-column'>";
+		html += "<button class='external-modules-add-instance' setting='" + setting.key + "'>+</button>";
+		html += "<button class='external-modules-remove-instance' >-</button>";
+		//html += "<span class='external-modules-original-instance'>original</span>";
+		html += "</td>";
 
-ExternalModules.Settings.prototype.addRepeatableButtons = function(setting, instance, header, type, key){
-    var html = '';
-    // no repeatable files allowed
-    if (setting.repeatable && (type != "file")) {
-        // fill with + and - buttons and hide when appropriate
-        // set original sign for first item when + is not displayed
-        var addButtonStyle = " style='display: none;'";
-        var removeButtonStyle = " style='display: none;'";
-        var originalTagStyle = " style='display: none;'";
+		trClass += ' repeatable';
+	}
+	else {
+		html += "<td></td>";
+	}
 
+	var outputHtml = "<tr" + (trClass === "" ? "" : " class='" + trClass + "'") + " field='" + setting.key + "'>" + html + "</tr>";
 
-        if ((typeof setting.value == "undefined") ||  (typeof instance == "undefined") || (instance + 1 >=  setting.value.length)) {
-            addButtonStyle = "";
-        }
-
-        if ((typeof instance != "undefined") && (instance > 0)) {
-            removeButtonStyle = "";
-        }
-
-        if ((addButtonStyle == "") && (removeButtonStyle == "") && (typeof instance != "undefined") && (instance === 0)) {
-            originalTagStyle = "";
-        }
-
-        //we are on the original element
-        if(type == 'sub_settings' && (instance === 0) && header > 0){
-            originalTagStyle = "";
-            addButtonStyle = " style='display: none;'";
-            removeButtonStyle = " style='display: none;'";
-        }
-
-
-        var settingsClass = '';
-        if(type == 'sub_settings'){
-            settingsClass = "-subsettings";
-        }
-
-        html += "<td class='external-modules-add-remove-column'>";
-        html += "<button class='external-modules-add-instance"+settingsClass+"'" + addButtonStyle + ">+</button>";
-        html += "<button class='external-modules-remove-instance"+settingsClass+"'"+ removeButtonStyle + ">-</button>";
-        html += "<span class='external-modules-original-instance"+settingsClass+"'" + originalTagStyle + ">original</span>";
-        html += "</td>";
-    } else {
-        html += "<td></td>";
-    }
-    //we add it after repeateable as it is a sub-setting and depends on it
-    if(type == 'sub_settings' &&  (header < 1 || typeof header == "undefined")){
-        html += this.getSubSettingsElements(key, setting.sub_settings, instance);
-    }
-
-    return html;
-}
-
-ExternalModules.Settings.prototype.getSubSettingsElements = function(name, value, instance){
-    if (typeof value == "undefined") {
-        value = "";
-    }
-
-    var html = '';
-    for(var i=0; i<value.length;i++){
-        html += '<tr class = "subsettings-table">'+this.getSettingColumns(value[i])+'<td></td></tr>';
-    }
-    return html;
-}
+	return outputHtml;
+};
 
 ExternalModules.Settings.prototype.getSelectElement = function(name, choices, selectedValue, selectAttributes){
-    if(!selectAttributes){
-        selectAttributes = [];
-    }
+	if(!selectAttributes){
+		selectAttributes = [];
+	}
 
-    var optionsHtml = '';
-    optionsHtml += '<option value=""></option>';
-    for(var i in choices ){
-        var choice = choices[i];
-        var value = choice.value;
+	var optionsHtml = '';
+	optionsHtml += '<option value=""></option>';
+	for(var i in choices ){
+		var choice = choices[i];
+		var value = choice.value;
 
-        var optionAttributes = ''
-        if(value == selectedValue){
-            optionAttributes += 'selected'
-        }
+		var optionAttributes = ''
+		if(value == selectedValue){
+			optionAttributes += 'selected'
+		}
 
-        optionsHtml += '<option value="' + this.getAttributeValueHtml(value) + '" ' + optionAttributes + '>' + choice.name + '</option>';
-    }
+		optionsHtml += '<option value="' + this.getAttributeValueHtml(value) + '" ' + optionAttributes + '>' + choice.name + '</option>';
+	}
 
-    var defaultAttributes = {"class" : "external-modules-input-element"};
-    var attributeString = this.getElementAttributes(defaultAttributes,selectAttributes);
+	var defaultAttributes = {"class" : "external-modules-input-element"};
+	var attributeString = this.getElementAttributes(defaultAttributes,selectAttributes);
 
-    return '<select ' + attributeString + ' name="' + name + '" ' + selectAttributes + '>' + optionsHtml + '</select>';
+	return '<select ' + attributeString + ' name="' + name + '" >' + optionsHtml + '</select>';
 }
 
 ExternalModules.Settings.prototype.getInputElement = function(type, name, value, inputAttributes){
-    if (typeof value == "undefined") {
-        value = "";
-    }
-    if (type == "file") {
-        if (ExternalModules.PID) {
-            return this.getProjectFileFieldElement(name, value, inputAttributes);
-        } else {
-            return this.getSystemFileFieldElement(name, value, inputAttributes);
-        }
-    } else {
-        return '<input type="' + type + '" name="' + name + '" value="' + this.getAttributeValueHtml(value) + '" ' + this.getElementAttributes({"class":"external-modules-input-element"},inputAttributes) + '>';
-    }
+	if (typeof value == "undefined") {
+		value = "";
+	}
+	if (type == "file") {
+		if (ExternalModules.PID) {
+			return this.getProjectFileFieldElement(name, value, inputAttributes);
+		} else {
+			return this.getSystemFileFieldElement(name, value, inputAttributes);
+		}
+	} else {
+		return '<input type="' + type + '" name="' + name + '" value="' + this.getAttributeValueHtml(value) + '" ' + this.getElementAttributes({"class":"external-modules-input-element"},inputAttributes) + '>';
+	}
 }
 
 // abstracted because file fields need to be reset in multiple places
 ExternalModules.Settings.prototype.getSystemFileFieldElement = function(name, value, inputAttributes) {
-    return this.getFileFieldElement(name, value, inputAttributes, "");
+	return this.getFileFieldElement(name, value, inputAttributes, "");
 }
 
 // abstracted because file fields need to be reset in multiple places
 ExternalModules.Settings.prototype.getProjectFileFieldElement = function(name, value, inputAttributes) {
-    return this.getFileFieldElement(name, value, inputAttributes, "pid=" + ExternalModules.PID);
+	return this.getFileFieldElement(name, value, inputAttributes, "pid=" + ExternalModules.PID);
 }
 
 // abstracted because file fields need to be reset in multiple places
 ExternalModules.Settings.prototype.getFileFieldElement = function(name, value, inputAttributes, pid) {
-    var attributeString = this.getElementAttributes([],inputAttributes);
-    var type = "file";
-    if ((typeof value != "undefined") && (value !== "")) {
-        var html = '<input type="hidden" name="' + name + '" value="' + this.getAttributeValueHtml(value) + '" >';
-        html += '<span class="external-modules-edoc-file"></span>';
-        html += '<button class="external-modules-delete-file" '+attributeString+'>Delete File</button>';
-        $.post('ajax/get-edoc-name.php?' + pid, { edoc : value }, function(data) {
-            $("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
-        });
-        return html;
-    } else {
-        attributeString = this.getElementAttributes({"class":"external-modules-input-element"},inputAttributes);
-        return '<input type="' + type + '" name="' + name + '" value="' + this.getAttributeValueHtml(value) + '" ' + attributeString + '>';
-    }
+	var attributeString = this.getElementAttributes([],inputAttributes);
+	var type = "file";
+	if ((typeof value != "undefined") && (value !== "")) {
+		var html = '<input type="hidden" name="' + name + '" value="' + this.getAttributeValueHtml(value) + '" >';
+		html += '<span class="external-modules-edoc-file"></span>';
+		html += '<button class="external-modules-delete-file" '+attributeString+'>Delete File</button>';
+		$.post('ajax/get-edoc-name.php?' + pid, { edoc : value }, function(data) {
+			$("[name='"+name+"']").closest("tr").find(".external-modules-edoc-file").html("<b>" + data.doc_name + "</b><br>");
+		});
+		return html;
+	} else {
+		attributeString = this.getElementAttributes({"class":"external-modules-input-element"},inputAttributes);
+		return '<input type="' + type + '" name="' + name + '" value="' + this.getAttributeValueHtml(value) + '" ' + attributeString + '>';
+	}
 }
 
 ExternalModules.Settings.prototype.getTextareaElement = function(name, value, inputAttributes){
-    if (typeof value == "undefined") {
-        value = "";
-    }
+	if (typeof value == "undefined") {
+		value = "";
+	}
 
-    return '<textarea contenteditable="true" name="' + name + '" ' + this.getElementAttributes([],inputAttributes) + '>'+this.getAttributeValueHtml(value)+'</textarea>';
+	return '<textarea contenteditable="true" name="' + name + '" ' + this.getElementAttributes([],inputAttributes) + '>'+this.getAttributeValueHtml(value)+'</textarea>';
 
 }
 
@@ -419,115 +316,173 @@ ExternalModules.Settings.prototype.getRichTextElement = function(name, value) {
 };
 
 ExternalModules.Settings.prototype.getElementAttributes = function(defaultAttributes, additionalAttributes) {
-    var attributeString = "";
+	var attributeString = "";
 
-    for (var tag in additionalAttributes) {
-        if(defaultAttributes[tag]) {
-            attributeString += tag + '="' + defaultAttributes[tag] + ' ' + additionalAttributes[tag] + '" ';
-            delete defaultAttributes[tag];
-        }
-        else {
-            attributeString += tag + '="' + additionalAttributes[tag] + '" ';
-        }
-    }
+	for (var tag in additionalAttributes) {
+		if(defaultAttributes[tag]) {
+			attributeString += tag + '="' + defaultAttributes[tag] + ' ' + additionalAttributes[tag] + '" ';
+			delete defaultAttributes[tag];
+		}
+		else {
+			attributeString += tag + '="' + additionalAttributes[tag] + '" ';
+		}
+	}
 
-    for (var tag in defaultAttributes) {
-        attributeString += tag + '="' + defaultAttributes[tag] + '" ';
-    }
+	for (var tag in defaultAttributes) {
+		attributeString += tag + '="' + defaultAttributes[tag] + '" ';
+	}
 
-    return attributeString;
-}
-
-ExternalModules.Settings.prototype.getCustomConfigClass = function(){
-    return this.customConfigClass;
-}
-ExternalModules.Settings.prototype.setCustomConfigClass = function(newcustomClass){
-    this.customConfigClass = newcustomClass;
-}
-
-ExternalModules.Settings.prototype.getInstanceName = function(name,instance){
-    if(instance != 0){
-        name += this.getInstanceSymbol()+instance;
-    }
-    return name;
+	return attributeString;
 }
 
 ExternalModules.Settings.prototype.getInstanceSymbol = function(){
-    return "____";
+	return "____";
 }
 
-ExternalModules.Settings.prototype.configureSettings = function(configSettings, savedSettings) {
-    var settings = this
+ExternalModules.Settings.prototype.findSettings = function(config,name) {
+	var configSettings = [config['project-settings'],config['system-settings']];
+	var activeSetting = false;
 
-    configSettings.forEach(function(setting){
-        var setting = $.extend({}, setting);
+	configSettings.forEach(function(configType) {
+		var matchedSetting = ExternalModules.Settings.prototype.parseSettings(configType, name);
 
-        if(setting.type == 'project-id') {
-            var saved = savedSettings[setting.key];
-            if(saved){
-                setting.value = saved.value;
-                setting.systemValue = saved.system_value;
-            }
+		if(matchedSetting !== false) {
+			activeSetting = matchedSetting;
+		}
+	});
 
-            if(setting.value != '' && setting.value != null) {
-                $('select[name="' + setting.key + '"]').removeClass('project_id_textbox');
-                $.ajax({
-                    url: 'ajax/get-project-list.php',
-                    dataType: 'json'
-                }).done(function(data) {
-                    var selectHtml = "";
-                    for(var key in data.results) {
-                        if(data.results[key]['id'] == setting.value) {
-                            selectHtml = "<option value='" + setting.value + "'>" + data.results[key]['text'] + "</option>";
-                        }
-                    }
-                    $('select[name="' + setting.key + '"]').html(selectHtml);
+	return activeSetting;
+};
 
-                    $('select[name="' + setting.key + '"]').select2({
-                        width: '100%',
-                        data: data.results,
-                        ajax: {
-                            url: 'ajax/get-project-list.php',
-                            dataType: 'json',
-                            delay: 250,
-                            data: function(params) { return {'parameters':params.term }; },
-                            method: 'GET',
-                            cache: true
-                        }
-                    });
-                });
-            }
-        }
-    });
+ExternalModules.Settings.prototype.parseSettings = function(configType, name) {
+	var activeSetting = false;
+	configType.forEach(function(setting) {
+		if(setting.key == name) {
+			activeSetting = setting;
+		}
+		else if(setting.type == 'sub_settings') {
+			var matchedSetting = ExternalModules.Settings.prototype.parseSettings(setting.sub_settings,name);
 
-    $(".project_id_textbox").select2({
-        width: '100%',
-        ajax: {
-            url: 'ajax/get-project-list.php',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) { return {'parameters':params.term }; },
-            method: 'GET',
-            cache: true
-        }
-    });
+			if(matchedSetting !== false) {
+				activeSetting = matchedSetting;
+			}
+		}
+	});
 
-    $(function(){
-		settings.initializeRichTextFields()
-    })
-}
+	return activeSetting;
+};
+
+ExternalModules.Settings.prototype.getEndOfSub = function(startTr) {
+	var currentTr = startTr;
+	var reachedEnd = false;
+	var currentDepth = 1;
+
+	// Loop through subsequent <tr> elements until finding its end element
+	while(!reachedEnd) {
+		currentTr = currentTr.next();
+
+		// If reaching end of a sub-setting, decrement depth and check if reached
+		// the end of the original element
+		if(currentTr.hasClass("sub_end")) {
+			currentDepth--;
+			reachedEnd = currentDepth < 1;
+		}
+
+		// If nested sub-setting, increment the depth counter
+		if(currentTr.hasClass("sub_start")) {
+			currentDepth++;
+		}
+	}
+
+	return currentTr;
+};
+
+ExternalModules.Settings.prototype.resetConfigInstances = function() {
+	var currentInstance = [];
+	var currentFields = [];
+	var lastWasEndNode = false;
+
+	// Loop through each config row to find it's place in the loop
+	$("#external-modules-configure-modal tr").each(function() {
+		var lastField = currentFields.slice(-1);
+		lastField = (lastField.length > 0 ? lastField[0] : false);
+
+		// End current count if next node is different field
+		if(lastWasEndNode) {
+			if($(this).attr("field") != lastField) {
+				// If there's only one instance of the previous field, hide "-" button
+				if(currentInstance[currentInstance.length - 1] == 1) {
+					var previousLoopField = currentFields[currentFields.length - 1];
+					var currentTr = $(this).prev();
+
+					// If merely a single repeating field
+					if(!currentTr.hasClass("sub_end")) {
+						currentTr.find(".external-modules-remove-instance").hide();
+					}
+					else {
+						// Loop backwards until finding a start element matching the previousLoopField
+						while((typeof currentTr !== "undefined") && !(currentTr.hasClass("sub_start") && (currentTr.attr("field") == previousLoopField))) {
+							currentTr = currentTr.prev();
+						}
+						currentTr.find(".external-modules-remove-instance").hide();
+					}
+				}
+				currentInstance.pop();
+				currentFields.pop();
+			}
+		}
+
+		// Increment or start count on current loop
+		if($(this).hasClass("sub_start") || $(this).hasClass("repeatable")) {
+			if(lastField == $(this).attr("field")) {
+				currentInstance[currentInstance.length - 1]++;
+			}
+			else {
+				currentInstance.push(0);
+				currentFields.push($(this).attr("field"));
+			}
+		}
+
+		lastWasEndNode = ($(this).hasClass("repeatable") && !$(this).hasClass("sub_start")) || $(this).hasClass("sub_end");
+
+		// Update the number scheme on label and input names
+		var currentLabel = "";
+		var currentName = "";
+		// Use PHP/JSON instance keys, so need to add one to make it look normal
+		for(var i = 0; i < currentInstance.length; i++) {
+			currentLabel += (currentInstance[i] + 1) + ".";
+			currentName += ExternalModules.Settings.prototype.getInstanceSymbol() + currentInstance[i];
+		}
+
+		$(this).find(".external-modules-instance-label").html(currentLabel + " ");
+		$(this).find("select, input").attr("name",$(this).attr("field") + currentName);
+	});
+};
 
 ExternalModules.Settings.prototype.initializeRichTextFields = function(){
+
+	$(".project_id_textbox").select2({
+		width: '100%',
+		ajax: {
+			url: 'ajax/get-project-list.php',
+			dataType: 'json',
+			delay: 250,
+			data: function(params) { return {'parameters':params.term }; },
+			method: 'GET',
+			cache: true
+		}
+	});
+
 	$('.external-modules-rich-text-field').each(function(index, textarea){
 		textarea = $(textarea)
-        var expectedId = 'external-modules-rich-text-field_' + textarea.attr('name')
-        if(expectedId != textarea.attr('id')){
-		    // This textarea must have just been added by clicking the repeatable plus button.
-            // We need to fix it's id.
+		var expectedId = 'external-modules-rich-text-field_' + textarea.attr('name')
+		if(expectedId != textarea.attr('id')){
+			// This textarea must have just been added by clicking the repeatable plus button.
+			// We need to fix it's id.
 			textarea.attr('id', expectedId)
 
-            // Remove the cloned TinyMCE elements (always the previous sibling), so they can be reinitialized.
-            textarea.prev().remove()
+			// Remove the cloned TinyMCE elements (always the previous sibling), so they can be reinitialized.
+			textarea.prev().remove()
 
 			// Show the textarea (so TinyMCE will reinitialize it).
 			textarea.show()
@@ -563,484 +518,318 @@ ExternalModules.Settings.prototype.initializeRichTextFields = function(){
 }
 
 $(function(){
-    var settings = new ExternalModules.Settings();
+	var settings = new ExternalModules.Settings();
 
-    /**
-     * Function that given a position, returns the element name
-     * @param positionElement
-     * @returns {*}
-     */
-    function getOldName(positionElement){
-        var oldName = positionElement.find('input').attr('name');
-        if (!oldName) {
-            oldName = positionElement.find('select').attr('name');
-        }
-        if (!oldName) {
-            oldName = positionElement.find('textarea').attr('name');
-        }
-        return oldName;
-    }
+	var onValueChange = function() {
+		var val;
+		if (this.type == "checkbox") {
+			val = $(this).is(":checked");
+		} else {
+			val = $(this).val();
+		}
+	};
 
-    /**
-     * Function that given a name returns the name modified
-     * @param oldName
-     * @returns {string}
-     */
-    function getNewName(oldName){
-        var idx = 1;
-        var newName = settings.getInstanceName(oldName, idx);  // default: guess that this is the second variable
-        var ary;
-        if (ary = oldName.match(new RegExp(settings.getInstanceSymbol()+"(\\d+)$"))) {
-            // transfer number (old + 1)
-            idx = Number(ary[1]) + 1;
-            newName = oldName.replace(settings.getInstanceSymbol() + ary[1], settings.getInstanceSymbol() + idx);
-        }
-        setIdx(idx);
-        return newName;
-    }
-    /**
-     * Set/Get of the element index when creating the new name
-     * @type {number}
-     */
-    var idx_g = 1;
-    function setIdx(idx){
-        idx_g = idx;
-    }
-    function getIdx() {
-        return idx_g;
-    }
+	$('#external-modules-configure-modal').on('change', '.external-modules-input-element', onValueChange);
+	$('#external-modules-configure-modal').on('check', '.external-modules-input-element', onValueChange);
 
-    var onValueChange = function() {
-        var val;
-        if ($(this).type == "checkbox") {
-            val = $(this).is(":checked");
-        } else {
-            val = $(this).val();
-        }
-        var overrideButton = $(this).closest('tr').find('button.external-modules-use-system-setting');
-        if (overrideButton) {
-            var systemValue = overrideButton.data('system-value');
-            if (typeof systemValue != "undefined") {
-                if (systemValue == val) {
-                    overrideButton.hide();
-                } else {
-                    overrideButton.show();
-                }
-            }
-        }
-    };
+	/**
+	 * Function to add new elements
+	 */
+	$('#external-modules-configure-modal').on('click', '.external-modules-add-instance-subsettings, .external-modules-add-instance', function(){
+		// Get the full configuration for the active module from the global variable
+		var config = ExternalModules.configsByPrefix[configureModal.data('module')];
 
-    $('#external-modules-configure-modal').on('change', '.external-modules-input-element', onValueChange);
-    $('#external-modules-configure-modal').on('check', '.external-modules-input-element', onValueChange);
+		// Find the setting currently being added to and its configuration
+		var name = $(this).attr('setting');
+		var setting = ExternalModules.Settings.prototype.findSettings(config,name);
+		//console.log(config);
+		//console.log(name);
+		//console.log(setting);
+		if(typeof setting !== "undefined") {
+			// Create new html for this setting
+			var html = ExternalModules.Settings.prototype.getSettingRows([setting],[{}]);
 
-    /**
-     * Function to add new elements
-     */
-    $('#external-modules-configure-modal').on('click', '.external-modules-add-instance-subsettings, .external-modules-add-instance', function(){
-        // RULE: first variable is base name (e.g., survey_name)
-        // second and following variables are base name + ____X, where X is a 0-based name
-        // so survey_name____1 is the second variable; survey_name____2 is the third variable; etc.
-        // RULE 2: Cannot remove first item
-        var newInstanceTotal = "";
-        var newclass = "";
-        var oldName = "";
-        if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
-                oldName = getOldName($(this).find('td:nth-child(2)'));
-                var newName = getNewName(oldName);
-                var idx = getIdx();
+			var thisTr = $(this).closest("tr");
 
-                //we copy the info
-                var $newInstance = $(this).clone();
+			if(thisTr.hasClass("sub_start")) {
+				thisTr = ExternalModules.Settings.prototype.getEndOfSub(thisTr);
+			}
+			thisTr.after(html);
+		}
 
-                // rename new instance of input/select and set value to empty string
-                $newInstance.find('[name="' + oldName + '"]').attr('name', newName);
-                $newInstance.find('[name="' + newName + '"]').val('');
+		settings.initializeRichTextFields();
 
-                // rename label
-                $newInstance.closest("tr").find('span.external-modules-instance-label').html((idx + 1) + ". ");
-                $(this).closest("tr").find('span.external-modules-instance-label').html((idx) + ". ");
+		settings.resetConfigInstances();
+	});
 
-                newInstanceTotal += '<tr class = "subsettings-table '+settings.getCustomConfigClass()+'">' + $newInstance.html() + '</tr>';
-            });
-            oldName = $(this).closest('tr').find('label').attr('name');
-            newclass = "-subsettings";
-        }else if($(this).hasClass('external-modules-add-instance')) {
-            oldName = getOldName($(this).closest('tr'));
-        }
+	/**
+	 * function to remove the elements
+	 */
+	$('#external-modules-configure-modal').on('click', '.external-modules-remove-instance-subsettings, .external-modules-remove-instance', function(){
+		var startTr = $(this).closest('tr');
 
-        // show original sign if previous was first item
-        if (!oldName.match(new RegExp(settings.getInstanceSymbol()))) {
-            $("[name='"+oldName+"']").closest("tr").find(".external-modules-original-instance"+newclass).show();
-        }
+		// If this element is a sub_setting element, loop through until reaching the end
+		// of this setting's rows
+		if(startTr.hasClass("sub_start")) {
+			var lastTr = ExternalModules.Settings.prototype.getEndOfSub(startTr);
 
-        //We show which one is the original
-//		      $(this).closest("tr").find(".external-modules-original-instance"+newclass).show();
+			// Remove all the elements between start and end. Then remove last element.
+			startTr.nextUntil(lastTr).remove();
+			lastTr.remove();
+		}
 
-        var newName = getNewName(oldName);
-        var idx = getIdx();
-
-        var $newInstanceTitle = $(this).closest('tr').clone();
-        $newInstanceTitle.find(".external-modules-remove-instance"+newclass).show();
-        $newInstanceTitle.find(".external-modules-original-instance"+newclass).hide();
-        $newInstanceTitle.find('[name="'+oldName+'"]').attr('name', newName);
-        $newInstanceTitle.find('[name="'+newName+'"]').val('');
-        $newInstanceTitle.find('span.external-modules-instance-label').html((idx+1)+". ");
-
-        //We add the whole new block at the end
-        if($(this).hasClass('external-modules-add-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').last().after("<tr class = '"+settings.getCustomConfigClass()+"'>"+$newInstanceTitle.html()+"</tr>"+newInstanceTotal);
-        }else if($(this).hasClass('external-modules-add-instance')) {
-            $newInstanceTitle.insertAfter($(this).closest('tr'));
-        }
-
-        // rename new instance of input/select and set value to empty string
-        $newInstanceTitle.find('[name="'+oldName+'"]').attr('name', newName);
-        $newInstanceTitle.find('[name="'+newName+'"]').val('');
-
-        // rename label
-        $(this).closest("tr").find('span.external-modules-instance-label').html((idx)+". ");
-
-        // show only last +
-        $(this).hide();
-
-        // Make sure any new rich text fields get initialized.
-		settings.initializeRichTextFields()
-    });
-    /**
-     * Function that given a name returns removes the elements
-     * @param oldName
-     * @param newclass
-     * @returns {string}
-     */
-    function removeElements(newclass,oldName){
-        var oldNameParts = oldName.split(new RegExp(settings.getInstanceSymbol()));
-        var baseName = oldNameParts[0];
-        var i = 1;
-        var j = 1;
-        while ($("[name='" +  settings.getInstanceName(baseName,i)+ "']").length) {
-            if (i == oldNameParts[1]) {
-                // remove tr
-                $("[name='" + settings.getInstanceName(baseName,i)+ "']").closest('tr').remove();
-            } else {
-                // rename label
-                $("[name='" +  settings.getInstanceName(baseName,i) + "']").closest("tr").find('span.external-modules-instance-label').html((j + 1) + ". ");
-                // rename tr: i --> j
-                $("[name='" +  settings.getInstanceName(baseName,i)+ "']").attr('name',  settings.getInstanceName(baseName,j));
-                j++;
-            }
-            i++;
-        }
-        if (j > 1) {
-            $("[name='" + settings.getInstanceName(baseName,(j-1))+ "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
-        } else {
-            $("[name='" + baseName + "']").closest("tr").find(".external-modules-add-instance"+newclass).show();
-            $("[name='" + baseName + "']").closest("tr").find(".external-modules-original-instance"+newclass).hide();
-        }
-        return j;
-    }
-
-    /**
-     * function to remove the elements
-     */
-    $('#external-modules-configure-modal').on('click', '.external-modules-remove-instance-subsettings, .external-modules-remove-instance', function(){
-        // see RULE on external-modules-add-instance
-        // we must maintain said RULE here
-        // RULE 2: Cannot remove first item
-
-        var newInstanceTotal = "";
-        var index = 0;
-        var newclass = "";
-        if($(this).hasClass('external-modules-remove-instance-subsettings')) {
-            $(this).closest('tr').nextAll('tr.subsettings-table').each(function () {
-                newclass = "-subsettings";
-                var oldName = getOldName($(this).find('td:nth-child(2)'));
-                index = removeElements(newclass,oldName);
-            });
-
-            //we remove the 'parent' element
-            var oldNameParts = $(this).closest('tr').find('label').attr('name').split(new RegExp(settings.getInstanceSymbol()));
-            var baseName = oldNameParts[0];
-            if (index > 1) {
-                $("[name='"+ settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
-                $("[name='"+settings.getInstanceName(baseName,(index-1))+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
-            } else {
-                $("[name='"+baseName+"']").closest("tr").find(".external-modules-add-instance-subsettings").show();
-                $("[name='"+baseName+"']").closest("tr").find(".external-modules-original-instance-subsettings").hide();
-            }
-
-        }else if($(this).hasClass('external-modules-remove-instance')) {
-            var oldName = getOldName($(this).closest('tr'));
-            index = removeElements(newclass,oldName);
-        }
-
-        $(this).closest('tr').remove();
+		// Clean up by removing the original element
+		startTr.remove();
 
 		tinymce.editors.forEach(function(editor, index){
 			if(!document.contains(editor.getElement())){
-			    // The element for this editor was removed from the DOM.  Destroy the editor.
-                editor.remove()
-            }
+				// The element for this editor was removed from the DOM.  Destroy the editor.
+				editor.remove()
+			}
 		})
-    });
 
-    // Merged from updated enabled-modules, may need to reconfigure
-    ExternalModules.configsByPrefix = ExternalModules.configsByPrefixJSON;
-    ExternalModules.versionsByPrefix = ExternalModules.versionsByPrefixJSON;
+		settings.resetConfigInstances();
+	});
 
-    var pid = ExternalModules.PID;
-    var pidString = pid;
-    if(pid === null){
-    	pidString = '';
-    }
-    var configureModal = $('#external-modules-configure-modal');
-    // may need to reconfigure
-    var isSuperUser = (ExternalModules.SUPER_USER == 1);
+	// Merged from updated enabled-modules, may need to reconfigure
+	ExternalModules.configsByPrefix = ExternalModules.configsByPrefixJSON;
+	ExternalModules.versionsByPrefix = ExternalModules.versionsByPrefixJSON;
 
-    // Shared function for combining 2 arrays to produce an attribute string for an HTML object
-
-
-    $('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
-        var moduleDirectoryPrefix = $(this).closest('tr').data('module');
-        configureModal.data('module', moduleDirectoryPrefix);
-
-        var config = ExternalModules.configsByPrefix[moduleDirectoryPrefix];
-        configureModal.find('.module-name').html(config.name);
-        var tbody = configureModal.find('tbody');
-        tbody.html('');
-        configureModal.modal('show');
-
-	var params = {moduleDirectoryPrefix: moduleDirectoryPrefix};
-	if (pid) {
-		params['pid'] = pidString;
+	var pid = ExternalModules.PID;
+	var pidString = pid;
+	if(pid === null){
+		pidString = '';
 	}
-        $.post('ajax/get-settings.php', params, function(data){
-            if(data.status != 'success'){
-                return;
-            }
+	var configureModal = $('#external-modules-configure-modal');
+	// may need to reconfigure
+	var isSuperUser = (ExternalModules.SUPER_USER == 1);
 
-            var savedSettings = data.settings;
+	// Shared function for combining 2 arrays to produce an attribute string for an HTML object
+	$('#external-modules-enabled').on('click', '.external-modules-configure-button', function(){
+		// find the module directory prefix from the <tr>
+		var moduleDirectoryPrefix = $(this).closest('tr').data('module');
+		configureModal.data('module', moduleDirectoryPrefix);
 
-            var settingsHtml = "";
-            settingsHtml += settings.getSettingRows(true, config['system-settings'], savedSettings);
+		var config = ExternalModules.configsByPrefix[moduleDirectoryPrefix];
+		configureModal.find('.module-name').html(config.name);
+		var tbody = configureModal.find('tbody');
+		tbody.html('');
+		configureModal.modal('show');
 
-            if(pid) {
-                settingsHtml += settings.getSettingRows(false, config['project-settings'], savedSettings);
-            }
+		// Param list to pass to get-settings.php
+		var params = {moduleDirectoryPrefix: moduleDirectoryPrefix};
+		if (pid) {
+			params['pid'] = pidString;
+		}
 
-            tbody.html(settingsHtml);
+		// Just in case there are any project-id lists, we need to get a full project list
+		if(typeof ExternalModules.Settings.projectList === "undefined") {
+			$.ajax({
+				url:'ajax/get-project-list.php',
+				dataType: 'json'
+			}).done(function(data) {
+				ExternalModules.Settings.projectList = [];
+				data["results"].forEach(function(projectDetails) {
+					ExternalModules.Settings.projectList[projectDetails["id"]] = projectDetails["text"];
+				});
+				settings.configureSettings();
+			});
+		}
 
-            if(pid) {
-                settings.configureSettings(config['project-settings'], savedSettings);
-            }
-            else {
-                settings.configureSettings(config['system-settings'], savedSettings);
-            }
-        });
-    });
+		// Get the existing values for this module through ajax
+		$.post('ajax/get-settings.php', params, function(data){
+			if(data.status != 'success'){
+				return;
+			}
 
-    var deleteFile = function(ob) {
-        var moduleDirectoryPrefix = configureModal.data('module');
+			var savedSettings = data.settings;
 
-        var row = ob.closest("tr");
-        var input = row.find("input[type=hidden]");
-        var disabled = input.prop("disabled");
-        var deleteFileButton = row.find("button.external-modules-delete-file");
-        if (deleteFileButton) {
-            deleteFileButton.hide();
-        }
+			// Get the html for the configuration
+			var settingsHtml = "";
 
-        $.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) {
-            if (data.status == "success") {
-                var inputAttributes = "";
-                if (disabled) {
-                    inputAttributes = "disabled";
-                }
-                row.find(".external-modules-edoc-file").html(settings.getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
-                input.remove();
-            } else {		// failure
-                alert("The file was not able to be deleted. "+JSON.stringify(data));
-            }
+			if(pid) {
+				settingsHtml += settings.getSettingRows(config['project-settings'], savedSettings);
+			}
+			else {
+				settingsHtml += settings.getSettingRows(config['system-settings'], savedSettings);
+			}
 
-            var overrideButton = row.find("button.external-modules-use-system-setting");
-            var systemValue = overrideButton.data("system-value");
+			// Add blank tr to end of table to make resetConfigInstances work better
+			settingsHtml += "<tr style='display:none'></tr>";
 
-            if (systemValue != "") {    // compare to new value
-                overrideButton.show();
-            } else {
-                overrideButton.hide();
-            }
-        });
-    };
-    configureModal.on('click', '.external-modules-delete-file', function() {
-        deleteFile($(this));
-    });
+			tbody.html(settingsHtml);
 
-    var resetSaveButton = function() {
-        if ($(this).val() != "") {
-            $(".save").html("Save and Upload");
-        }
-        var allEmpty = true;
-        $("input[type=file]").each(function() {
-            if ($(this).val() !== "") {
-                allEmpty = false;
-            }
-        });
-        if (allEmpty) {
-            $(".save").html("Save");
-        }
-    }
+			// Post HTML scripting
+			settings.configureSettings();
+		});
+	});
 
-    configureModal.on('change', 'input[type=file]', resetSaveButton);
 
-    configureModal.on('click', '.external-modules-use-system-setting', function(){
-        var overrideButton = $(this);
-        var systemValue = overrideButton.data('system-value');
-        var row = overrideButton.closest('tr');
-        var inputs = row.find('td:nth-child(2)').find('input, select');
+	var deleteFile = function(ob) {
+		var moduleDirectoryPrefix = configureModal.data('module');
 
-        var type = inputs[0].type;
-        if(type == 'radio'){
-            inputs.filter('[value=' + systemValue + ']').click();
-        }
-        else if(type == 'checkbox'){
-            inputs.prop('checked', systemValue);
-        }
-        else if((type == 'hidden') && (inputs.closest("tr").find(".external-modules-edoc-file").length > 0)) {   // file
-            deleteFile($(this));
-            resetSaveButton("");
-        }
-        else if(type == 'file') {
-            // if a real value
-            if (!isNaN(systemValue)) {
-                var edocLine = row.find(".external-modules-input-td");
-                if (edocLine) {
-                    var inputAttributes = "";
-                    if (inputs.prop("disabled")) {
-                        inputAttributes = "disabled";
-                    }
-                    edocLine.html(settings.getSystemFileFieldElement(inputs.attr('name'), systemValue, inputAttributes));
-                    resetSaveButton(systemValue);
-                    row.find(".external-modules-delete-file").show();
-                }
-            }
-        }
-        else{ // text or select
-            inputs.val(systemValue);
-        }
-        overrideButton.hide();
-    });
+		var row = ob.closest("tr");
+		var input = row.find("input[type=hidden]");
+		var disabled = input.prop("disabled");
+		var deleteFileButton = row.find("button.external-modules-delete-file");
+		if (deleteFileButton) {
+			deleteFileButton.hide();
+		}
 
-    // helper method for saving
-    var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
-        var lengthOfFiles = 0;
-        var formData = new FormData();
-        for (var name in files) {
-            lengthOfFiles++;
-            formData.append(name, files[name]);   // filename agnostic
-        }
-        if (lengthOfFiles > 0) {
-            // AJAX rather than $.post
-            $.ajax({
-                url: url,
-                data: formData,
-                processData: false,
-                contentType: false,
-                async: false,
-                type: 'POST',
-                success: function(returnData) {
-                    if (returnData.status != 'success') {
-                        alert(returnData.status+" One or more of the files could not be saved."+JSON.stringify(returnData));
-                    }
+		$.post("ajax/delete-file.php?pid="+pidString, { moduleDirectoryPrefix: moduleDirectoryPrefix, key: input.attr('name'), edoc: input.val() }, function(data) {
+			if (data.status == "success") {
+				var inputAttributes = "";
+				if (disabled) {
+					inputAttributes = "disabled";
+				}
+				row.find(".external-modules-edoc-file").html(settings.getProjectFileFieldElement(input.attr('name'), "", inputAttributes));
+				input.remove();
+			} else {		// failure
+				alert("The file was not able to be deleted. "+JSON.stringify(data));
+			}
+		});
+	};
+	configureModal.on('click', '.external-modules-delete-file', function() {
+		deleteFile($(this));
+	});
 
-                    // proceed anyways to save data
-                    callbackWithNoArgs();
-                },
-                error: function(e) {
-                    alert("One or more of the files could not be saved."+JSON.stringify(e));
-                    callbackWithNoArgs();
-                }
-            });
-        } else {
-            callbackWithNoArgs();
-        }
-    }
+	var resetSaveButton = function() {
+		if ($(this).val() != "") {
+			$(".save").html("Save and Upload");
+		}
+		var allEmpty = true;
+		$("input[type=file]").each(function() {
+			if ($(this).val() !== "") {
+				allEmpty = false;
+			}
+		});
+		if (allEmpty) {
+			$(".save").html("Save");
+		}
+	}
 
-    // helper method for saving
-    var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
-        $.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix + "&moduleDirectoryVersion=" + version, data, function(returnData){
-            if(returnData.status != 'success'){
-                alert('An error occurred while saving settings: ' + returnData);
-                configureModal.show();
-                return;
-            }
+	configureModal.on('change', 'input[type=file]', resetSaveButton);
 
-            // Reload the page reload after saving settings,
-            // in case a settings affects some page behavior (like which menu items are visible).
-            location.reload();
-        });
-    }
+	// helper method for saving
+	var saveFilesIfTheyExist = function(url, files, callbackWithNoArgs) {
+		var lengthOfFiles = 0;
+		var formData = new FormData();
+		for (var name in files) {
+			lengthOfFiles++;
+			formData.append(name, files[name]);   // filename agnostic
+		}
+		if (lengthOfFiles > 0) {
+			// AJAX rather than $.post
+			$.ajax({
+				url: url,
+				data: formData,
+				processData: false,
+				contentType: false,
+				async: false,
+				type: 'POST',
+				success: function(returnData) {
+					if (returnData.status != 'success') {
+						alert(returnData.status+" One or more of the files could not be saved."+JSON.stringify(returnData));
+					}
 
-    configureModal.on('click', 'button.save', function(){
-        configureModal.hide();
-        var moduleDirectoryPrefix = configureModal.data('module');
-        var version = ExternalModules.versionsByPrefix[moduleDirectoryPrefix];
+					// proceed anyways to save data
+					callbackWithNoArgs();
+				},
+				error: function(e) {
+					alert("One or more of the files could not be saved."+JSON.stringify(e));
+					callbackWithNoArgs();
+				}
+			});
+		} else {
+			callbackWithNoArgs();
+		}
+	}
 
-        var data = {};
-        var files = {};
-        
-        configureModal.find('input, select, textarea').each(function(index, element){
-            var element = $(element);
-            var systemValue = element.closest('tr').find('.override-system-setting').data('system-value');
-            var name = element.attr('name');
-            var type = element[0].type;
+	// helper method for saving
+	var saveSettings = function(pidString, moduleDirectoryPrefix, version, data) {
+	   $.post('ajax/save-settings.php?pid=' + pidString + '&moduleDirectoryPrefix=' + moduleDirectoryPrefix, data).done( function(returnData){
+			if(returnData.status != 'success'){
+				alert('An error occurred while saving settings: ' + returnData);
+				configureModal.show();
+				return;
+			}
 
-            if(!name || (type == 'radio' && !element.is(':checked'))){
-                return;
-            }
+			// Reload the page reload after saving settings,
+			// in case a settings affects some page behavior (like which menu items are visible).
+			location.reload();
+		});
+	}
 
-            if (type == 'file') {
-                // only store one file per variable - the first file
-                jQuery.each(element[0].files, function(i, file) {
-                    if (typeof files[name] == "undefined") {
-                        files[name] = file;
-                    }
-                });
-            } else {
-                var value;
-                if(type == 'checkbox'){
-                    if(element.prop('checked')){
-                        value = '1';
-                    }
-                    else{
-                        value = '0';
-                    }
-                }
-                else if(element.hasClass('external-modules-rich-text-field')){
+	configureModal.on('click', 'button.save', function(){
+		configureModal.hide();
+		var moduleDirectoryPrefix = configureModal.data('module');
+		var version = ExternalModules.versionsByPrefix[moduleDirectoryPrefix];
+
+		var data = {};
+		var files = {};
+		
+		configureModal.find('input, select, textarea').each(function(index, element){
+			var element = $(element);
+			var name = element.attr('name');
+			var type = element[0].type;
+
+			if(!name || (type == 'radio' && !element.is(':checked'))){
+				return;
+			}
+
+			if (type == 'file') {
+				// only store one file per variable - the first file
+				jQuery.each(element[0].files, function(i, file) {
+					if (typeof files[name] == "undefined") {
+						files[name] = file;
+					}
+				});
+			} else {
+				var value;
+				if(type == 'checkbox'){
+					if(element.prop('checked')){
+						value = '1';
+					}
+					else{
+						value = '0';
+					}
+				}
+				else if(element.hasClass('external-modules-rich-text-field')){
 					var id = element.attr('id');
 					value = tinymce.get(id).getContent();
-                }
-                else{
-                    value = element.val();
-                }
+				}
+				else{
+					value = element.val();
+				}
 
-                if(value == systemValue){
-                    value = '';
-                }
+				data[name] = value;
+			}
+		});
 
-                data[name] = value;
-            }
-        });
+		var url = 'ajax/save-file.php?pid=' + pidString +
+			'&moduleDirectoryPrefix=' + moduleDirectoryPrefix +
+			'&moduleDirectoryVersion=' + version;
+		saveFilesIfTheyExist(url, files, function() {
+			saveSettings(pidString, moduleDirectoryPrefix, version, data);
+		});
+	});
 
-        var url = 'ajax/save-file.php?pid=' + pidString +
-            '&moduleDirectoryPrefix=' + moduleDirectoryPrefix +
-            '&moduleDirectoryVersion=' + version;
-        saveFilesIfTheyExist(url, files, function() {
-            saveSettings(pidString, moduleDirectoryPrefix, version, data);
-        });
-    });
+	configureModal.on('hidden.bs.modal', function () {
+		tinymce.remove()
+	})
 
-    configureModal.on('hidden.bs.modal', function () {
-        tinymce.remove()
-    })
+	$('.external-modules-usage-button').click(function(){
+		var row = $(this).closest('tr');
+		var prefix = row.data('module')
+		$.get('ajax/usage.php', {prefix: prefix}, function(data){
+			if(data == ''){
+				data = 'None'
+			}
+
+			var modal = $('#external-modules-usage-modal')
+			modal.find('.modal-title').html('Project Usage:<br><b>' + row.find('.external-modules-title').text() + '</b>')
+			modal.find('.modal-body').html(data)
+			modal.modal('show')
+		})
+	})
 });

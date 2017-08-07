@@ -49,7 +49,8 @@ abstract class BaseTest extends TestCase
 		$m->removeSystemSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 		$m->removeProjectSetting(ExternalModules::KEY_ENABLED, TEST_SETTING_PID);
 
-		unset($_GET['pid']);
+		$_GET = [];
+		$_POST = [];
 	}
 
 	protected function setSystemSetting($value)

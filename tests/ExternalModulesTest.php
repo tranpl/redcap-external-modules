@@ -441,6 +441,26 @@ class ExternalModulesTest extends BaseTest
 		return new \ReflectionClass('ExternalModules\ExternalModules');
 	}
 
+	function testSaveSettingsFromPost()
+	{
+		$_POST[TEST_SETTING_KEY] = rand();
+
+		$repeatableSettingKey = 'test-repeatable';
+		$repeatableExpected = [rand(), 'some string', rand()/100.0];
+
+		for($i = 0; $i<count($repeatableExpected); $i++){
+			$_POST[$repeatableSettingKey . '____' . $i] = $repeatableExpected[$i];
+		}
+
+		ExternalModules::saveSettingsFromPost(TEST_MODULE_PREFIX, TEST_SETTING_PID);
+
+		$this->assertSame($_POST[TEST_SETTING_KEY], ExternalModules::getProjectSetting(TEST_MODULE_PREFIX, TEST_SETTING_PID, TEST_SETTING_KEY));
+		$this->assertSame($repeatableExpected, ExternalModules::getProjectSetting(TEST_MODULE_PREFIX, TEST_SETTING_PID, $repeatableSettingKey));
+
+		// cleanup
+		ExternalModules::removeProjectSetting(TEST_MODULE_PREFIX, TEST_SETTING_PID, $repeatableSettingKey);
+	}
+
 	function testInstance()
 	{
 		$value1 = rand();

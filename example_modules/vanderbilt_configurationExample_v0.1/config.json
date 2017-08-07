@@ -1,6 +1,10 @@
 {
 	"name": "Configuration Example",
 
+	"namespace": "Vanderbilt\\ConfigurationExampleExternalModule",
+
+	"module-class-name": "ConfigurationExampleExternalModule",
+
 	"description": "Example module to show off all the options available",
 
 	"authors": [
@@ -24,35 +28,68 @@
 		]
 	},
 
-	"global-settings": [
+	"system-settings": [
 		{
-			"key": "global-file",
-			"name": "Global Upload",
+			"key": "system-file",
+			"name": "System Upload",
 			"required": false,
 			"type": "file",
-			"repeatable": false,
-			"allow-project-overrides": true
+			"repeatable": false
 		},
 		{
-			"key": "global-checkbox",
-			"name": "Global Checkbox",
+			"key": "system-checkbox",
+			"name": "System Checkbox",
 			"required": false,
 			"type": "checkbox",
-			"repeatable": false,
-			"allow-project-overrides": true
+			"repeatable": false
 		},
 		{
-			"key": "global-project",
+			"key": "system-project",
 			"name": "Project",
 			"required": false,
 			"type": "project-id",
 			"repeatable": false
+		},
+		{
+			"key": "test-list",
+			"name": "List of Sub Settings",
+			"required": true,
+			"type": "sub_settings",
+			"repeatable":true,
+			"sub_settings":[
+				{
+					"key": "system_project_sub",
+					"name": "System Project",
+					"required": true,
+					"type": "project-id"
+				},
+				{
+					"key": "system_project_text",
+					"name": "Sub Text Field",
+					"required": true,
+					"type": "text"
+				}
+			]
 		}
 	],
 
 	"project-settings": [
 		{
-			"key": "test-list",
+			"key": "custom-field1",
+			"name": "Custom Field 1",
+			"type": "custom",
+			"source": "js/test_javascript.js",
+			"functionName": "ExternalModulesOptional.customTextAlert"
+		},
+		{
+			"key": "custom-field2",
+			"name": "Custom Field 2",
+			"type": "custom",
+			"source": "extra_types.js",
+			"functionName": "ExternalModulesOptional.addColorToText"
+		},
+		{
+			"key": "test-list2",
 			"name": "List of Sub Settings",
 			"required": true,
 			"type": "sub_settings",

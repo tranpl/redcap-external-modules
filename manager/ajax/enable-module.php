@@ -32,7 +32,10 @@ else {
     }
 
     if(empty($return_data['error_message'])) {
-        ExternalModules::enable($_POST['prefix'], $_POST['version']);
+		$exception = ExternalModules::enableAndCatchExceptions($_POST['prefix'], $_POST['version']);
+		if($exception){
+			$return_data['error_message'] = $exception->getMessage();
+		}
     }
 }
 

@@ -6,9 +6,9 @@
  * Time: 2:12 PM
  */
 
-namespace ExternalModules;
+namespace Vanderbilt\ConfigurationExampleExternalModule;
 
 
-class ConfigurationExampleExternalModule extends AbstractExternalModule {
+class ConfigurationExampleExternalModule extends \ExternalModules\AbstractExternalModule {
 
 }
