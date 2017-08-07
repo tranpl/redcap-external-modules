@@ -1688,7 +1688,11 @@ class ExternalModules
 
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
-		return self::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix,$version));
+		$filePath = ExternalModules::getModuleDirectoryPath($prefix, $version);
+
+		$url = APP_PATH_WEBROOT_FULL.substr($filePath,strlen(dirname(dirname(__DIR__))."/"))."/";
+
+		return $url;
 	}
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key = null)
