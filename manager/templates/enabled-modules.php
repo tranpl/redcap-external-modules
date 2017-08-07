@@ -188,11 +188,12 @@ if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
                 $names = array();
                 foreach ($config['authors'] as $author) {
                         $name = $author['name'];
+                        $institution = empty($author['institution']) ? "" : " <span class='author-institution'>({$author['institution']})</span>";
                         if ($name) {
                                 if ($author['email']) {
-                                        $names[] = "<a href='mailto:".$author['email']."'>".$name."</a>";
+                                        $names[] = "<a href='mailto:".$author['email']."'>".$name."</a>$institution";
                                 } else {
-                                        $names[] = $name;
+                                        $names[] = $name . $institution;
                                 }
                         }
                 }
