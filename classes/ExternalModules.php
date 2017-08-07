@@ -356,6 +356,9 @@ class ExternalModules
 		# Attempt to create an instance of the module before enabling it system wide.
 		# This should catch problems like syntax errors in module code.
 		$instance = self::getModuleInstance($moduleDirectoryPrefix, $version);
+		
+		// Ensure compatibility with PHP version and REDCap version before instantiating the module class
+		self::isCompatibleWithREDCapPHP($moduleDirectoryPrefix, $version);
 
 		if (!isset($project_id)) {
 			self::initializeSettingDefaults($instance);
@@ -995,8 +998,9 @@ class ExternalModules
 	}
 
 	# Ensure compatibility with PHP version and REDCap version during module installation using config values
-	private static function isCompatibleWithREDCapPHP($config=array())
+	private static function isCompatibleWithREDCapPHP($moduleDirectoryPrefix, $version)
 	{
+		$config = self::getConfig($moduleDirectoryPrefix, $version);
 		if (!isset($config['compatibility'])) return;
 		$Exceptions = array();
 		$compat = $config['compatibility'];
@@ -1028,9 +1032,6 @@ class ExternalModules
 		$instance = @self::$instanceCache[$prefix][$version];
 		if(!isset($instance)){
 			$config = self::getConfig($prefix, $version);
-			
-			// Ensure compatibility with PHP version and REDCap version before instantiating the module class
-			self::isCompatibleWithREDCapPHP($config);
 
 			$namespace = @$config['namespace'];
 			if($namespace) {
