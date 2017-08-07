@@ -14,12 +14,32 @@ if($sql !== ""){
 }
 
 $pid = $_GET['pid'];
+$disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " for the current project" : "";
 ?>
 
 <div id="external-modules-download" class="simpleDialog" role="dialog">
 	Do you wish to download the External Module named 
 	"<b><?php print \RCView::escape(rawurldecode(urldecode($_GET['download_module_title']))) ?></b>"?
 	This will create a new directory folder for the module on the REDCap web server.
+</div>
+
+<div id="external-modules-disable-confirm-modal" class="modal fade" role="dialog" data-backdrop="static">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Disable module? <span class="module-name"></span></h4>
+			</div>
+			<div class="modal-body">
+				Are you sure you wish to disable this module 
+				(<b><span id="external-modules-disable-confirm-module-name"></span>_<span id="external-modules-disable-confirm-module-version"></span></b>)<?=$disableModuleConfirmProject?>?
+			</div>
+			<div class="modal-footer">
+				<button data-dismiss="modal">Cancel</button>
+				<button id="external-modules-disable-button-confirmed" class="save">Disable module</button>
+			</div>
+		</div>
+	</div>
 </div>
 
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">

@@ -39,4 +39,8 @@ else {
     }
 }
 
+// Log this event
+$logText = "Enable external module \"{$_POST['prefix']}_{$_POST['version']}\" for " . (!empty($_GET['pid']) ? "project" : "system");
+\REDCap::logEvent($logText, "", "", null, null, $_GET['pid']);
+
 echo json_encode($return_data);
