@@ -118,10 +118,14 @@ ExternalModules.Settings.prototype.configureSettings = function() {
 }
 
 
-ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
+ExternalModules.Settings.prototype.getColumnHtml = function(setting,value,className){
 	var type = setting.type;
 	var key = setting.key;
-	var trClass = "";
+
+	if(typeof className === "undefined") {
+		className = "";
+	}
+	var trClass = className;
 
 	var instanceLabel = "";
 	if (typeof instance != "undefined") {
@@ -180,7 +184,7 @@ ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
 	}
 	else if(type == 'sub_settings'){
 		inputHtml = "<span class='external-modules-instance-label'>"+instanceLabel+"</span><label name='"+key+"'>" + setting.name + ":</label><input type='hidden' value='true' name='key' />";
-		trClass += 'sub_start';
+		trClass += ' sub_start';
 	}
 	else if(type == 'radio'){
 		inputHtml = "";
@@ -204,6 +208,11 @@ ExternalModules.Settings.prototype.getColumnHtml = function(setting,value){
 		var inputAttributes = [];
 		if(type == 'checkbox' && value == 1){
 			inputAttributes['checked'] = 'checked';
+		} else if (type == 'text' && typeof setting.validation != "undefined") {
+			var validation = setting.validation;
+			var validation_min = (typeof setting.validation_min == "undefined") ? "" : setting.validation_min;
+			var validation_max = (typeof setting.validation_max == "undefined") ? "" : setting.validation_max;
+			inputAttributes['onblur'] = "redcap_validate(this,'"+validation_min+"','"+validation_max+"','soft_typed','"+validation+"',1);";
 		}
 
 		inputHtml = this.getInputElement(type, key, value, inputAttributes);
@@ -455,7 +464,7 @@ ExternalModules.Settings.prototype.resetConfigInstances = function() {
 		}
 
 		$(this).find(".external-modules-instance-label").html(currentLabel + " ");
-		$(this).find("select, input").attr("name",$(this).attr("field") + currentName);
+		$(this).find("input, select, textarea").attr("name",$(this).attr("field") + currentName);
 	});
 };
 

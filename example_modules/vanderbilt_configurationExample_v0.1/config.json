@@ -3,14 +3,13 @@
 
 	"namespace": "Vanderbilt\\ConfigurationExampleExternalModule",
 
-	"module-class-name": "ConfigurationExampleExternalModule",
-
 	"description": "Example module to show off all the options available",
 
 	"authors": [
 		{
 			"name": "Kyle McGuffin",
-			"email": "kyle.mcguffin@vanderbilt.edu"
+			"email": "kyle.mcguffin@vanderbilt.edu",
+			"institution": "Vanderbilt University Medical Center"
 		}
 	],
 

@@ -34,9 +34,14 @@ else {
     if(empty($return_data['error_message'])) {
 		$exception = ExternalModules::enableAndCatchExceptions($_POST['prefix'], $_POST['version']);
 		if($exception){
-			$return_data['error_message'] = $exception->getMessage();
+			$return_data['error_message'] = 'Exception while enabling module: ' . $exception->getMessage();
+			$return_data['stack_trace'] = $exception->getTraceAsString();
 		}
     }
 }
+
+// Log this event
+$logText = "Enable external module \"{$_POST['prefix']}_{$_POST['version']}\" for " . (!empty($_GET['pid']) ? "project" : "system");
+\REDCap::logEvent($logText, "", "", null, null, $_GET['pid']);
 
 echo json_encode($return_data);

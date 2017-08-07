@@ -7,7 +7,7 @@ require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
 
 <h4 style="margin-top: 0;">
 	<img src='../images/puzzle_medium.png'>
-	Module Management
+	External Modules - Module Manager
 </h4>
 
 <?php
@@ -37,7 +37,7 @@ ExternalModules::safeRequireOnce('templates/enabled-modules.php');
 				<h4 class="modal-title">Enable Module: <span class="module-name"></span></h4>
 			</div>
 			<div class="modal-body">
-				<div id="external-modules-enable-modal-error" style="display:none;color:red;font-weight: bold"></div>
+				<div id="external-modules-enable-modal-error"></div>
 				<p>This module requests the following permissions:</p>
 				<ul></ul>
 			</div>
