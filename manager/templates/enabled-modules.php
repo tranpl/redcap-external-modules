@@ -191,14 +191,10 @@ if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
                         $institution = empty($author['institution']) ? "" : " <span class='author-institution'>({$author['institution']})</span>";
                         if ($name) {
                                 if ($author['email']) {
-                                        $name = "<a href='mailto:".$author['email']."?subject=".rawurlencode($config['name']." - ".$version)."'>".$name."</a>$institution";
+                                        $names[] = "<a href='mailto:".$author['email']."?subject=".rawurlencode($config['name']." - ".$version)."'>".$name."</a>$institution";
                                 } else {
                                         $names[] = $name . $institution;
                                 }
-                                if ($author['institution']) {
-                                        $name .= " (" . $author['institution'] . ")";
-                                }
-                                $names[] = $name;
                         }
                 }
                 if (count($names) > 0) {
