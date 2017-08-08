@@ -14,6 +14,7 @@ if($sql !== ""){
 }
 
 $pid = $_GET['pid'];
+$disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " for the current project" : "";
 ?>
 
 <div id="external-modules-download" class="simpleDialog" role="dialog">
@@ -22,7 +23,26 @@ $pid = $_GET['pid'];
 	This will create a new directory folder for the module on the REDCap web server.
 </div>
 
-<div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-disable-confirm-modal" class="modal fade" role="dialog" data-backdrop="static">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Disable module? <span class="module-name"></span></h4>
+			</div>
+			<div class="modal-body">
+				Are you sure you wish to disable this module 
+				(<b><span id="external-modules-disable-confirm-module-name"></span>_<span id="external-modules-disable-confirm-module-version"></span></b>)<?=$disableModuleConfirmProject?>?
+			</div>
+			<div class="modal-footer">
+				<button data-dismiss="modal">Cancel</button>
+				<button id="external-modules-disable-button-confirmed" class="save">Disable module</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="external-modules-disabled-modal" class="modal fade" role="dialog">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -50,23 +70,48 @@ $pid = $_GET['pid'];
 	</div>
 </div>
 
-<br>
-<?php if (isset($_GET['pid'])) { ?>
+<p>External Modules are individual packages of software that can be downloaded and installed by a REDCap administrator.
+Modules can extend REDCap's current functionality, and can also provide customizations and enhancements for REDCap's
+existing behavior and appearance at the system level or project level.</p>
 
-<p>External modules combine and replace what REDCap previously has called plugins and hooks.
-Below is a list of enabled modules that can be used in this project. You can see what other modules are
-available by searching for additional modules. These are groups of code from outside sources
-that enhance REDCap functioning for specific purposes.</p> 
+<?php if (isset($_GET['pid']) && SUPER_USER) { ?>
+
+<p>As a REDCap administrator, you may enable any module that has been installed in REDCap for this project.
+Some configuration settings might be required to be set, in which administrators or
+users in this project with Project Setup/Design privileges can modify the configuration of any module at any time after the module
+has first been enabled by an administrator. Note: Normal project users will not be able to enable or disable modules.</p>
+
+<?php } elseif (isset($_GET['pid']) && !SUPER_USER) { ?>
+
+<p>As a user with Project Setup/Design privileges in this project, you can modify the configuration (if applicable)
+of any enabled module. Note: Only REDCap administrators are able to enable or disable modules.</p>
 
 <?php } else { ?>
 
-<p>External modules combine and replace what REDCap previously has called plugins and hooks.
-Below is a list of enabled modules (consisting of hooks and plugins) that are available for your users' use.
-They can be enabled system-wide or they can be enabled (opt-in style) on a project-level. Default values for each module,
-where desired, have been set by the author of the module. Each system can override these defaults by configuring them
-here. In turn, each project can override this set of defaults with their own value.</p>
+<p>You may click the "Download new module" button below to navigate to the External Modules Repository, which is a centralized catalog 
+of curated modules that have been submitted by various REDCap partner institutions. If you find a module in the repository that you wish
+to download, you will be able to install it, enable it, and then set any configuration settings (if applicable).
+If you choose not to enable the module in all REDCap projects by default, then you will need to navigate to the External Modules page
+on the left-hand menu of a given project to enable it there for that project. Some project-level configuration settings, depending on the module,
+may also need to set on the project page.</p>
 
 <?php } ?>
+
+<?php
+// Ensure that server is running PHP 5.4.0+ since REDCap's minimum requirement is PHP 5.3.0
+if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
+	?>
+	<div class="red">
+		<b>PHP <?=ExternalModules::MIN_PHP_VERSION?> or higher is required for External Modules:</b>
+		Sorry, but unfortunately your REDCap web server must be running PHP <?=ExternalModules::MIN_PHP_VERSION?>
+		or a later version to utilize the External Modules functionality. Your current version is PHP <?=PHP_VERSION?>.
+		You should consider upgrading PHP.
+	</div>
+	<?php
+	require_once APP_PATH_DOCROOT . 'ControlCenter/footer.php';
+	exit;
+}
+?>
 <br>
 <?php if(SUPER_USER) { ?>
 	<button id="external-modules-enable-modules-button" class="btn btn-success btn-sm">
@@ -84,9 +129,9 @@ here. In turn, each project can override this set of defaults with their own val
 <br>
 
 <?php if (isset($_GET['pid'])) { ?>
-<h3>Currently Enabled Modules</h3>
+<h4><b>Currently Enabled Modules</b></h4>
 <?php } else { ?>
-<h3>Modules Currently Available on this System</h3>
+<h4><b>Modules Currently Available on this System</b></h4>
 <?php } ?>
 
 <script>
@@ -143,11 +188,12 @@ here. In turn, each project can override this set of defaults with their own val
                 $names = array();
                 foreach ($config['authors'] as $author) {
                         $name = $author['name'];
+                        $institution = empty($author['institution']) ? "" : " <span class='author-institution'>({$author['institution']})</span>";
                         if ($name) {
                                 if ($author['email']) {
-                                        $names[] = "<a href='mailto:".$author['email']."'>".$name."</a>";
+                                        $names[] = "<a href='mailto:".$author['email']."?subject=".rawurlencode($config['name']." - ".$version)."'>".$name."</a>$institution";
                                 } else {
-                                        $names[] = $name;
+                                        $names[] = $name . $institution;
                                 }
                         }
                 }

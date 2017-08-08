@@ -29,9 +29,9 @@ ExternalModules::addResource(ExternalModules::getManagerJSDirectory().'globals.j
     ExternalModules.BASE_URL = <?=json_encode(ExternalModules::$BASE_URL)?>;
     ExternalModules.configsByPrefixJSON = <?=$configsByPrefixJSON?>;
     ExternalModules.versionsByPrefixJSON = <?=$versionsByPrefixJSON?>;
-	ExternalModules.LIB_URL = '<?=APP_URL_EXTMOD_LIB?>login.php?referer=<?=urlencode(PAGE_FULL)?>'
-							+ '&php_version=<?=urlencode(PHP_VERSION)?>&redcap_version=<?=urlencode(REDCAP_VERSION)?>'
-							+ '&downloaded_modules=<?=urlencode(implode(",", getDirFiles(dirname(APP_PATH_DOCROOT).DS.'modules'.DS)))?>';
+	ExternalModules.LIB_URL = '<?=APP_URL_EXTMOD_LIB?>login.php?referer=<?=urlencode(APP_URL_EXTMOD)."manager/control_center.php"?>'
+		+ '&php_version=<?=urlencode(PHP_VERSION)?>&redcap_version=<?=urlencode(REDCAP_VERSION)?>'
+		+ '&downloaded_modules=<?=urlencode(implode(",", getDirFiles(dirname(APP_PATH_DOCROOT).DS.'modules'.DS)))?>';
     
     $(function () {
         var disabledModal = $('#external-modules-disabled-modal');

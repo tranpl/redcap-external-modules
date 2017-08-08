@@ -1,8 +1,8 @@
 <?php
 namespace ExternalModules;
 require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
+if (!empty(ExternalModules::getLinks())) {
 ?>
-
 <script>
 	$(function () {
 		var span = $('<span style="position: relative; float: left; left: 4px;"></span>')
@@ -32,3 +32,5 @@ require_once dirname(__FILE__) . '/../../../classes/ExternalModules.php';
 		menu.append(span)
 	})
 </script>
+<?php
+}

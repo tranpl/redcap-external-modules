@@ -50,6 +50,12 @@ class ExternalModules
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
 
+	// We can't write values larger than this to the database, or they will be truncated.
+	const SETTING_SIZE_LIMIT = 65535;
+
+	// The minimum required PHP version for External Modules to run
+	const MIN_PHP_VERSION = '5.4.0';
+
 	# base URL for external modules
 	public static $BASE_URL;
 
@@ -220,17 +226,19 @@ class ExternalModules
 					// A fatal error did not occur in the middle of a module operation.
 					return;
 				}
-				else if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
-					// An admin was attempting to enable a module.
-					// Simply let REDCap display the error to the admin, instead of sending an email to all admins about it.
-					return;
-				}
 
 				$error = error_get_last();
 				$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 				$message .= 'Error Message: ' . $error['message'] . "\n";
 				$message .= 'File: ' . $error['file'] . "\n";
 				$message .= 'Line: ' . $error['line'] . "\n";
+
+				if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
+					// An admin was attempting to enable a module.
+					// Simply display the error to the current user, instead of sending an email to all admins about it.
+					echo $message;
+					return;
+				}
 
 				error_log($message);
 				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
@@ -353,6 +361,9 @@ class ExternalModules
 		# Attempt to create an instance of the module before enabling it system wide.
 		# This should catch problems like syntax errors in module code.
 		$instance = self::getModuleInstance($moduleDirectoryPrefix, $version);
+		
+		// Ensure compatibility with PHP version and REDCap version before instantiating the module class
+		self::isCompatibleWithREDCapPHP($moduleDirectoryPrefix, $version);
 
 		if (!isset($project_id)) {
 			self::initializeSettingDefaults($instance);
@@ -526,6 +537,11 @@ class ExternalModules
 						AND `key` = '$key'";
 		} else {
 			$value = db_real_escape_string($value);
+
+			if(strlen($value) > self::SETTING_SIZE_LIMIT){
+				throw new Exception("Cannot save the setting for prefix '$moduleDirectoryPrefix' and key '$key' because the value is larger than the " . self::SETTING_SIZE_LIMIT . " character limit.");
+			}
+
 			if($oldValue === null) {
 				$event = "INSERT";
 				$sql = "INSERT INTO redcap_external_module_settings
@@ -559,20 +575,6 @@ class ExternalModules
 		self::query($sql);
 
 		$affectedRows = db_affected_rows();
-
-		$description = ucfirst(strtolower($event)) . ' External Module setting';
-		$logevent = "MANAGE";
-
-		if (($value === "") || ($value === null)) {
-			if(class_exists('Logging')){
-				// REDCap v6.18.3 or later
-				\Logging::logEvent($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
-			}
-			else{
-				// REDCap prior to v6.18.3
-				log_event($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
-			}
-		}
 
 		if($affectedRows != 1){
 			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
@@ -800,6 +802,19 @@ class ExternalModules
 		return null;
 	}
 
+	# gets the currently installed module's version based on the module prefix string
+	public static function getModuleVersionByPrefix($prefix){
+		$prefix = db_real_escape_string($prefix);
+		
+		$sql = "SELECT s.value FROM redcap_external_modules m, redcap_external_module_settings s 
+				WHERE m.external_module_id = s.external_module_id AND m.directory_prefix = '$prefix'
+				AND s.project_id IS NULL AND s.`key` = '" . self::KEY_VERSION . "' LIMIT 1";
+		
+		$result = self::query($sql);
+
+		return db_result($result, 0);
+	}
+
 	# executes a database query and returns the result
 	private static function query($sql)
 	{
@@ -986,6 +1001,32 @@ class ExternalModules
 		require_once $path;
 	}
 
+	# Ensure compatibility with PHP version and REDCap version during module installation using config values
+	private static function isCompatibleWithREDCapPHP($moduleDirectoryPrefix, $version)
+	{
+		$config = self::getConfig($moduleDirectoryPrefix, $version);
+		if (!isset($config['compatibility'])) return;
+		$Exceptions = array();
+		$compat = $config['compatibility'];
+		if (isset($compat['php-version-max']) && !empty($compat['php-version-max']) && !version_compare(PHP_VERSION, $compat['php-version-max'], '<=')) {
+			$Exceptions[] = "This module's maximum compatible PHP version is {$compat['php-version-max']}, but you are currently running PHP " . PHP_VERSION . ".";
+		}
+		elseif (isset($compat['php-version-min']) && !empty($compat['php-version-min']) && !version_compare(PHP_VERSION, $compat['php-version-min'], '>=')) {
+			$Exceptions[] = "This module's minimum required PHP version is {$compat['php-version-min']}, but you are currently running PHP " . PHP_VERSION . ".";
+		}
+		if (isset($compat['redcap-version-max']) && !empty($compat['redcap-version-max']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-max'], '<=')) {
+			$Exceptions[] = "This module's maximum compatible REDCap version is {$compat['redcap-version-max']}, but you are currently running REDCap " . REDCAP_VERSION . ".";
+		}
+		elseif (isset($compat['redcap-version-min']) && !empty($compat['redcap-version-min']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-min'], '>=')) {
+			$Exceptions[] = "This module's minimum required REDCap version is {$compat['redcap-version-min']}, but you are currently running REDCap " . REDCAP_VERSION . ".";
+		}
+		if (!empty($Exceptions)) {
+			throw new Exception("COMPATIBILITY ERROR: This version of the module \"".$config['name']."\"
+								is not compatible with your current version of PHP and/or REDCap, so cannot be installed on your 
+								REDCap server at this time. Details:<ul><li>" . implode("</li><li>", $Exceptions) . "</li></ul>");
+		}
+	}
+
 	# this is where a module has its code loaded
 	public static function getModuleInstance($prefix, $version)
 	{
@@ -997,19 +1038,16 @@ class ExternalModules
 			$config = self::getConfig($prefix, $version);
 
 			$namespace = @$config['namespace'];
-			if(!$namespace){
-				$namespace = __NAMESPACE__;
-
-				// TODO - Once all modules have been given a namespace, require a namespace by throwing an exception here.
-				//throw new Exception("The '$prefix' module MUST specify a 'module-class-name' in it's config.json file.");
+			if($namespace) {
+				$parts = explode('\\', $namespace);
+				$className = end($parts);
 			}
-
-			$className = @$config['module-class-name'];
-			if (!$className) {
+			else{
+				$namespace = __NAMESPACE__;
 				$className = self::getMainClassName($prefix, $version);
 
-				// TODO - Once all modules have been given a module-class-name, require it by throwing an exception here.
-				//throw new Exception("The '$prefix' module MUST specify a 'module-class-name' in it's config.json file.");
+				// TODO - Once all modules have been given a namespace, require a namespace by throwing an exception here.
+				//throw new Exception("The '$prefix' module MUST specify a 'namespace' in it's config.json file.");
 			}
 
 			$classNameWithNamespace = "\\$namespace\\$className";
@@ -1133,6 +1171,13 @@ class ExternalModules
 
 	private static function shouldExcludeModule($prefix, $version)
 	{
+		if(strpos($_SERVER['REQUEST_URI'], '/manager/ajax/enable-module.php') !== false && $prefix == $_POST['prefix']){
+			// We are in the process of switching an already enabled module from one version to another.
+			// Do NOT include the currently enabled version of the module to avoid a class name conflict
+			// for the ComposerAutoloaderInit class (if it hasn't changed between module versions).
+			return true;
+		}
+
 		$modulePath = self::getModuleDirectoryPath($prefix, $version);
 		$doesDirectoryExist = (file_exists($modulePath) && is_dir($modulePath));
 
@@ -1340,22 +1385,6 @@ class ExternalModules
 			}
 		}
 
-		$addManageLink = function($url) use (&$links){
-			$links['Manage External Modules'] = array(
-				'icon' => 'puzzle_small',
-				'url' => ExternalModules::$BASE_URL  . $url
-			);
-		};
-
-		if(isset($pid)){
-			if(SUPER_USER || !empty($versionsByPrefix) && self::hasDesignRights()){
-				$addManageLink('manager/project.php?');
-			}
-		}
-		else{
-			$addManageLink('manager/control_center.php');
-		}
-
 		ksort($links);
 
 		return $links;
@@ -1443,11 +1472,6 @@ class ExternalModules
 				self::disable($prefix);
 
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
-			}
-
-			# backwards compatibility
-			if (!isset($config['system-settings']) && isset($config['global-settings'])) {
-				$config['system-settings'] = $config['global-settings'];
 			}
 
 			foreach(['permissions', 'system-settings', 'project-settings', 'no-auth-pages'] as $key){
@@ -1668,7 +1692,11 @@ class ExternalModules
 
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
-		return self::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix,$version));
+		$filePath = ExternalModules::getModuleDirectoryPath($prefix, $version);
+
+		$url = APP_PATH_WEBROOT_FULL.substr($filePath,strlen(dirname(dirname(__DIR__))."/"))."/";
+
+		return $url;
 	}
 
 	static function hasProjectSettingSavePermission($moduleDirectoryPrefix, $key = null)
@@ -1832,9 +1860,7 @@ class ExternalModules
 	{
 		if(!empty($config)){
 			$systemSettings = $config['system-settings'];
-			if(empty($systemSettings) && !empty($config['global-settings'])){
-				$systemSettings = $config['global-settings'];
-			}else if(empty($systemSettings) && empty($config['global-settings'])){
+			if(empty($systemSettings)){
 				return false;
 			}
 

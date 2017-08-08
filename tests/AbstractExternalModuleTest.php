@@ -161,6 +161,14 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertReturnedSettingType(1, 'integer');
 	}
 
+	function testSettingSizeLimit()
+	{
+		$this->assertThrowsException(function () {
+			$data = str_repeat('a', ExternalModules::SETTING_SIZE_LIMIT + 1);
+			$this->setProjectSetting($data);
+		}, 'value is larger than');
+	}
+
 	function testRequireProjectId()
 	{
 		$m = $this->getInstance();
