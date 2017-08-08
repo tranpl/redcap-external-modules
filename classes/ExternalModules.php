@@ -997,17 +997,12 @@ class ExternalModules
 			$config = self::getConfig($prefix, $version);
 
 			$namespace = @$config['namespace'];
-			if($namespace) {
-				$parts = explode('\\', $namespace);
-				$className = end($parts);
+			if(empty($namespace)) {
+				throw new Exception("The '$prefix' module MUST specify a 'namespace' in it's config.json file.");
 			}
-			else{
-				$namespace = __NAMESPACE__;
-				$className = self::getMainClassName($prefix, $version);
 
-				// TODO - Once all modules have been given a namespace, require a namespace by throwing an exception here.
-				//throw new Exception("The '$prefix' module MUST specify a 'namespace' in it's config.json file.");
-			}
+			$parts = explode('\\', $namespace);
+			$className = end($parts);
 
 			$classNameWithNamespace = "\\$namespace\\$className";
 
