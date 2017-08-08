@@ -236,7 +236,7 @@ class ExternalModules
 				if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
 					// An admin was attempting to enable a module.
 					// Simply display the error to the current user, instead of sending an email to all admins about it.
-					echo str_replace("\n", "<br>", $message);
+					echo $message;
 					return;
 				}
 
