@@ -1474,11 +1474,6 @@ class ExternalModules
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 			}
 
-			# backwards compatibility
-			if (!isset($config['system-settings']) && isset($config['global-settings'])) {
-				$config['system-settings'] = $config['global-settings'];
-			}
-
 			foreach(['permissions', 'system-settings', 'project-settings', 'no-auth-pages'] as $key){
 				if(!isset($config[$key])){
 					$config[$key] = array();
@@ -1865,9 +1860,7 @@ class ExternalModules
 	{
 		if(!empty($config)){
 			$systemSettings = $config['system-settings'];
-			if(empty($systemSettings) && !empty($config['global-settings'])){
-				$systemSettings = $config['global-settings'];
-			}else if(empty($systemSettings) && empty($config['global-settings'])){
+			if(empty($systemSettings)){
 				return false;
 			}
 
