@@ -226,17 +226,19 @@ class ExternalModules
 					// A fatal error did not occur in the middle of a module operation.
 					return;
 				}
-				else if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
-					// An admin was attempting to enable a module.
-					// Simply let REDCap display the error to the admin, instead of sending an email to all admins about it.
-					return;
-				}
 
 				$error = error_get_last();
 				$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 				$message .= 'Error Message: ' . $error['message'] . "\n";
 				$message .= 'File: ' . $error['file'] . "\n";
 				$message .= 'Line: ' . $error['line'] . "\n";
+
+				if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
+					// An admin was attempting to enable a module.
+					// Simply display the error to the current user, instead of sending an email to all admins about it.
+					echo str_replace("\n", "<br>", $message);
+					return;
+				}
 
 				error_log($message);
 				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
