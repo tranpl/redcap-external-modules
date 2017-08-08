@@ -1169,6 +1169,13 @@ class ExternalModules
 
 	private static function shouldExcludeModule($prefix, $version)
 	{
+		if(strpos($_SERVER['REQUEST_URI'], '/manager/ajax/enable-module.php') !== false && $prefix == $_POST['prefix']){
+			// We are in the process of switching an already enabled module from one version to another.
+			// Do NOT include the currently enabled version of the module to avoid a class name conflict
+			// for the ComposerAutoloaderInit class (if it hasn't changed between module versions).
+			return true;
+		}
+
 		$modulePath = self::getModuleDirectoryPath($prefix, $version);
 		$doesDirectoryExist = (file_exists($modulePath) && is_dir($modulePath));
 
