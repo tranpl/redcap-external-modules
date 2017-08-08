@@ -51,12 +51,9 @@
 	width: 850px;
 }
 
-/* Modify Bootstrap modal z-index because it conflicts with jQuery UI modals */
-.modal-backdrop {
-	z-index: 99;
-}
-.modal {
-	z-index: 100;
+/* Modify jQuery UI modal z-index since it conflicts with Bootstrap modal */
+.ui-dialog { 
+	z-index: 1060;
 }
 
 #external-modules-configure-modal input[type=radio] {
