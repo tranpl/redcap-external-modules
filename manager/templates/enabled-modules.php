@@ -42,7 +42,7 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 	</div>
 </div>
 
-<div id="external-modules-disabled-modal" class="modal fade" role="dialog" data-backdrop="static">
+<div id="external-modules-disabled-modal" class="modal fade" role="dialog">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
