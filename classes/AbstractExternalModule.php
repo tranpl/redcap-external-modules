@@ -302,6 +302,9 @@ class AbstractExternalModule
 					}
 				}
 			}
+			else {
+				$row = $rows[0];
+			}
 			$returnCode = $row['return_code'];
 			$hash = $row['hash'];
 			$participantId = "";
