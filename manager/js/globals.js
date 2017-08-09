@@ -208,6 +208,11 @@ ExternalModules.Settings.prototype.getColumnHtml = function(setting,value,classN
 		var inputAttributes = [];
 		if(type == 'checkbox' && value == 1){
 			inputAttributes['checked'] = 'checked';
+		} else if (type == 'text' && typeof setting.validation != "undefined") {
+			var validation = setting.validation;
+			var validation_min = (typeof setting.validation_min == "undefined") ? "" : setting.validation_min;
+			var validation_max = (typeof setting.validation_max == "undefined") ? "" : setting.validation_max;
+			inputAttributes['onblur'] = "redcap_validate(this,'"+validation_min+"','"+validation_max+"','soft_typed','"+validation+"',1);";
 		}
 
 		inputHtml = this.getInputElement(type, key, value, inputAttributes);

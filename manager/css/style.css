@@ -51,6 +51,11 @@
 	width: 850px;
 }
 
+/* Modify jQuery UI modal z-index since it conflicts with Bootstrap modal */
+.ui-dialog { 
+	z-index: 1060;
+}
+
 #external-modules-configure-modal input[type=radio] {
 	vertical-align: -2px;
 	margin-right: 5px;
@@ -124,4 +129,8 @@
 	display: none;
 	color: red;
 	font-weight: bold;
+}
+
+.author-institution {
+	color: #777;
 }

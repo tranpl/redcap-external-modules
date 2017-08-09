@@ -256,18 +256,7 @@ class AbstractExternalModule
 
 		## Create participant and return code if doesn't exist yet
 		if($participantId == "" || $responseId == "") {
-			## Generate a random hash and verify it's unique
-			do {
-				$hash = generateRandomHash(10);
-
-				$sql = "SELECT p.hash
-						FROM redcap_surveys_participants p
-						WHERE p.hash = '$hash'";
-
-				$result = db_query($sql);
-
-				$hashExists = (db_num_rows($result) > 0);
-			} while($hashExists);
+			$hash = self::generateUniqueRandomSurveyHash();
 
 			## Insert a participant row for this survey
 			$sql = "INSERT INTO redcap_surveys_participants (survey_id, event_id, participant_email, participant_identifier, hash)
@@ -288,40 +277,74 @@ class AbstractExternalModule
 		}
 		## Reset response status if it already exists
 		else {
-			# Check if a participant and response exists for this survey/record combo
-			$sql = "SELECT p.hash, r.return_code
-				FROM redcap_surveys_participants p, redcap_surveys_response r
-				WHERE p.survey_id = '$surveyId'
-					AND p.participant_id = r.participant_id
-					AND r.record = '".prep($recordId)."'";
+			$sql = "SELECT p.participant_id, p.hash, r.return_code, r.response_id, COALESCE(p.participant_email,'NULL') as participant_email
+					FROM redcap_surveys_participants p, redcap_surveys_response r
+					WHERE p.survey_id = '$surveyId'
+						AND p.participant_id = r.participant_id
+						AND r.record = '".prep($recordId)."'";
 
-			$row = db_fetch_assoc(db_query($sql));
+			$q = db_query($sql);
+			$rows = [];
+			while($row = db_fetch_assoc($q)) {
+				$rows[] = $row;
+			}
+
+			## If more than one exists, delete any that are responses to public survey links
+			if(db_num_rows($q) > 1) {
+				foreach($rows as $thisRow) {
+					if($thisRow["participant_email"] == "NULL" && $thisRow["response_id"] != "") {
+						$sql = "DELETE FROM redcap_surveys_response
+								WHERE response_id = ".$thisRow["response_id"];
+						if(!db_query($sql)) echo "Error: ".db_error()." <br />$sql<br />";
+					}
+					else {
+						$row = $thisRow;
+					}
+				}
+			}
+			else {
+				$row = $rows[0];
+			}
 			$returnCode = $row['return_code'];
 			$hash = $row['hash'];
+			$participantId = "";
 
 			if($returnCode == "") {
 				$returnCode = generateRandomHash();
 			}
 
-			// Set the response as incomplete in the response table
+			## If this is only as a public survey link, generate new participant row
+			if($row["participant_email"] == "NULL") {
+				$hash = self::generateUniqueRandomSurveyHash();
+
+				## Insert a participant row for this survey
+				$sql = "INSERT INTO redcap_surveys_participants (survey_id, event_id, participant_email, participant_identifier, hash)
+						VALUES ($surveyId,".prep($eventId).", '', null, '$hash')";
+
+				if(!db_query($sql)) echo "Error: ".db_error()." <br />$sql<br />";
+				$participantId = db_insert_id();
+			}
+
+			// Set the response as incomplete in the response table, update participantId if on public survey link
 			$sql = "UPDATE redcap_surveys_participants p, redcap_surveys_response r
 					SET r.completion_time = null,
 						r.first_submit_time = '".date('Y-m-d h:m:s')."',
-						r.return_code = '".prep($returnCode)."'
+						r.return_code = '".prep($returnCode)."'".
+						($participantId == "" ? "" : ", r.participant_id = '$participantId'")."
 					WHERE p.survey_id = $surveyId
 						AND p.event_id = ".prep($eventId)."
 						AND r.participant_id = p.participant_id
-						AND r.record = '".prep($recordId)."' ";
+						AND r.record = '".prep($recordId)."'";
 			db_query($sql);
 		}
 
 		// Set the response as incomplete in the data table
 		$sql = "UPDATE redcap_data
-					SET value = '0'
-					WHERE project_id = ".prep($projectId)."
-						AND record = '".prep($recordId)."'
-						AND event_id = ".prep($eventId)."
-						AND field_name = '{$surveyFormName}_complete'";
+				SET value = '0'
+				WHERE project_id = ".prep($projectId)."
+					AND record = '".prep($recordId)."'
+					AND event_id = ".prep($eventId)."
+					AND field_name = '{$surveyFormName}_complete'";
 
 		$q = db_query($sql);
 		// Log the event (if value changed)
@@ -337,6 +360,23 @@ class AbstractExternalModule
 		@db_query("COMMIT");
 
 		return array("hash" => $hash, "return_code" => $returnCode);
+	}
+
+	public function generateUniqueRandomSurveyHash() {
+		## Generate a random hash and verify it's unique
+		do {
+			$hash = generateRandomHash(10);
+
+			$sql = "SELECT p.hash
+						FROM redcap_surveys_participants p
+						WHERE p.hash = '$hash'";
+
+			$result = db_query($sql);
+
+			$hashExists = (db_num_rows($result) > 0);
+		} while($hashExists);
+
+		return $hash;
 	}
 
 	public function getProjectAndRecordFromHashes($surveyHash, $returnCode) {

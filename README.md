@@ -77,7 +77,7 @@ External Modules combine the concepts of REDCap Plugins and REDCap Hooks. They c
 1. Open the **config.json** file. This is a JSON used to specify the External Module.
 	* Fill in the **name**
 	* Fill in the **description**
-	* Fill in the **name** and **email** for authors. At least one email is required to run the module.
+	* Fill in the **name** and **email** (and optional **institution**) for authors. At least one email is required to run the module.
 	* Grant **permissions** for all of the operations. Start with **hook_...**. For example, **hook_save_record**.
 	* **links** specify any links to show up on the left-hand toolbar. These include stand-alone webpages (substitutes for plugins) or links to outside websites. These are listable at the control-center level or at the project level.  A **link** consists of:
 		* A **name** to be displayed on the site

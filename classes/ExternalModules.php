@@ -226,17 +226,19 @@ class ExternalModules
 					// A fatal error did not occur in the middle of a module operation.
 					return;
 				}
-				else if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
-					// An admin was attempting to enable a module.
-					// Simply let REDCap display the error to the admin, instead of sending an email to all admins about it.
-					return;
-				}
 
 				$error = error_get_last();
 				$message = "The '$activeModulePrefix' module was automatically disabled because of the following error:\n\n";
 				$message .= 'Error Message: ' . $error['message'] . "\n";
 				$message .= 'File: ' . $error['file'] . "\n";
 				$message .= 'Line: ' . $error['line'] . "\n";
+
+				if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
+					// An admin was attempting to enable a module.
+					// Simply display the error to the current user, instead of sending an email to all admins about it.
+					echo $message;
+					return;
+				}
 
 				error_log($message);
 				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $activeModulePrefix", $message, $activeModulePrefix);
@@ -574,20 +576,6 @@ class ExternalModules
 
 		$affectedRows = db_affected_rows();
 
-		$description = ucfirst(strtolower($event)) . ' External Module setting';
-		$logevent = "MANAGE";
-
-		if (($value === "") || ($value === null)) {
-			if(class_exists('Logging')){
-				// REDCap v6.18.3 or later
-				\Logging::logEvent($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
-			}
-			else{
-				// REDCap prior to v6.18.3
-				log_event($sql, 'redcap_external_module_settings', $logevent, $key, $value, $description, "", "", $projectId);
-			}
-		}
-
 		if($affectedRows != 1){
 			throw new Exception("Unexpected number of affected rows ($affectedRows) on External Module setting query: $sql");
 		}
@@ -812,6 +800,19 @@ class ExternalModules
 		}
 
 		return null;
+	}
+
+	# gets the currently installed module's version based on the module prefix string
+	public static function getModuleVersionByPrefix($prefix){
+		$prefix = db_real_escape_string($prefix);
+		
+		$sql = "SELECT s.value FROM redcap_external_modules m, redcap_external_module_settings s 
+				WHERE m.external_module_id = s.external_module_id AND m.directory_prefix = '$prefix'
+				AND s.project_id IS NULL AND s.`key` = '" . self::KEY_VERSION . "' LIMIT 1";
+		
+		$result = self::query($sql);
+
+		return db_result($result, 0);
 	}
 
 	# executes a database query and returns the result
@@ -1170,6 +1171,13 @@ class ExternalModules
 
 	private static function shouldExcludeModule($prefix, $version)
 	{
+		if(strpos($_SERVER['REQUEST_URI'], '/manager/ajax/enable-module.php') !== false && $prefix == $_POST['prefix']){
+			// We are in the process of switching an already enabled module from one version to another.
+			// Do NOT include the currently enabled version of the module to avoid a class name conflict
+			// for the ComposerAutoloaderInit class (if it hasn't changed between module versions).
+			return true;
+		}
+
 		$modulePath = self::getModuleDirectoryPath($prefix, $version);
 		$doesDirectoryExist = (file_exists($modulePath) && is_dir($modulePath));
 
@@ -1466,11 +1474,6 @@ class ExternalModules
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 			}
 
-			# backwards compatibility
-			if (!isset($config['system-settings']) && isset($config['global-settings'])) {
-				$config['system-settings'] = $config['global-settings'];
-			}
-
 			foreach(['permissions', 'system-settings', 'project-settings', 'no-auth-pages'] as $key){
 				if(!isset($config[$key])){
 					$config[$key] = array();
@@ -1690,9 +1693,9 @@ class ExternalModules
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
 		$filePath = ExternalModules::getModuleDirectoryPath($prefix, $version);
-		
+
 		$url = APP_PATH_WEBROOT_FULL.substr($filePath,strlen(dirname(dirname(__DIR__))."/"))."/";
-		
+
 		return $url;
 	}
 
@@ -1863,9 +1866,7 @@ class ExternalModules
 	{
 		if(!empty($config)){
 			$systemSettings = $config['system-settings'];
-			if(empty($systemSettings) && !empty($config['global-settings'])){
-				$systemSettings = $config['global-settings'];
-			}else if(empty($systemSettings) && empty($config['global-settings'])){
+			if(empty($systemSettings)){
 				return false;
 			}
 
