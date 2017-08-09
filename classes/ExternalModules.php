@@ -1689,6 +1689,20 @@ class ExternalModules
 
 	static function getModuleDirectoryUrl($prefix, $version)
 	{
+		$directoryToFind = $prefix . '_' . $version;
+		foreach(self::$MODULES_PATH as $pathDir) {
+			$modulePath = $pathDir . $directoryToFind;
+			if(is_dir($modulePath)) {
+				if (basename($pathDir) == "example_modules" && basename(dirname($pathDir)) == "external_modules") {
+					// Example modules directory					
+					return APP_URL_EXTMOD . "example_modules/" . basename(ExternalModules::getModuleDirectoryPath($prefix,$version));
+				} else {
+					// Regular modules directory
+					return self::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix,$version));
+				}
+				break;
+			}
+		}
 		return self::$MODULES_URL . basename(ExternalModules::getModuleDirectoryPath($prefix,$version));
 	}
 
