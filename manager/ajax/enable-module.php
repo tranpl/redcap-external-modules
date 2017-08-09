@@ -18,16 +18,23 @@ else {
     if(empty($config['authors'])){
         $return_data['error_message'] .= "The module named  ".$config['name']." is missing its authors. Fill in the config.json to ENABLE it.<br/>";
     }else{
-        $error_email = true;
+        $missingEmail = true;
         foreach ($config['authors'] as $author){
             if(!empty( $author['email'])){
-                $error_email = false;
+                $missingEmail = false;
                 break;
             }
         }
 
-        if($error_email){
+        if($missingEmail){
             $return_data['error_message'] .= "The module named  ".$config['name']." needs at least one email inside the authors portion of the configuration.  Please fill an email for at least one author in the config.json.<br/>";
+        }
+
+        foreach ($config['authors'] as $author) {
+            if (empty($author['institution'])) {
+                $return_data['error_message'] .= "The module named  " . $config['name'] . " is missing an institution for at least one of it's authors the config.json file.<br/>";
+                break;
+            }
         }
     }
 
