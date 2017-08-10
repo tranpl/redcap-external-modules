@@ -176,13 +176,17 @@ if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
 
 			$configsByPrefix[$prefix] = $config;
 			$enabled = false;
+			$system_enabled = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_ENABLED);
+
 			if (isset($_GET['pid'])) {
 				$enabled = ExternalModules::getProjectSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
 			}
 			if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
-					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?></div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div><div class='external-modules-byline'>
+					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?>
+                            <?php if ($system_enabled) print "<span class='label label-warning'>Enabled for All Projects</span>" ?>
+                        </div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div><div class='external-modules-byline'>
 <?php
         if ($config['authors']) {
                 $names = array();
